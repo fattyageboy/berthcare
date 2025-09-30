@@ -1,0 +1,78 @@
+---
+# Auth0 API (Resource Server) Configuration
+# Defines the API that will be protected by Auth0
+
+- name: "Berthcare API (Development)"
+  identifier: "https://api.dev.berthcare.ca"
+  allow_offline_access: true  # Enable refresh tokens
+  skip_consent_for_verifiable_first_party_clients: true
+  token_lifetime: 3600  # 1 hour in seconds
+  token_lifetime_for_web: 3600  # 1 hour in seconds
+  signing_alg: "RS256"
+
+  # API Scopes mapped to permissions
+  scopes:
+    # Visit Management
+    - value: "read:visits"
+      description: "Read visit information"
+    - value: "write:visits"
+      description: "Create and update visits"
+    - value: "delete:visits"
+      description: "Delete visits"
+
+    # Care Plan Management
+    - value: "read:care_plans"
+      description: "Read care plan information"
+    - value: "write:care_plans"
+      description: "Create and update care plans"
+    - value: "delete:care_plans"
+      description: "Delete care plans"
+
+    # Client Management
+    - value: "read:clients"
+      description: "Read client information"
+    - value: "write:clients"
+      description: "Create and update client information"
+    - value: "delete:clients"
+      description: "Delete client records"
+
+    # User Management
+    - value: "read:users"
+      description: "Read user information"
+    - value: "write:users"
+      description: "Create and update users"
+    - value: "delete:users"
+      description: "Delete users"
+
+    # Photo Management
+    - value: "upload:photos"
+      description: "Upload visit photos"
+    - value: "read:photos"
+      description: "View visit photos"
+    - value: "delete:photos"
+      description: "Delete visit photos"
+
+    # Analytics and Reporting
+    - value: "read:analytics"
+      description: "Access analytics and reports"
+    - value: "read:audit_logs"
+      description: "Access audit logs"
+
+    # Messaging
+    - value: "read:messages"
+      description: "Read messages"
+    - value: "write:messages"
+      description: "Send messages"
+
+    # Family Portal
+    - value: "read:family_info"
+      description: "Read family member accessible information"
+
+    # System Administration
+    - value: "admin:system"
+      description: "Full system administration access"
+    - value: "admin:organization"
+      description: "Organization administration access"
+
+  enforce_policies: true
+  token_dialect: "access_token_authz"

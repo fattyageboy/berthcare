@@ -1,0 +1,65 @@
+---
+# Auth0 Database Connection Configuration
+# Defines the primary username-password database connection
+
+- name: "Username-Password-Authentication"
+  strategy: "auth0"
+  enabled_clients:
+    - "Berthcare Web App (Development)"
+    - "Berthcare Mobile App (Development)"
+  is_domain_connection: false
+
+  options:
+    # Password Policy
+    password_policy: "good"
+    password_history:
+      enable: true
+      size: 5
+    password_no_personal_info:
+      enable: true
+    password_dictionary:
+      enable: true
+      dictionary: []
+
+    # Password Complexity
+    password_complexity_options:
+      min_length: 10
+
+    # MFA Configuration
+    mfa:
+      active: true
+      return_enroll_settings: true
+
+    # Brute Force Protection
+    brute_force_protection: true
+
+    # Username/Email Configuration
+    requires_username: false
+    disable_signup: false  # Allow signup for dev/testing
+
+    # Import/Export Configuration
+    import_mode: false
+    disable_self_service_change_password: false
+
+    # Custom Database Scripts (not using custom DB for dev)
+    enabledDatabaseCustomization: false
+
+    # Configuration for username/password
+    validation:
+      username:
+        min: 1
+        max: 100
+
+    # User Attributes
+    non_persistent_attrs: []
+
+    # Set User Attributes from Rules
+    set_user_root_attributes: "on_first_login"
+
+    # Sync user profile attributes at login
+    should_trust_email_verified_connection: "always_set_emails_as_verified"
+
+  # Connection metadata
+  metadata:
+    environment: "development"
+    purpose: "primary-authentication"

@@ -1,0 +1,61 @@
+---
+# Auth0 Tenant Configuration for Berthcare Development Environment
+# This file defines the core tenant settings using Auth0 Deploy CLI format
+# Documentation: https://auth0.com/docs/deploy-cli
+
+tenant:
+  friendly_name: "Berthcare Development"
+  support_email: "dev-support@berthcare.ca"
+  support_url: "https://dev.berthcare.ca/support"
+
+  # Tenant Settings
+  enabled_locales:
+    - en
+  default_directory: "Username-Password-Authentication"
+
+  # Session Configuration
+  session_lifetime: 168  # 7 days in hours
+  idle_session_lifetime: 72  # 3 days in hours
+
+  # Security Settings
+  flags:
+    enable_client_connections: true
+    enable_apis_section: true
+    enable_pipeline2: true
+    disable_clickjack_protection_headers: false
+    enable_public_signup_user_exists_error: false
+    use_scope_descriptions_for_consent: true
+    disable_management_api_sms_obfuscation: false
+    enable_adfs_waad_email_verification: true
+    revoke_refresh_token_grant: false
+    dashboard_log_streams_next: false
+    dashboard_insights_view: false
+    disable_fields_map_fix: false
+
+  # Session Cookie Settings
+  session_cookie:
+    mode: "persistent"
+
+  # Password Policy
+  change_password:
+    enabled: true
+    html: ""
+
+  guardian_mfa_page:
+    enabled: true
+    html: ""
+
+  default_redirection_uri: "https://dev.berthcare.ca/callback"
+  allowed_logout_urls:
+    - "https://dev.berthcare.ca"
+    - "https://dev.berthcare.ca/logout"
+    - "berthcare://callback"  # Mobile app deep link
+
+  # Sandbox version for testing
+  sandbox_version: "16"
+
+  # Universal Login
+  universal_login:
+    colors:
+      primary: "#0066CC"
+      page_background: "#F5F7FA"

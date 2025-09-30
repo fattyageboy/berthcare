@@ -1,0 +1,65 @@
+---
+# Auth0 Guardian (MFA) Configuration
+# Configures Multi-Factor Authentication options
+
+# MFA Factors Configuration
+factors:
+  - name: "sms"
+    enabled: true
+  - name: "push-notification"
+    enabled: false
+  - name: "otp"
+    enabled: true  # One-Time Password (TOTP - Google Authenticator, etc.)
+  - name: "email"
+    enabled: false
+  - name: "duo"
+    enabled: false
+  - name: "webauthn-roaming"
+    enabled: false
+  - name: "webauthn-platform"
+    enabled: false
+
+# SMS Configuration
+sms:
+  # Twilio configuration (requires Twilio credentials)
+  provider: "twilio"
+  # These will need to be configured via Auth0 Dashboard or environment variables
+  # TWILIO_SID: "your_twilio_account_sid"
+  # TWILIO_TOKEN: "your_twilio_auth_token"
+  # TWILIO_FROM: "+1234567890"
+
+  # SMS template
+  template: "Your Berthcare verification code is: {{code}}"
+
+# OTP (TOTP) Configuration
+otp:
+  time_step: 30  # seconds
+  window_size: 1  # Accept codes from 1 time step before/after
+
+# MFA Policies
+policies:
+  # When to prompt for MFA
+  - name: "all-applications"
+    # Options: always, never, confidence-score
+    enforcement: "confidence-score"
+    confidence_threshold: "low"  # low, medium, high
+
+# Phone Configuration
+phone:
+  # Message types: sms or voice
+  message_types:
+    - "sms"
+
+  # Phone number configuration
+  provider: "twilio"
+
+# MFA Enrollment Settings
+enrollment:
+  # Allow users to skip MFA enrollment
+  allow_skip: true
+
+  # How long users can skip MFA before being forced to enroll (in seconds)
+  skip_duration: 86400  # 24 hours
+
+  # Tickets for MFA enrollment
+  ticket_lifetime: 3600  # 1 hour
