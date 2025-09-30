@@ -1,0 +1,83 @@
+# Code Ownership for BerthCare
+# Documentation: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything in the repo
+# These owners will be requested for review when someone opens a pull request
+*                                   @berthcare/core-team
+
+# Mobile Application
+/mobile/                            @berthcare/mobile-team @berthcare/frontend-leads
+/mobile/src/components/             @berthcare/mobile-team @berthcare/design-team
+/mobile/src/screens/                @berthcare/mobile-team @berthcare/ux-team
+/mobile/android/                    @berthcare/mobile-team @berthcare/android-leads
+/mobile/ios/                        @berthcare/mobile-team @berthcare/ios-leads
+
+# Backend Services
+/backend/                           @berthcare/backend-team @berthcare/backend-leads
+/backend/user-service/              @berthcare/backend-team @berthcare/security-team
+/backend/visit-service/             @berthcare/backend-team @berthcare/compliance-team
+/backend/sync-service/              @berthcare/backend-team @berthcare/data-team
+/backend/notification-service/      @berthcare/backend-team
+
+# Web Applications
+/web/                               @berthcare/web-team @berthcare/frontend-leads
+/web/family-portal/                 @berthcare/web-team @berthcare/product-team
+/web/admin-portal/                  @berthcare/web-team @berthcare/operations-team
+
+# Infrastructure & DevOps
+/infrastructure/                    @berthcare/devops-team @berthcare/infra-leads
+/infrastructure/terraform/          @berthcare/devops-team @berthcare/security-team
+/infrastructure/kubernetes/         @berthcare/devops-team
+/.github/workflows/                 @berthcare/devops-team @berthcare/ci-leads
+/docker/                            @berthcare/devops-team
+/scripts/deployment/                @berthcare/devops-team @berthcare/release-managers
+
+# Documentation
+/docs/                              @berthcare/documentation-team @berthcare/tech-writers
+/docs/api/                          @berthcare/backend-team @berthcare/documentation-team
+/README.md                          @berthcare/documentation-team
+/CONTRIBUTING.md                    @berthcare/documentation-team
+/CHANGELOG.md                       @berthcare/release-managers
+
+# Design & UX
+/design-documentation/              @berthcare/design-team @berthcare/ux-team
+/design-documentation/design-system/ @berthcare/design-team @berthcare/frontend-leads
+/design-documentation/accessibility/ @berthcare/design-team @berthcare/accessibility-team
+
+# Project Documentation
+/project-documentation/             @berthcare/product-team @berthcare/tech-leads
+
+# Configuration & Build
+package.json                        @berthcare/core-team @berthcare/frontend-leads
+tsconfig.json                       @berthcare/core-team @berthcare/frontend-leads
+.eslintrc.*                         @berthcare/core-team @berthcare/code-quality-team
+.prettierrc.*                       @berthcare/core-team @berthcare/code-quality-team
+jest.config.*                       @berthcare/core-team @berthcare/qa-team
+
+# Security & Compliance
+/security/                          @berthcare/security-team
+*.pem                               @berthcare/security-team
+*.key                               @berthcare/security-team
+/backend/*/auth/                    @berthcare/security-team @berthcare/backend-leads
+/mobile/src/security/               @berthcare/security-team @berthcare/mobile-team
+SECURITY.md                         @berthcare/security-team
+
+# Database & Migrations
+/backend/*/migrations/              @berthcare/data-team @berthcare/backend-leads
+/backend/*/seeds/                   @berthcare/data-team
+schema.sql                          @berthcare/data-team @berthcare/dba-team
+
+# Testing
+/tests/                             @berthcare/qa-team
+/mobile/__tests__/                  @berthcare/qa-team @berthcare/mobile-team
+/backend/*/__tests__/               @berthcare/qa-team @berthcare/backend-team
+*.test.ts                           @berthcare/qa-team
+*.spec.ts                           @berthcare/qa-team
+
+# Environment & Secrets (requires security review)
+.env.example                        @berthcare/security-team @berthcare/devops-team
+*.env.template                      @berthcare/security-team @berthcare/devops-team
+
+# Critical files requiring multiple reviews
+/.github/CODEOWNERS                 @berthcare/core-team @berthcare/tech-leads
+/LICENSE                            @berthcare/legal-team @berthcare/core-team
