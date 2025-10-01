@@ -32,15 +32,19 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
 
       - name: Install dependencies
+        working-directory: ./backend
         run: npm ci --prefer-offline --no-audit
 
       - name: Run ESLint
+        working-directory: ./backend
         run: npm run lint
         continue-on-error: false
 
       - name: Run TypeScript type check
+        working-directory: ./backend
         run: npm run type-check
         continue-on-error: false
 
@@ -70,11 +74,14 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
 
       - name: Install dependencies
+        working-directory: ./backend
         run: npm ci --prefer-offline --no-audit
 
       - name: Run unit tests
+        working-directory: ./backend
         run: npm run test:unit -- --coverage --ci
         env:
           NODE_ENV: test
@@ -116,11 +123,14 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
 
       - name: Install dependencies
+        working-directory: ./backend
         run: npm ci --prefer-offline --no-audit
 
       - name: Run tests for coverage
+        working-directory: ./backend
         run: npm run test:unit -- --coverage --ci
         continue-on-error: true
         env:
@@ -134,10 +144,10 @@ jobs:
         with:
           args: >
             -Dsonar.projectKey=berthcare
-            -Dsonar.sources=src
-            -Dsonar.tests=src
+            -Dsonar.sources=backend/src
+            -Dsonar.tests=backend/src
             -Dsonar.test.inclusions=**/*.test.ts,**/*.test.tsx,**/*.spec.ts,**/*.spec.tsx
-            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.javascript.lcov.reportPaths=backend/coverage/lcov.info
             -Dsonar.coverage.exclusions=**/*.test.ts,**/*.test.tsx,**/*.spec.ts,**/*.spec.tsx,**/*.config.js,**/*.config.ts
             -Dsonar.cpd.exclusions=**/*.test.ts,**/*.test.tsx,**/*.spec.ts,**/*.spec.tsx
 
@@ -172,12 +182,15 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
 
       - name: Install dependencies
+        working-directory: ./backend
         run: npm ci --prefer-offline --no-audit
 
       - name: Run npm audit
         id: npm-audit
+        working-directory: ./backend
         run: |
           echo "## NPM Audit Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -221,8 +234,10 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
 
       - name: Install dependencies
+        working-directory: ./backend
         run: npm ci --prefer-offline --no-audit
 
       - name: Run Snyk to check for vulnerabilities
