@@ -1,0 +1,137 @@
+Berthcare/
+│
+├── docker-compose.dev.yml          # Docker Compose configuration for local development
+├── .env.example                     # Environment variable template
+├── Makefile                         # Command shortcuts for development
+│
+├── LOCAL_DEVELOPMENT.md             # Comprehensive developer guide
+├── E3_COMPLETION_REPORT.md          # Task completion report and documentation
+│
+├── db/
+│   └── seeds/                       # Database initialization scripts
+│       ├── 01_schema.sql           # Complete database schema (tables, types, indexes)
+│       └── 02_seed_data.sql        # Realistic development test data
+│
+└── scripts/
+    ├── setup-dev.sh                # Automated environment setup script
+    └── verify-environment.sh       # Comprehensive verification tests
+
+DOCKER SERVICES:
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│  PostgreSQL Database (port 5432)                                │
+│  ├── Database: berthcare_dev                                    │
+│  ├── Auto-loads schema and seed data                            │
+│  └── 9 tables with realistic test data                          │
+│                                                                 │
+│  Redis Cache (port 6379)                                        │
+│  ├── Persistence enabled                                        │
+│  └── Password protected                                         │
+│                                                                 │
+│  MinIO S3 Storage (ports 9000, 9001)                            │
+│  ├── API: port 9000                                             │
+│  ├── Console UI: port 9001                                      │
+│  └── Auto-creates 3 buckets (photos, documents, signatures)     │
+│                                                                 │
+│  Adminer Database UI (port 8080)                                │
+│  └── Web-based PostgreSQL management                            │
+│                                                                 │
+│  Redis Commander (port 8081)                                    │
+│  └── Web-based Redis management                                 │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+DATABASE SCHEMA:
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│  organizations (2 records)                                      │
+│  ├── Healthcare organizations                                   │
+│  └── Settings and license information                           │
+│                                                                 │
+│  users (11 records)                                             │
+│  ├── Admins, supervisors, coordinators                          │
+│  ├── Nurses and PSWs                                            │
+│  └── Family members                                             │
+│                                                                 │
+│  clients (5 records)                                            │
+│  ├── Care recipients with full medical histories                │
+│  ├── Medications, allergies, diagnoses                          │
+│  └── Emergency contacts and addresses                           │
+│                                                                 │
+│  care_plans (3 records)                                         │
+│  ├── Active care plans with goals                               │
+│  ├── Detailed interventions                                     │
+│  └── Frequency schedules                                        │
+│                                                                 │
+│  visits (10+ records)                                           │
+│  ├── Past completed visits                                      │
+│  ├── Current in-progress visits                                 │
+│  └── Future scheduled visits                                    │
+│                                                                 │
+│  family_members (3 records)                                     │
+│  ├── Family relationships                                       │
+│  └── Access levels and notification preferences                 │
+│                                                                 │
+│  sync_log                                                       │
+│  └── Offline synchronization tracking                           │
+│                                                                 │
+│  audit_log (sample records)                                     │
+│  └── Compliance and audit trail                                 │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+QUICK START COMMANDS:
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│  Initial Setup:                                                 │
+│  $ cp .env.example .env                                         │
+│  $ ./scripts/setup-dev.sh                                       │
+│                                                                 │
+│  Daily Operations:                                              │
+│  $ make up          # Start all services                        │
+│  $ make status      # Check service status                      │
+│  $ make logs        # View logs                                 │
+│  $ make down        # Stop services                             │
+│                                                                 │
+│  Database:                                                      │
+│  $ make db-shell    # Access PostgreSQL                         │
+│  $ make db-backup   # Backup database                           │
+│  $ make db-restore  # Restore database                          │
+│                                                                 │
+│  Redis:                                                         │
+│  $ make redis-shell # Access Redis CLI                          │
+│                                                                 │
+│  Testing:                                                       │
+│  $ ./scripts/verify-environment.sh  # Run all tests             │
+│  $ make test-all    # Test service connections                  │
+│                                                                 │
+│  Troubleshooting:                                               │
+│  $ make restart     # Restart services                          │
+│  $ make reset       # Full reset (deletes data!)                │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+ACCESS INFORMATION:
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│  PostgreSQL:                                                    │
+│    URL: localhost:5432                                          │
+│    Database: berthcare_dev                                      │
+│    User: postgres                                               │
+│    Password: dev_password_change_in_production                  │
+│                                                                 │
+│  Redis:                                                         │
+│    URL: localhost:6379                                          │
+│    Password: dev_redis_password                                 │
+│                                                                 │
+│  MinIO:                                                         │
+│    API: http://localhost:9000                                   │
+│    Console: http://localhost:9001                               │
+│    Access Key: minioadmin                                       │
+│    Secret Key: minioadmin123                                    │
+│                                                                 │
+│  Management UIs:                                                │
+│    Adminer: http://localhost:8080                               │
+│    Redis Commander: http://localhost:8081                       │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
