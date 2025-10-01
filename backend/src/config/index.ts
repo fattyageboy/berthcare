@@ -54,3 +54,7 @@ export const validateConfig = (): void => {
     }
   }
 };
+
+// Export database and Redis connections
+export { database, DatabaseHealthStatus } from './database';
+export { redis, RedisHealthStatus } from './redis';

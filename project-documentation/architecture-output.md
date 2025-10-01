@@ -1800,3 +1800,613 @@ Implement offline-first architecture using SQLite with sync mechanism.
 ```
 
 This comprehensive technical architecture blueprint provides engineering teams with detailed specifications for building BerthCare. The architecture emphasizes offline-first mobile capabilities, robust security, scalable infrastructure, and healthcare compliance while maintaining focus on user experience and operational efficiency.
+
+## Infrastructure Layer
+
+### Repository and Version Control
+
+#### Repository Information
+**GitHub Repository**: Not yet configured (see GITHUB-SETUP.md for setup instructions)
+- **Branching Strategy**: GitFlow with modified workflow
+- **Branch Protection**: Enabled on `main` and `develop` branches
+- **Commit Signing**: Required for all commits
+
+#### Repository Structure
+```
+Berthcare/
+├── .github/
+│   └── workflows/          # CI/CD pipeline configurations
+│       └── ci.yml          # Main CI pipeline
+├── db/
+│   └── seeds/              # Database initialization scripts
+│       ├── 01_schema.sql   # Database schema
+│       └── 02_seed_data.sql # Development seed data
+├── infrastructure/         # Infrastructure as Code (Terraform/Pulumi)
+├── scripts/                # Automation and utility scripts
+├── project-documentation/  # Architecture and design documentation
+├── docker-compose.dev.yml  # Local development environment
+├── Makefile               # Development workflow commands
+├── .env.example           # Environment configuration template
+└── .gitignore             # Version control exclusions
+```
+
+### CI/CD Pipeline Configuration
+
+#### GitHub Actions Workflow
+**Pipeline File**: `.github/workflows/ci.yml`
+
+**Trigger Events**:
+- Pull requests to `main` branch
+- Manual workflow dispatch
+
+**Pipeline Jobs**:
+
+1. **Code Quality (10 min timeout)**
+   - ESLint for code style and best practices
+   - TypeScript type checking
+   - Artifacts: lint results, type check output
+
+2. **Unit Tests (15 min timeout)**
+   - Jest test execution with coverage
+   - Coverage threshold enforcement (80% minimum)
+   - Artifacts: coverage reports and summaries
+
+3. **SAST - SonarQube Analysis (15 min timeout)**
+   - Static application security testing
+   - Code quality metrics
+   - Quality gate enforcement
+   - Test coverage integration
+
+4. **Dependency Audit (10 min timeout)**
+   - npm audit for known vulnerabilities
+   - Moderate severity threshold blocking
+   - Automated vulnerability reporting
+
+5. **Snyk Security Scanning (15 min timeout)**
+   - Dependency vulnerability scanning
+   - SAST code analysis
+   - High severity threshold blocking
+
+6. **CI Summary (5 min timeout)**
+   - Aggregates all job results
+   - Generates comprehensive status report
+   - Fails pipeline if any required check fails
+
+**Required Secrets**:
+```yaml
+SONAR_TOKEN           # SonarQube authentication
+SONAR_HOST_URL        # SonarQube instance URL
+SNYK_TOKEN           # Snyk authentication token
+AWS_ACCESS_KEY_ID    # AWS deployment credentials (production)
+AWS_SECRET_ACCESS_KEY # AWS secret key (production)
+```
+
+**Pipeline Features**:
+- Concurrency control to cancel in-progress runs
+- Artifact retention (7 days)
+- Comprehensive status summaries
+- Node.js 18 runtime
+- Dependency caching for faster builds
+
+### Local Development Setup
+
+#### Prerequisites
+- **Node.js 18+**: JavaScript/TypeScript runtime
+- **Docker Desktop**: Container orchestration
+- **Git**: Version control
+
+#### Quick Start Commands
+```bash
+# Clone repository
+git clone <repository-url>
+cd Berthcare
+
+# Configure environment
+cp .env.example .env
+# Edit .env with Auth0 credentials and other settings
+
+# Start development environment
+make up
+# or
+docker-compose -f docker-compose.dev.yml up -d
+
+# Verify services
+make status
+
+# View logs
+make logs
+
+# Stop services
+make down
+```
+
+#### Development Services
+
+**PostgreSQL Database**
+- **Port**: 5432
+- **Database**: berthcare_dev
+- **Credentials**: postgres / dev_password_change_in_production
+- **Features**: Auto-seeding with development data
+- **Admin UI**: Adminer at http://localhost:8080
+
+**Redis Cache**
+- **Port**: 6379
+- **Password**: dev_redis_password
+- **Features**: Persistence enabled, AOF logging
+- **Admin UI**: Redis Commander at http://localhost:8081
+
+**MinIO S3-Compatible Storage**
+- **API Port**: 9000
+- **Console Port**: 9001
+- **Credentials**: minioadmin / minioadmin123
+- **Buckets**: Auto-created (photos, documents, signatures)
+
+**Development Tools**
+- **Adminer**: PostgreSQL web UI (port 8080)
+- **Redis Commander**: Redis management UI (port 8081)
+- **MinIO Console**: S3 storage management (port 9001)
+
+#### Makefile Commands
+
+**Environment Management**:
+```bash
+make up          # Start all services
+make down        # Stop all services
+make restart     # Restart services
+make status      # Show service status
+make logs        # View all logs
+make clean       # Remove containers (keep data)
+make reset       # DANGER: Remove all data and restart
+```
+
+**Database Operations**:
+```bash
+make db-shell    # Access PostgreSQL CLI
+make db-backup   # Backup to backup.sql
+make db-restore  # Restore from backup.sql
+make db-logs     # View database logs
+make test-db     # Test database connection
+```
+
+**Redis Operations**:
+```bash
+make redis-shell # Access Redis CLI
+make redis-logs  # View Redis logs
+make test-redis  # Test Redis connection
+```
+
+**MinIO Operations**:
+```bash
+make minio-logs  # View MinIO logs
+make test-minio  # Test MinIO health
+```
+
+**Testing**:
+```bash
+make test-all    # Test all service connections
+make dev         # Start and show status
+```
+
+#### Docker Compose Configuration
+
+**Network Architecture**:
+```yaml
+networks:
+  berthcare-network:
+    driver: bridge
+    name: berthcare-network
+```
+
+**Data Persistence**:
+```yaml
+volumes:
+  postgres_data:    # PostgreSQL data
+  redis_data:       # Redis persistence
+  minio_data:       # MinIO object storage
+```
+
+**Health Checks**:
+- PostgreSQL: pg_isready check every 10s
+- Redis: PING check every 10s
+- MinIO: Health endpoint check every 15s
+
+**Automatic Initialization**:
+- Database schema loaded from `/db/seeds/01_schema.sql`
+- Seed data loaded from `/db/seeds/02_seed_data.sql`
+- MinIO buckets auto-created with appropriate policies
+
+### Authentication Configuration (Auth0)
+
+#### Auth0 Tenant Information
+
+**Development Tenant**:
+- **Domain**: Configured via `AUTH0_DOMAIN` environment variable
+- **Client ID**: Configured via `AUTH0_CLIENT_ID`
+- **Client Secret**: Configured via `AUTH0_CLIENT_SECRET`
+- **Audience**: `https://api.berthcare.local` (development)
+
+**Authentication Flow**:
+1. **Mobile Apps**: OAuth 2.0 with PKCE (Proof Key for Code Exchange)
+2. **Web Applications**: Authorization Code Flow
+3. **Token Management**: JWT with refresh token rotation
+4. **Session Handling**: Redis-backed session store
+
+**Auth0 Configuration Requirements**:
+```javascript
+// Required Auth0 Application Settings
+{
+  "name": "BerthCare Development",
+  "application_type": "native", // For mobile apps
+  "callbacks": [
+    "http://localhost:3000/auth/callback",
+    "berthcare://auth/callback"
+  ],
+  "allowed_logout_urls": [
+    "http://localhost:3000/auth/logout",
+    "berthcare://auth/logout"
+  ],
+  "allowed_web_origins": [
+    "http://localhost:3000",
+    "http://localhost:19006"
+  ],
+  "token_endpoint_auth_method": "none", // For PKCE
+  "grant_types": [
+    "authorization_code",
+    "refresh_token"
+  ]
+}
+```
+
+**Role-Based Access Control (RBAC)**:
+Auth0 roles mapped to application permissions:
+```javascript
+// Auth0 Roles Configuration
+const roles = {
+  "nurse": {
+    permissions: [
+      "read:assigned_visits",
+      "write:visit_documentation",
+      "upload:visit_photos",
+      "read:care_plans"
+    ]
+  },
+  "psw": {
+    permissions: [
+      "read:assigned_visits",
+      "write:visit_documentation",
+      "upload:visit_photos"
+    ]
+  },
+  "coordinator": {
+    permissions: [
+      "read:all_visits",
+      "write:all_visits",
+      "create:care_plans",
+      "manage:team_users"
+    ]
+  },
+  "supervisor": {
+    permissions: [
+      "read:*",
+      "write:*",
+      "manage:*"
+    ]
+  },
+  "family_member": {
+    permissions: [
+      "read:assigned_client",
+      "read:visit_history"
+    ]
+  }
+};
+```
+
+**Token Configuration**:
+```javascript
+// JWT Token Settings
+{
+  "access_token": {
+    "expires_in": 3600,        // 1 hour
+    "algorithm": "RS256",
+    "include_user_id": true,
+    "include_email": true
+  },
+  "refresh_token": {
+    "expires_in": 2592000,     // 30 days
+    "rotation_enabled": true,
+    "reuse_interval": 0
+  }
+}
+```
+
+**Multi-Factor Authentication**:
+- **SMS OTP**: Primary MFA method for initial setup
+- **Authenticator App**: TOTP for enhanced security
+- **Biometric**: Device-level (iOS Face ID / Android Fingerprint)
+- **Recovery Codes**: For account recovery
+
+**Auth0 Rules and Hooks**:
+```javascript
+// Custom Auth0 Rule for role assignment
+function assignUserRole(user, context, callback) {
+  const namespace = 'https://berthcare.ca/';
+  const assignedRoles = user.app_metadata.roles || ['nurse'];
+
+  context.idToken[namespace + 'roles'] = assignedRoles;
+  context.accessToken[namespace + 'roles'] = assignedRoles;
+
+  callback(null, user, context);
+}
+
+// Custom Auth0 Rule for organization validation
+function validateOrganization(user, context, callback) {
+  const namespace = 'https://berthcare.ca/';
+  const orgId = user.app_metadata.organization_id;
+
+  if (!orgId) {
+    return callback(new UnauthorizedError('User not assigned to organization'));
+  }
+
+  context.idToken[namespace + 'organization_id'] = orgId;
+  context.accessToken[namespace + 'organization_id'] = orgId;
+
+  callback(null, user, context);
+}
+```
+
+### Environment Configuration
+
+#### Environment Variables Structure
+
+**Application Settings** (12 variables):
+- Core application configuration (name, version, port)
+- Logging configuration (level, format)
+
+**Database Configuration** (8 variables):
+- PostgreSQL connection details
+- Connection pooling settings
+- SSL configuration
+
+**Redis Configuration** (7 variables):
+- Connection details and credentials
+- TTL settings for sessions and cache
+
+**File Storage Configuration** (10 variables):
+- MinIO/S3 configuration
+- Bucket names and file size limits
+
+**Authentication Configuration** (10 variables):
+- Auth0 tenant details
+- JWT settings
+- Session configuration
+
+**API Configuration** (6 variables):
+- Base URLs and versioning
+- Rate limiting settings
+- CORS configuration
+
+**Real-time Communication** (3 variables):
+- WebSocket configuration
+
+**Email Configuration** (6 variables):
+- SMTP settings for development
+
+**Notification Services** (3 variables):
+- Twilio and Expo configuration
+
+**Geolocation Services** (3 variables):
+- Google Maps API configuration
+- Geofencing settings
+
+**Offline Sync Configuration** (4 variables):
+- Sync intervals and batch sizes
+- Conflict resolution strategy
+
+**Background Jobs Configuration** (3 variables):
+- Queue and job processing settings
+
+**Monitoring & Observability** (4 variables):
+- APM and error tracking configuration
+
+**Feature Flags** (6 boolean flags):
+- Enable/disable features during development
+
+**Development Tools** (4 variables):
+- Debugging and seeding configuration
+
+**Security Settings** (5 variables):
+- CSRF, rate limiting, CSP configuration
+
+**Total Environment Variables**: 94 variables comprehensively documented in `.env.example`
+
+### Infrastructure Deployment Strategy
+
+#### Development Environment
+**Current State**: Fully configured with Docker Compose
+- Local development with hot reloading
+- Automated database seeding
+- Development credentials and test data
+- Web-based admin tools for all services
+
+#### Staging Environment (Not Yet Implemented)
+**Planned Infrastructure**:
+- AWS ECS Fargate single-container deployment
+- RDS PostgreSQL (db.t3.medium)
+- ElastiCache Redis (cache.t3.micro)
+- S3 with lifecycle policies
+- Automated deployment from `develop` branch
+
+#### Production Environment (Not Yet Implemented)
+**Planned Infrastructure**:
+- AWS ECS Fargate with auto-scaling (2-10 instances)
+- RDS PostgreSQL (db.r5.large) with read replica
+- ElastiCache Redis cluster (cache.r6g.large)
+- S3 with CloudFront CDN
+- Multi-AZ deployment for high availability
+- Automated deployment from `main` branch
+
+### Monitoring and Observability (Planned)
+
+#### Application Performance Monitoring
+- **New Relic**: Performance tracking and alerting
+- **AWS CloudWatch**: Infrastructure metrics
+- **Sentry**: Error tracking and crash reporting
+
+#### Custom Metrics
+- Visit completion rates
+- Sync success rates
+- Documentation time tracking
+- User engagement metrics
+
+#### Alerting Strategy
+**Critical Alerts** (15-minute response):
+- Service outages
+- Database connection failures
+- Authentication service unavailable
+
+**Warning Alerts** (1-hour response):
+- Elevated error rates
+- Performance degradation
+- High resource utilization
+
+### Security and Compliance
+
+#### Security Scanning in CI/CD
+- **SonarQube**: Static application security testing (SAST)
+- **Snyk**: Dependency vulnerability scanning
+- **npm audit**: Known vulnerability detection
+
+#### Data Protection
+- **At Rest**: AES-256 encryption for PHI
+- **In Transit**: TLS 1.3 for all communications
+- **Mobile**: SQLite encryption using SQLCipher
+
+#### Compliance Framework
+- **PIPEDA**: Canadian privacy legislation compliance
+- **Provincial HIA**: Alberta, BC health information acts
+- **Data Residency**: Canadian-only data storage
+
+### Deployment Automation
+
+#### Current State
+- **Local Development**: Fully automated with Docker Compose and Makefile
+- **CI Pipeline**: Automated testing and quality checks on PRs
+- **CD Pipeline**: Not yet configured (requires AWS infrastructure setup)
+
+#### Planned CD Pipeline
+```yaml
+# Future Production Deployment Pipeline
+deploy-production:
+  - Build Docker images
+  - Push to AWS ECR
+  - Run database migrations
+  - Deploy to ECS with blue-green strategy
+  - Run smoke tests
+  - Update Route 53 DNS
+  - Monitor for rollback triggers
+```
+
+### Infrastructure as Code (Planned)
+
+#### Terraform Modules
+**Planned Structure**:
+```
+infrastructure/
+├── terraform/
+│   ├── modules/
+│   │   ├── networking/      # VPC, subnets, security groups
+│   │   ├── database/        # RDS PostgreSQL configuration
+│   │   ├── cache/           # ElastiCache Redis setup
+│   │   ├── storage/         # S3 buckets and policies
+│   │   ├── compute/         # ECS Fargate services
+│   │   └── cdn/             # CloudFront distributions
+│   ├── environments/
+│   │   ├── dev/             # Development environment
+│   │   ├── staging/         # Staging environment
+│   │   └── production/      # Production environment
+│   └── main.tf              # Root configuration
+└── scripts/
+    ├── deploy.sh            # Deployment automation
+    └── rollback.sh          # Rollback procedures
+```
+
+### Disaster Recovery and Backup
+
+#### Backup Strategy (Planned)
+**Database Backups**:
+- Automated daily backups with 30-day retention
+- Point-in-time recovery capability
+- Cross-region replication for disaster recovery
+
+**File Storage Backups**:
+- S3 cross-region replication
+- Versioning enabled for all buckets
+- Lifecycle policies for cost optimization
+
+**Recovery Objectives**:
+- **RTO (Recovery Time Objective)**: 4 hours
+- **RPO (Recovery Point Objective)**: 1 hour
+
+### Getting Started for Engineers
+
+#### Onboarding Checklist
+1. Install prerequisites (Node.js 18+, Docker Desktop, Git)
+2. Clone repository (once remote is configured)
+3. Copy `.env.example` to `.env`
+4. Configure Auth0 credentials in `.env`
+5. Run `make up` to start local environment
+6. Run `make test-all` to verify service connectivity
+7. Access development tools:
+   - Database UI: http://localhost:8080
+   - Redis UI: http://localhost:8081
+   - MinIO Console: http://localhost:9001
+
+#### Development Workflow
+```bash
+# Start development
+git checkout develop
+git pull origin develop
+git checkout -b feature/your-feature-name
+
+# Start local services
+make up
+
+# Make changes and test locally
+# ...
+
+# Run tests
+npm run test:unit
+npm run lint
+
+# Commit changes (signed commits required)
+git add .
+git commit -S -m "feat: your feature description"
+
+# Push and create PR
+git push origin feature/your-feature-name
+# Create PR via GitHub to develop branch
+```
+
+#### Required GitHub Secrets Setup
+Before CI/CD will work, configure these secrets in GitHub repository settings:
+- `SONAR_TOKEN` and `SONAR_HOST_URL` (code quality)
+- `SNYK_TOKEN` (security scanning)
+- AWS credentials (for future deployment automation)
+
+### Documentation References
+
+**Setup Guides**:
+- `LOCAL_DEVELOPMENT.md`: Complete local development setup
+- `GITHUB-SETUP.md`: Repository creation and configuration
+- `.env.example`: Comprehensive environment variable documentation
+
+**Architecture Documents**:
+- `architecture-output.md` (this document): Technical architecture blueprint
+- `architecture-living.md`: Living document for runtime operations (see separate file)
+
+**Quick Reference**:
+- `Makefile`: Development workflow commands
+- `docker-compose.dev.yml`: Local service configuration
+- `QUICK_REFERENCE.md`: Common commands and workflows
+
+This infrastructure layer documentation provides complete details for repository structure, CI/CD configuration, local development setup, and authentication integration, enabling engineers to onboard and contribute to the BerthCare platform effectively.
