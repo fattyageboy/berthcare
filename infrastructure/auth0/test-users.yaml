@@ -1,0 +1,178 @@
+---
+# Auth0 Test Users Configuration for Development Environment
+# WARNING: These credentials are for DEVELOPMENT ONLY
+# DO NOT use these credentials in production environments
+
+users:
+  - email: "nurse.test@berthcare.dev"
+    password: "DevNurse2025!Test"
+    email_verified: true
+    connection: "Username-Password-Authentication"
+    given_name: "Sarah"
+    family_name: "Johnson"
+    name: "Sarah Johnson"
+    nickname: "sarah.nurse"
+    picture: "https://i.pravatar.cc/150?u=nurse.test"
+    user_metadata:
+      employee_id: "EMP-N-001"
+      phone_number: "+1-555-0101"
+      organization: "Berthcare Health Services"
+      department: "Nursing"
+    app_metadata:
+      roles:
+        - "Nurse"
+      organization_id: "org_dev_001"
+      employee_type: "nurse"
+      hire_date: "2023-01-15"
+
+  - email: "psw.test@berthcare.dev"
+    password: "DevPSW2025!Test"
+    email_verified: true
+    connection: "Username-Password-Authentication"
+    given_name: "Michael"
+    family_name: "Chen"
+    name: "Michael Chen"
+    nickname: "michael.psw"
+    picture: "https://i.pravatar.cc/150?u=psw.test"
+    user_metadata:
+      employee_id: "EMP-P-001"
+      phone_number: "+1-555-0102"
+      organization: "Berthcare Health Services"
+      department: "Personal Support"
+    app_metadata:
+      roles:
+        - "PSW"
+      organization_id: "org_dev_001"
+      employee_type: "psw"
+      hire_date: "2023-03-20"
+
+  - email: "coordinator.test@berthcare.dev"
+    password: "DevCoord2025!Test"
+    email_verified: true
+    connection: "Username-Password-Authentication"
+    given_name: "Emma"
+    family_name: "Martinez"
+    name: "Emma Martinez"
+    nickname: "emma.coordinator"
+    picture: "https://i.pravatar.cc/150?u=coordinator.test"
+    user_metadata:
+      employee_id: "EMP-C-001"
+      phone_number: "+1-555-0103"
+      organization: "Berthcare Health Services"
+      department: "Care Coordination"
+    app_metadata:
+      roles:
+        - "Coordinator"
+      organization_id: "org_dev_001"
+      employee_type: "coordinator"
+      hire_date: "2022-06-10"
+
+  - email: "supervisor.test@berthcare.dev"
+    password: "DevSuper2025!Test"
+    email_verified: true
+    connection: "Username-Password-Authentication"
+    given_name: "James"
+    family_name: "Williams"
+    name: "James Williams"
+    nickname: "james.supervisor"
+    picture: "https://i.pravatar.cc/150?u=supervisor.test"
+    user_metadata:
+      employee_id: "EMP-S-001"
+      phone_number: "+1-555-0104"
+      organization: "Berthcare Health Services"
+      department: "Operations"
+    app_metadata:
+      roles:
+        - "Supervisor"
+      organization_id: "org_dev_001"
+      employee_type: "supervisor"
+      hire_date: "2021-02-01"
+
+  - email: "admin.test@berthcare.dev"
+    password: "DevAdmin2025!Test"
+    email_verified: true
+    connection: "Username-Password-Authentication"
+    given_name: "Admin"
+    family_name: "User"
+    name: "Admin User"
+    nickname: "admin"
+    picture: "https://i.pravatar.cc/150?u=admin.test"
+    user_metadata:
+      employee_id: "EMP-A-001"
+      phone_number: "+1-555-0105"
+      organization: "Berthcare Health Services"
+      department: "IT Administration"
+    app_metadata:
+      roles:
+        - "Admin"
+      organization_id: "org_dev_001"
+      employee_type: "admin"
+      hire_date: "2020-01-01"
+
+  - email: "family.test@berthcare.dev"
+    password: "DevFamily2025!Test"
+    email_verified: true
+    connection: "Username-Password-Authentication"
+    given_name: "Robert"
+    family_name: "Thompson"
+    name: "Robert Thompson"
+    nickname: "robert.family"
+    picture: "https://i.pravatar.cc/150?u=family.test"
+    user_metadata:
+      phone_number: "+1-555-0106"
+      relationship: "Son"
+      primary_contact: true
+    app_metadata:
+      roles:
+        - "Family Member"
+      organization_id: "org_dev_001"
+      client_id: "client_001"  # ID of the client they have access to
+      user_type: "family_member"
+      access_granted_date: "2024-01-15"
+
+# MFA Test Users (pre-configured with MFA for testing)
+  - email: "nurse.mfa@berthcare.dev"
+    password: "DevNurseMFA2025!Test"
+    email_verified: true
+    connection: "Username-Password-Authentication"
+    given_name: "Jennifer"
+    family_name: "Davis"
+    name: "Jennifer Davis"
+    nickname: "jennifer.nurse.mfa"
+    picture: "https://i.pravatar.cc/150?u=nurse.mfa"
+    user_metadata:
+      employee_id: "EMP-N-002"
+      phone_number: "+1-555-0201"
+      organization: "Berthcare Health Services"
+      department: "Nursing"
+      mfa_enabled: true
+    app_metadata:
+      roles:
+        - "Nurse"
+      organization_id: "org_dev_001"
+      employee_type: "nurse"
+      hire_date: "2023-02-15"
+      requires_mfa: true
+
+  - email: "admin.mfa@berthcare.dev"
+    password: "DevAdminMFA2025!Test"
+    email_verified: true
+    connection: "Username-Password-Authentication"
+    given_name: "System"
+    family_name: "Administrator"
+    name: "System Administrator"
+    nickname: "sysadmin.mfa"
+    picture: "https://i.pravatar.cc/150?u=admin.mfa"
+    user_metadata:
+      employee_id: "EMP-A-002"
+      phone_number: "+1-555-0202"
+      organization: "Berthcare Health Services"
+      department: "IT Administration"
+      mfa_enabled: true
+    app_metadata:
+      roles:
+        - "Admin"
+      organization_id: "org_dev_001"
+      employee_type: "admin"
+      hire_date: "2020-01-01"
+      requires_mfa: true

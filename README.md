@@ -167,8 +167,8 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 ## Support
 
 - **Technical Issues**: Create a GitHub issue
-- **Security Concerns**: Email security@berthcare.com
-- **General Inquiries**: Contact support@berthcare.com
+- **Security Concerns**: Email security@berthcare.ca
+- **General Inquiries**: Contact support@berthcare.ca
 
 ## Roadmap
 

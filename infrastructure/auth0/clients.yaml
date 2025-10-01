@@ -1,0 +1,86 @@
+---
+# Auth0 Application/Client Configuration for Berthcare
+# Defines the applications that will authenticate against Auth0
+
+- name: "Berthcare Web App (Development)"
+  app_type: "spa"  # Single Page Application
+  logo_uri: "https://dev.berthcare.ca/logo.png"
+  callbacks:
+    - "https://dev.berthcare.ca/callback"
+    - "http://localhost:3000/callback"
+    - "http://localhost:5173/callback"  # Vite dev server
+  allowed_logout_urls:
+    - "https://dev.berthcare.ca"
+    - "http://localhost:3000"
+    - "http://localhost:5173"
+  web_origins:
+    - "https://dev.berthcare.ca"
+    - "http://localhost:3000"
+    - "http://localhost:5173"
+  allowed_origins:
+    - "https://dev.berthcare.ca"
+    - "http://localhost:3000"
+    - "http://localhost:5173"
+  grant_types:
+    - "authorization_code"
+    - "refresh_token"
+  jwt_configuration:
+    alg: "RS256"
+    lifetime_in_seconds: 3600  # 1 hour access token
+  refresh_token:
+    rotation_type: "rotating"
+    expiration_type: "expiring"
+    token_lifetime: 2592000  # 30 days
+    idle_token_lifetime: 1296000  # 15 days
+    infinite_token_lifetime: false
+    infinite_idle_token_lifetime: false
+    leeway: 0
+  custom_login_page_on: false
+  is_first_party: true
+  oidc_conformant: true
+  sso: true
+  cross_origin_auth: false
+  sso_disabled: false
+  token_endpoint_auth_method: "none"  # PKCE for SPA
+
+- name: "Berthcare Mobile App (Development)"
+  app_type: "native"
+  logo_uri: "https://dev.berthcare.ca/logo.png"
+  callbacks:
+    - "berthcare://callback"
+    - "berthcare://dev.berthcare.ca/callback"
+  allowed_logout_urls:
+    - "berthcare://logout"
+  grant_types:
+    - "authorization_code"
+    - "refresh_token"
+  jwt_configuration:
+    alg: "RS256"
+    lifetime_in_seconds: 3600  # 1 hour access token
+  refresh_token:
+    rotation_type: "rotating"
+    expiration_type: "expiring"
+    token_lifetime: 2592000  # 30 days
+    idle_token_lifetime: 1296000  # 15 days
+    infinite_token_lifetime: false
+    infinite_idle_token_lifetime: false
+    leeway: 0
+  is_first_party: true
+  oidc_conformant: true
+  token_endpoint_auth_method: "none"  # PKCE for mobile
+  native_social_login:
+    apple:
+      enabled: false
+    facebook:
+      enabled: false
+
+- name: "Berthcare Backend API (Development)"
+  app_type: "non_interactive"  # Machine to Machine
+  grant_types:
+    - "client_credentials"
+  jwt_configuration:
+    alg: "RS256"
+    lifetime_in_seconds: 86400  # 24 hours
+  is_first_party: true
+  oidc_conformant: true
+  token_endpoint_auth_method: "client_secret_post"

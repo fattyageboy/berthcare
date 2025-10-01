@@ -1,0 +1,130 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:14-alpine
+    container_name: berthcare-postgres
+    environment:
+      POSTGRES_DB: berthcare_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: dev_password_change_in_production
+      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=en_US.UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/seeds:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d berthcare_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - berthcare-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: berthcare-redis
+    command: redis-server --appendonly yes --requirepass dev_redis_password
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - berthcare-network
+
+  # MinIO (S3-compatible storage)
+  minio:
+    image: minio/minio:latest
+    container_name: berthcare-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+      MINIO_REGION_NAME: us-east-1
+    ports:
+      - "9000:9000"  # API
+      - "9001:9001"  # Console
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    networks:
+      - berthcare-network
+
+  # MinIO Client - Creates buckets on startup
+  minio-setup:
+    image: minio/mc:latest
+    container_name: berthcare-minio-setup
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin123;
+      /usr/bin/mc mb --ignore-existing myminio/berthcare-dev-photos;
+      /usr/bin/mc mb --ignore-existing myminio/berthcare-dev-documents;
+      /usr/bin/mc mb --ignore-existing myminio/berthcare-dev-signatures;
+      /usr/bin/mc anonymous set download myminio/berthcare-dev-photos;
+      /usr/bin/mc anonymous set download myminio/berthcare-dev-documents;
+      /usr/bin/mc anonymous set download myminio/berthcare-dev-signatures;
+      echo 'MinIO buckets created successfully';
+      exit 0;
+      "
+    networks:
+      - berthcare-network
+
+  # PostgreSQL Admin UI (Optional - for database management)
+  adminer:
+    image: adminer:latest
+    container_name: berthcare-adminer
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+      ADMINER_DESIGN: pepa-linha
+    networks:
+      - berthcare-network
+
+  # Redis Commander (Optional - for Redis management)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: berthcare-redis-commander
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      REDIS_HOSTS: local:redis:6379:0:dev_redis_password
+    ports:
+      - "8081:8081"
+    networks:
+      - berthcare-network
+
+networks:
+  berthcare-network:
+    driver: bridge
+    name: berthcare-network
+
+volumes:
+  postgres_data:
+    name: berthcare-postgres-data
+  redis_data:
+    name: berthcare-redis-data
+  minio_data:
+    name: berthcare-minio-data

@@ -21,7 +21,8 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
-package-lock.json
+# Allow backend/package-lock.json for CI
+# package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
@@ -127,6 +128,11 @@ terraform.tfvars
 
 # Docker
 .dockerignore
+docker-compose.override.yml
+
+# Database Backups
+backup.sql
+*.dump
 
 # Secrets and Certificates
 *.pem
@@ -137,6 +143,11 @@ terraform.tfvars
 secrets.json
 credentials.json
 service-account.json
+
+# Auth0 Configuration
+infrastructure/auth0/backups/
+infrastructure/auth0/deploy-config.json
+infrastructure/auth0/.auth0_*
 
 # Documentation Build
 docs/.vitepress/dist/

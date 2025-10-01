@@ -1,0 +1,149 @@
+---
+# Auth0 Rules Configuration
+# Rules execute custom logic during the authentication pipeline
+
+- name: "Add User Roles to Access Token"
+  script: |
+    function addRolesToAccessToken(user, context, callback) {
+      const namespace = 'https://berthcare.ca';
+      const assignedRoles = (context.authorization || {}).roles || [];
+
+      // Add roles to ID token
+      context.idToken = context.idToken || {};
+      context.idToken[`${namespace}/roles`] = assignedRoles;
+
+      // Add roles to Access token
+      context.accessToken = context.accessToken || {};
+      context.accessToken[`${namespace}/roles`] = assignedRoles;
+
+      // Add user metadata
+      if (user.app_metadata) {
+        context.idToken[`${namespace}/app_metadata`] = user.app_metadata;
+        context.accessToken[`${namespace}/app_metadata`] = user.app_metadata;
+      }
+
+      if (user.user_metadata) {
+        context.idToken[`${namespace}/user_metadata`] = user.user_metadata;
+        context.accessToken[`${namespace}/user_metadata`] = user.user_metadata;
+      }
+
+      callback(null, user, context);
+    }
+  enabled: true
+  order: 1
+
+- name: "Enforce MFA for Privileged Roles"
+  script: |
+    function enforceMFAForPrivilegedRoles(user, context, callback) {
+      const PRIVILEGED_ROLES = ['Admin', 'Supervisor'];
+      const assignedRoles = (context.authorization || {}).roles || [];
+
+      // Check if user has privileged role
+      const hasPrivilegedRole = assignedRoles.some(role =>
+        PRIVILEGED_ROLES.includes(role)
+      );
+
+      // Check if MFA is required in app_metadata
+      const mfaRequired = user.app_metadata && user.app_metadata.requires_mfa;
+
+      if ((hasPrivilegedRole || mfaRequired) && !context.multifactor) {
+        // Trigger MFA
+        context.multifactor = {
+          provider: 'any',
+          allowRememberBrowser: false
+        };
+      }
+
+      callback(null, user, context);
+    }
+  enabled: true
+  order: 2
+
+- name: "Add Device Information to Token"
+  script: |
+    function addDeviceInformation(user, context, callback) {
+      const namespace = 'https://berthcare.ca';
+
+      // Extract device information from context
+      const deviceInfo = {
+        device_id: context.request.query.device_id || null,
+        device_name: context.request.query.device_name || null,
+        device_type: context.request.query.device_type || null,
+        ip_address: context.request.ip,
+        user_agent: context.request.userAgent
+      };
+
+      // Add device info to tokens
+      context.accessToken = context.accessToken || {};
+      context.accessToken[`${namespace}/device`] = deviceInfo;
+
+      callback(null, user, context);
+    }
+  enabled: true
+  order: 3
+
+- name: "Email Domain Validation"
+  script: |
+    function emailDomainValidation(user, context, callback) {
+      // For development, allow any domain
+      const ALLOWED_DOMAINS = [
+        'berthcare.dev',
+        'berthcare.ca',
+        'gmail.com',  // For testing
+        'test.com'     // For testing
+      ];
+
+      const userEmail = user.email || '';
+      const emailDomain = userEmail.split('@')[1];
+
+      // Only enforce for production environment
+      if (context.connection === 'Username-Password-Authentication') {
+        // In development, we're more permissive
+        if (configuration.ENVIRONMENT === 'production' &&
+            !ALLOWED_DOMAINS.includes(emailDomain)) {
+          return callback(
+            new UnauthorizedError('Email domain not allowed')
+          );
+        }
+      }
+
+      callback(null, user, context);
+    }
+  enabled: false  # Disabled for dev environment
+  order: 4
+
+- name: "Log Successful Authentication"
+  script: |
+    function logSuccessfulAuthentication(user, context, callback) {
+      const namespace = 'https://berthcare.ca';
+      const assignedRoles = (context.authorization || {}).roles || [];
+
+      // Log authentication event
+      console.log({
+        event: 'successful_authentication',
+        user_id: user.user_id,
+        email: user.email,
+        roles: assignedRoles,
+        client: context.clientName,
+        connection: context.connection,
+        ip_address: context.request.ip,
+        timestamp: new Date().toISOString()
+      });
+
+      // Add last login timestamp to app_metadata
+      user.app_metadata = user.app_metadata || {};
+      user.app_metadata.last_login = new Date().toISOString();
+      user.app_metadata.last_ip = context.request.ip;
+
+      auth0.users.updateAppMetadata(user.user_id, user.app_metadata)
+        .then(() => {
+          callback(null, user, context);
+        })
+        .catch(err => {
+          // Don't fail authentication if metadata update fails
+          console.error('Failed to update app_metadata:', err);
+          callback(null, user, context);
+        });
+    }
+  enabled: true
+  order: 5
