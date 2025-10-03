@@ -271,7 +271,7 @@ describe('Visit Service - Full Lifecycle Integration Tests', () => {
       // Verify database state
       const visit = await getVisitById(visitId);
       expect(visit.documentation).toBeDefined();
-      expect(visit.documentation.vital_signs).toBeDefined();
+      expect(visit.documentation!.vital_signs).toBeDefined();
       expect(visit.notes).toBe('Patient is doing well today');
     });
 
@@ -300,8 +300,8 @@ describe('Visit Service - Full Lifecycle Integration Tests', () => {
 
       // Verify both updates are present
       const visit = await getVisitById(visitId);
-      expect(visit.documentation.vital_signs).toBeDefined();
-      expect(visit.documentation.activities).toBeDefined();
+      expect(visit.documentation!.vital_signs).toBeDefined();
+      expect(visit.documentation!.activities).toBeDefined();
     });
 
     it('should add photos to visit', async () => {
@@ -482,7 +482,7 @@ describe('Visit Service - Full Lifecycle Integration Tests', () => {
 
       visit = await getVisitById(visitId);
       expect(visit.documentation).toBeDefined();
-      expect(visit.documentation.vital_signs).toBeDefined();
+      expect(visit.documentation!.vital_signs).toBeDefined();
       expect(visit.notes).toBe('Routine visit completed without issues');
       expect(visit.photos).toEqual(['visit_photo_1.jpg']);
 
@@ -516,14 +516,14 @@ describe('Visit Service - Full Lifecycle Integration Tests', () => {
       expect(visit.check_in_location).not.toBeNull();
       expect(visit.check_out_location).not.toBeNull();
       expect(visit.signature_url).toBe('base64-encoded-signature');
-      expect(visit.documentation.summary).toBe(
+      expect(visit.documentation!.summary).toBe(
         'Visit completed successfully. All tasks performed.'
       );
-      expect(visit.documentation.vital_signs).toBeDefined();
+      expect(visit.documentation!.vital_signs).toBeDefined();
 
       // Verify actual_end is after actual_start
-      const actualStart = new Date(visit.actual_start);
-      const actualEnd = new Date(visit.actual_end);
+      const actualStart = new Date(visit.actual_start!);
+      const actualEnd = new Date(visit.actual_end!);
       expect(actualEnd.getTime()).toBeGreaterThan(actualStart.getTime());
     });
   });

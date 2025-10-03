@@ -56,7 +56,7 @@ export async function seedTestOrganization(): Promise<string> {
   const pool = getTestPool();
 
   const timestamp = Date.now();
-  const result = await pool.query(
+  const result = await pool.query<{ id: string }>(
     `INSERT INTO organizations (name, code, status)
      VALUES ($1, $2, $3)
      RETURNING id`,
@@ -73,7 +73,7 @@ export async function seedTestUser(organizationId: string): Promise<string> {
   const pool = getTestPool();
 
   const timestamp = Date.now();
-  const result = await pool.query(
+  const result = await pool.query<{ id: string }>(
     `INSERT INTO users (email, first_name, last_name, role, organization_id, status)
      VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING id`,
@@ -90,7 +90,7 @@ export async function seedTestClient(organizationId: string): Promise<string> {
   const pool = getTestPool();
 
   const timestamp = Date.now();
-  const result = await pool.query(
+  const result = await pool.query<{ id: string }>(
     `INSERT INTO clients (
       client_number, first_name, last_name, date_of_birth, 
       address, care_level, organization_id, status
@@ -134,7 +134,7 @@ export async function seedTestVisit(
   const scheduledEnd = new Date(scheduledStart);
   scheduledEnd.setHours(scheduledEnd.getHours() + 1);
 
-  const result = await pool.query(
+  const result = await pool.query<{ id: string }>(
     `INSERT INTO visits (
       client_id, user_id, scheduled_start, scheduled_end,
       visit_type, status
@@ -147,11 +147,24 @@ export async function seedTestVisit(
   return result.rows[0].id;
 }
 
+interface VisitRow {
+  id: string;
+  documentation?: {
+    vital_signs?: unknown;
+    activities?: unknown;
+    summary?: string;
+  };
+  notes?: string;
+  actual_start?: string;
+  actual_end?: string;
+  [key: string]: unknown;
+}
+
 /**
  * Get visit by ID
  */
-export async function getVisitById(visitId: string): Promise<any> {
+export async function getVisitById(visitId: string): Promise<VisitRow> {
   const pool = getTestPool();
-  const result = await pool.query('SELECT * FROM visits WHERE id = $1', [visitId]);
+  const result = await pool.query<VisitRow>('SELECT * FROM visits WHERE id = $1', [visitId]);
   return result.rows[0];
 }
