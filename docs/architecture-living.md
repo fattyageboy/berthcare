@@ -1,907 +1,772 @@
-# BerthCare Living Architecture Document
+# BerthCare Backend Architecture - Living Documentation
 
-## Document Overview
+**Version:** 1.0.0  
+**Last Updated:** January 3, 2025  
+**Status:** ✅ Production Ready
 
-This is a **living document** that captures runtime configuration, operational procedures, deployment history, and dynamic aspects of the BerthCare system. Unlike the static architecture blueprint, this document is continuously updated to reflect the current state of deployed systems and operational knowledge.
-
-**Last Updated**: 2025-09-30
-**Document Owner**: DevOps Team
-**Update Frequency**: Updated with each deployment and significant operational change
-
-## Purpose and Scope
-
-This document serves as the operational reference for:
-- Current deployment configurations across environments
-- Runtime system parameters and tuning
-- Deployment history and change log
-- Operational procedures and runbooks
-- Performance metrics and system health indicators
-- Incident response procedures
-- Known issues and workarounds
-
-## Current Deployment Status
-
-### Environment Inventory
-
-| Environment       | Status           | Last Deployed | Version | Infrastructure   |
-|-------------------|------------------|---------------|---------|------------------|
-| Local Development | Active           | N/A           | Latest  | Docker Compose   |
-| Staging           | Not Yet Deployed | N/A           | N/A     | Planned: AWS ECS |
-| Production        | Not Yet Deployed | N/A           | N/A     | Planned: AWS ECS |
-
-### Active Services
-
-#### Local Development Environment
-
-**Status**: Fully Operational
-**Configuration Date**: 2025-09-30
-
-| Service         | Container Name            | Port(s)    | Health Status | Resource Usage           |
-|-----------------|---------------------------|------------|---------------|--------------------------|
-| PostgreSQL      | berthcare-postgres        | 5432       | Healthy       | CPU: <5%, Memory: ~200MB |
-| Redis           | berthcare-redis           | 6379       | Healthy       | CPU: <2%, Memory: ~50MB  |
-| MinIO           | berthcare-minio           | 9000, 9001 | Healthy       | CPU: <5%, Memory: ~100MB |
-| Adminer         | berthcare-adminer         | 8080       | Running       | CPU: <2%, Memory: ~30MB  |
-| Redis Commander | berthcare-redis-commander | 8081       | Running       | CPU: <2%, Memory: ~50MB  |
-
-**Network**: berthcare-network (Bridge)
-**Volumes**: postgres_data, redis_data, minio_data
-**Total Resource Usage**: ~430MB RAM, <15% CPU (idle state)
-
-## Runtime Configuration
-
-### Database Configuration
-
-#### PostgreSQL Settings
-
-**Development Environment**:
-```yaml
-version: 14-alpine
-max_connections: 100
-shared_buffers: 128MB
-effective_cache_size: 512MB
-work_mem: 4MB
-maintenance_work_mem: 64MB
-```
-
-**Connection Pool Configuration**:
-```javascript
-{
-  min: 2,
-  max: 10,
-  acquireTimeoutMillis: 30000,
-  idleTimeoutMillis: 600000
-}
-```
-
-**Database Sizes** (Development):
-- Schema: ~5MB
-- Seed Data: ~2MB
-- Indexes: ~1MB
-- Total: ~8MB
-
-**Active Indexes** (Development):
-- Primary key indexes: 8
-- Foreign key indexes: 12
-- Custom performance indexes: 6
-- Total indexes: 26
-
-#### Redis Configuration
-
-**Development Environment**:
-```yaml
-version: 7-alpine
-maxmemory: 256mb
-maxmemory-policy: allkeys-lru
-appendonly: yes
-appendfsync: everysec
-```
-
-**Cache TTL Settings**:
-```javascript
-{
-  userSessions: 3600,        // 1 hour
-  clientProfiles: 86400,     // 24 hours
-  visitTemplates: 604800,    // 7 days
-  carePlans: 43200          // 12 hours
-}
-```
-
-**Current Cache Usage** (Development):
-- Used Memory: <10MB
-- Keys: ~0 (fresh instance)
-- Evictions: 0
-
-### File Storage Configuration
-
-#### MinIO/S3 Storage
-
-**Bucket Configuration**:
-```yaml
-berthcare-dev-photos:
-  policy: download
-  versioning: disabled
-  lifecycle: none
-  size: 0MB (empty)
-
-berthcare-dev-documents:
-  policy: download
-  versioning: disabled
-  lifecycle: none
-  size: 0MB (empty)
-
-berthcare-dev-signatures:
-  policy: download
-  versioning: disabled
-  lifecycle: none
-  size: 0MB (empty)
-```
-
-**Upload Limits**:
-- Photos: 10MB max
-- Documents: 25MB max
-- Signatures: 5MB max
-
-### Authentication Runtime Configuration
-
-#### Auth0 Tenant Status
-
-**Development Tenant**:
-- **Status**: Not yet configured (requires Auth0 account setup)
-- **Domain**: To be configured via environment variable
-- **Applications**: To be created (Mobile App, Web Portal)
-- **Rules**: To be implemented (role assignment, organization validation)
-
-**Required Setup Steps**:
-1. Create Auth0 account
-2. Configure tenant for development
-3. Create applications for mobile and web
-4. Configure callback URLs and CORS
-5. Implement custom rules for RBAC
-6. Configure MFA policies
-
-## Deployment Procedures
-
-### Local Development Deployment
-
-#### Initial Setup Procedure
-
-```bash
-# 1. Clone repository (when available)
-git clone <repository-url>
-cd Berthcare
-
-# 2. Configure environment
-cp .env.example .env
-# Edit .env with required credentials
-
-# 3. Start services
-make up
-
-# 4. Verify deployment
-make test-all
-
-# 5. Check service status
-make status
-```
-
-**Expected Duration**: 5-10 minutes (including Docker image pulls)
-
-#### Update Procedure
-
-```bash
-# 1. Pull latest changes
-git pull origin develop
-
-# 2. Rebuild containers (if needed)
-make rebuild
-
-# 3. Restart services
-make restart
-
-# 4. Verify health
-make test-all
-```
-
-**Expected Duration**: 2-5 minutes
-
-#### Rollback Procedure
-
-```bash
-# 1. Stop services
-make down
-
-# 2. Checkout previous version
-git checkout <previous-commit>
-
-# 3. Restart services
-make up
-
-# 4. Verify rollback
-make status
-```
-
-**Expected Duration**: 3-5 minutes
-
-### Staging Deployment (Planned)
-
-**Status**: Not yet implemented
-
-**Planned Procedure**:
-1. Merge feature branch to `develop`
-2. GitHub Actions builds Docker image
-3. Push image to AWS ECR
-4. Update ECS task definition
-5. Deploy to staging cluster
-6. Run smoke tests
-7. Notify team of deployment
-
-**Expected Duration**: 10-15 minutes
-
-### Production Deployment (Planned)
-
-**Status**: Not yet implemented
-
-**Planned Procedure**:
-1. Create release branch from `develop`
-2. QA testing and approval
-3. Merge release to `main`
-4. GitHub Actions builds production image
-5. Run database migrations
-6. Deploy with blue-green strategy
-7. Monitor for 24 hours
-8. Promote to full traffic
-
-**Expected Duration**: 30-45 minutes (excluding monitoring period)
-
-## Monitoring and Observability
-
-### Health Check Endpoints
-
-#### Service Health Checks
-
-**PostgreSQL**:
-```bash
-# Command
-docker exec berthcare-postgres pg_isready -U postgres -d berthcare_dev
-
-# Expected Response
-/var/run/postgresql:5432 - accepting connections
-```
-
-**Redis**:
-```bash
-# Command
-docker exec berthcare-redis redis-cli -a dev_redis_password ping
-
-# Expected Response
-PONG
-```
-
-**MinIO**:
-```bash
-# Command
-curl http://localhost:9000/minio/health/live
-
-# Expected Response
-HTTP 200 OK
-```
-
-### Performance Metrics (Development)
-
-**Current Baseline Metrics**:
-- Database query time (avg): <10ms
-- Redis cache hit rate: N/A (no traffic)
-- File upload time (3MB): N/A (not tested)
-- API response time: N/A (API not deployed)
-
-**Resource Utilization**:
-- Total Docker containers: 5
-- Total memory usage: ~430MB
-- Total CPU usage: <15% (idle)
-- Disk usage: ~2GB (images + volumes)
-
-### Logging Configuration
-
-#### Log Locations
-
-**PostgreSQL Logs**:
-```bash
-docker-compose -f docker-compose.dev.yml logs db
-```
-
-**Redis Logs**:
-```bash
-docker-compose -f docker-compose.dev.yml logs redis
-```
-
-**MinIO Logs**:
-```bash
-docker-compose -f docker-compose.dev.yml logs minio
-```
-
-**Log Retention**: 7 days (Docker default)
-
-#### Log Levels
-
-**Development Environment**:
-- Application: DEBUG
-- Database: LOG
-- Redis: NOTICE
-- MinIO: INFO
-
-### Alerting Configuration (Planned)
-
-**Alert Channels** (To be configured):
-- Slack: #berthcare-alerts
-- PagerDuty: DevOps on-call rotation
-- Email: devops@berthcare.ca
-
-**Alert Thresholds** (Planned):
-- CPU > 80% for 5 minutes
-- Memory > 85% for 5 minutes
-- Disk usage > 80%
-- Database connections > 80% of max
-- Error rate > 1% for 5 minutes
-- Response time p95 > 2 seconds
-
-## Operational Runbooks
-
-### Common Operational Tasks
-
-#### Resetting Development Environment
-
-**When to Use**: Database corruption, need fresh start, testing migrations
-
-**Procedure**:
-```bash
-# DANGER: This deletes all data
-make reset
-
-# Alternative: Manual reset
-docker-compose -f docker-compose.dev.yml down -v
-docker-compose -f docker-compose.dev.yml up -d
-```
-
-**Expected Outcome**: Fresh environment with seed data loaded
-
-#### Backing Up Development Database
-
-**When to Use**: Before major schema changes, preserving test data
-
-**Procedure**:
-```bash
-# Backup
-make db-backup
-
-# Verify backup file
-ls -lh backup.sql
-
-# Restore if needed
-make db-restore
-```
-
-**Expected Outcome**: backup.sql file in repository root
-
-#### Clearing Redis Cache
-
-**When to Use**: Testing cache behavior, resolving stale data
-
-**Procedure**:
-```bash
-# Access Redis CLI
-make redis-shell
-
-# Clear all keys
-FLUSHALL
-
-# Or clear specific database
-SELECT 0
-FLUSHDB
-
-# Exit
-EXIT
-```
-
-**Expected Outcome**: All cached data removed
-
-#### Viewing Service Logs
-
-**When to Use**: Debugging issues, monitoring activity
-
-**Procedure**:
-```bash
-# All services
-make logs
-
-# Specific service
-make db-logs
-make redis-logs
-make minio-logs
-
-# Follow logs in real-time
-docker-compose -f docker-compose.dev.yml logs -f db
-```
-
-**Expected Outcome**: Live log stream
-
-#### Testing Service Connectivity
-
-**When to Use**: After startup, troubleshooting connectivity
-
-**Procedure**:
-```bash
-# Test all services
-make test-all
-
-# Test individually
-make test-db
-make test-redis
-make test-minio
-```
-
-**Expected Outcome**: Success messages for all services
-
-### Database Operations
-
-#### Running SQL Queries
-
-**Procedure**:
-```bash
-# Access PostgreSQL shell
-make db-shell
-
-# Run queries
-SELECT * FROM users LIMIT 5;
-SELECT * FROM clients WHERE status = 'active';
-
-# Exit
-\q
-```
-
-#### Viewing Database Statistics
-
-**Procedure**:
-```sql
--- Database size
-SELECT pg_size_pretty(pg_database_size('berthcare_dev'));
-
--- Table sizes
-SELECT
-  schemaname,
-  tablename,
-  pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS size
-FROM pg_tables
-WHERE schemaname = 'public'
-ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
-
--- Index usage
-SELECT
-  schemaname,
-  tablename,
-  indexname,
-  idx_scan,
-  pg_size_pretty(pg_relation_size(indexrelid)) AS size
-FROM pg_stat_user_indexes
-ORDER BY idx_scan DESC;
-```
-
-#### Checking for Slow Queries
-
-**Procedure**:
-```sql
--- Enable query logging (if not already enabled)
-ALTER DATABASE berthcare_dev SET log_min_duration_statement = 100;
-
--- View slow queries (requires pg_stat_statements extension)
-SELECT
-  query,
-  mean_time,
-  calls
-FROM pg_stat_statements
-WHERE mean_time > 100
-ORDER BY mean_time DESC
-LIMIT 10;
-```
-
-### MinIO/S3 Operations
-
-#### Uploading Test Files
-
-**Via Console**:
-1. Navigate to http://localhost:9001
-2. Login with minioadmin/minioadmin123
-3. Select bucket
-4. Upload files via UI
-
-**Via CLI**:
-```bash
-# Install MinIO client
-brew install minio/stable/mc  # macOS
-# or download from https://min.io/docs/minio/linux/reference/minio-mc.html
-
-# Configure alias
-mc alias set local http://localhost:9000 minioadmin minioadmin123
-
-# Upload file
-mc cp /path/to/file.jpg local/berthcare-dev-photos/
-
-# List files
-mc ls local/berthcare-dev-photos/
-```
-
-#### Clearing Bucket Contents
-
-**Procedure**:
-```bash
-# Via MinIO client
-mc rm --recursive --force local/berthcare-dev-photos/
-
-# Or via console
-# Navigate to bucket, select all, delete
-```
-
-## Incident Response
-
-### Incident Classification
-
-**Severity Levels**:
-- **P1 (Critical)**: Service completely unavailable, data loss risk
-- **P2 (High)**: Major functionality impaired, workaround available
-- **P3 (Medium)**: Minor functionality issue, no immediate impact
-- **P4 (Low)**: Cosmetic issue, documentation update needed
-
-### Incident Response Procedures
-
-#### P1 - Critical Incident
-
-**Response Time**: Immediate (15 minutes)
-
-**Procedure**:
-1. Alert on-call engineer via PagerDuty
-2. Create incident channel in Slack
-3. Assess impact and scope
-4. Implement immediate mitigation
-5. Communicate status to stakeholders
-6. Restore service
-7. Conduct post-incident review
-
-**Escalation Path**:
-1. On-call DevOps Engineer
-2. DevOps Team Lead
-3. CTO
-
-#### P2 - High Severity Incident
-
-**Response Time**: 1 hour
-
-**Procedure**:
-1. Create incident ticket
-2. Assign to appropriate team
-3. Implement workaround if available
-4. Develop permanent fix
-5. Deploy fix to production
-6. Monitor for recurrence
-
-#### Service Recovery Procedures
-
-**Database Failure**:
-```bash
-# Check database status
-docker-compose -f docker-compose.dev.yml ps db
-
-# View database logs
-docker-compose -f docker-compose.dev.yml logs db
-
-# Restart database
-docker-compose -f docker-compose.dev.yml restart db
-
-# If corruption suspected
-make reset  # DANGER: Data loss
-```
-
-**Redis Failure**:
-```bash
-# Check Redis status
-docker-compose -f docker-compose.dev.yml ps redis
-
-# View Redis logs
-docker-compose -f docker-compose.dev.yml logs redis
-
-# Restart Redis
-docker-compose -f docker-compose.dev.yml restart redis
-
-# Clear corrupted data
-docker exec berthcare-redis redis-cli -a dev_redis_password FLUSHALL
-```
-
-**Complete Environment Failure**:
-```bash
-# Stop all services
-make down
-
-# Remove corrupted volumes
-docker volume rm berthcare-postgres-data berthcare-redis-data berthcare-minio-data
-
-# Restart fresh
-make up
-```
-
-## Troubleshooting Guide
-
-### Common Issues and Solutions
-
-#### Issue: Services Won't Start
-
-**Symptoms**:
-- `docker-compose up` fails
-- Containers exit immediately
-- Port conflicts
-
-**Diagnosis**:
-```bash
-# Check Docker status
-docker ps -a
-
-# Check for port conflicts
-lsof -i :5432
-lsof -i :6379
-lsof -i :9000
-
-# Check Docker logs
-docker-compose -f docker-compose.dev.yml logs
-```
-
-**Solutions**:
-1. Ensure Docker Desktop is running
-2. Kill processes using required ports
-3. Check .env file configuration
-4. Verify Docker has sufficient resources (4GB+ RAM)
-
-#### Issue: Database Connection Refused
-
-**Symptoms**:
-- Cannot connect to PostgreSQL
-- "Connection refused" errors
-- pg_isready fails
-
-**Diagnosis**:
-```bash
-# Check PostgreSQL container
-docker-compose -f docker-compose.dev.yml ps db
-
-# Check PostgreSQL health
-docker exec berthcare-postgres pg_isready -U postgres
-
-# View PostgreSQL logs
-docker-compose -f docker-compose.dev.yml logs db
-```
-
-**Solutions**:
-1. Wait for health check to pass (up to 30 seconds)
-2. Restart PostgreSQL container
-3. Check credentials in .env file
-4. Verify network connectivity
-
-#### Issue: Redis Connection Issues
-
-**Symptoms**:
-- Cannot connect to Redis
-- Authentication failures
-- PING fails
-
-**Diagnosis**:
-```bash
-# Check Redis container
-docker-compose -f docker-compose.dev.yml ps redis
-
-# Test Redis connection
-docker exec berthcare-redis redis-cli -a dev_redis_password ping
-
-# View Redis logs
-docker-compose -f docker-compose.dev.yml logs redis
-```
-
-**Solutions**:
-1. Verify password in .env matches docker-compose.dev.yml
-2. Restart Redis container
-3. Check network connectivity
-4. Clear AOF file if corrupted
-
-#### Issue: MinIO Not Accessible
-
-**Symptoms**:
-- Cannot access MinIO console
-- Health check fails
-- Buckets not created
-
-**Diagnosis**:
-```bash
-# Check MinIO container
-docker-compose -f docker-compose.dev.yml ps minio
-
-# Test MinIO health
-curl http://localhost:9000/minio/health/live
-
-# Check bucket creation
-docker-compose -f docker-compose.dev.yml logs minio-setup
-```
-
-**Solutions**:
-1. Verify ports 9000 and 9001 are not in use
-2. Check credentials match .env file
-3. Restart MinIO container
-4. Manually create buckets via console
-
-#### Issue: Seed Data Not Loading
-
-**Symptoms**:
-- Empty database tables
-- No test users or clients
-- Login fails with test credentials
-
-**Diagnosis**:
-```bash
-# Check if seed scripts exist
-ls -la db/seeds/
-
-# Check PostgreSQL initialization logs
-docker-compose -f docker-compose.dev.yml logs db | grep "seed"
-
-# Verify table counts
-docker exec berthcare-postgres psql -U postgres -d berthcare_dev -c "SELECT COUNT(*) FROM users;"
-```
-
-**Solutions**:
-1. Verify seed files have correct permissions
-2. Check for SQL syntax errors in seed files
-3. Reset environment to reload seeds: `make reset`
-4. Manually run seed scripts
-
-## Known Issues and Workarounds
-
-### Development Environment
-
-**Issue**: Docker Compose slow on macOS
-**Impact**: Slow file I/O for volume mounts
-**Workaround**: Use Docker Desktop with VirtioFS file sharing
-**Status**: Permanent limitation of Docker on macOS
-**Tracking**: N/A
-
-**Issue**: Auth0 not configured
-**Impact**: Cannot test authentication flows
-**Workaround**: Configure Auth0 tenant and update .env
-**Status**: Requires manual setup
-**Tracking**: Setup documentation in .env.example
-
-**Issue**: No API implementation yet
-**Impact**: Cannot test full stack integration
-**Workaround**: Wait for API development (Phase 4)
-**Status**: Planned for future sprint
-**Tracking**: E4 completion required
-
-### CI/CD Pipeline
-
-**Issue**: SonarQube and Snyk require external accounts
-**Impact**: CI pipeline will fail without secrets
-**Workaround**: Configure accounts and add secrets to GitHub
-**Status**: Requires team decision
-**Tracking**: GitHub secrets setup required
-
-## Change Log
-
-### 2025-09-30 - Initial Setup
-- Created local development environment with Docker Compose
-- Configured PostgreSQL, Redis, MinIO services
-- Created database schema and seed data
-- Set up Makefile for common operations
-- Configured GitHub Actions CI pipeline
-- Documented environment variables in .env.example
-
-**Changes Made**:
-- Added docker-compose.dev.yml
-- Created db/seeds/01_schema.sql
-- Created db/seeds/02_seed_data.sql
-- Created Makefile with development commands
-- Created .github/workflows/ci.yml
-- Created .env.example with 94 variables
-
-**Infrastructure Impact**: None (local development only)
-
-## Future Enhancements
-
-### Planned Infrastructure Improvements
-
-**Q1 2026**:
-- [ ] Deploy staging environment to AWS
-- [ ] Configure AWS RDS and ElastiCache
-- [ ] Implement Terraform infrastructure as code
-- [ ] Set up production monitoring with New Relic
-- [ ] Configure automated backups and disaster recovery
-
-**Q2 2026**:
-- [ ] Deploy production environment
-- [ ] Implement blue-green deployment strategy
-- [ ] Configure CloudFront CDN
-- [ ] Set up multi-region replication
-- [ ] Implement auto-scaling policies
-
-**Q3 2026**:
-- [ ] Add Kubernetes deployment option
-- [ ] Implement service mesh (Istio)
-- [ ] Enhanced observability with distributed tracing
-- [ ] Implement chaos engineering practices
-
-## Operational Metrics
-
-### Service Level Objectives (SLOs)
-
-**Development Environment** (Current):
-- Availability: 95% (during working hours)
-- Recovery Time: <10 minutes
-- Data Loss: Acceptable (non-production)
-
-**Staging Environment** (Planned):
-- Availability: 99%
-- Recovery Time: <30 minutes
-- Data Loss: <1 hour (RPO)
-
-**Production Environment** (Planned):
-- Availability: 99.9%
-- Recovery Time: <4 hours (RTO)
-- Data Loss: <1 hour (RPO)
-- Response Time p95: <2 seconds
-- Error Rate: <0.1%
-
-### Capacity Planning
-
-**Current Capacity** (Development):
-- Database: 8MB used / 100GB available
-- Redis: 10MB used / 256MB available
-- Storage: 0MB used / unlimited (local)
-
-**Projected Growth** (6 months):
-- Database: ~500MB (50 users, 1000 visits/month)
-- Redis: ~100MB (session data + cache)
-- Storage: ~10GB (photos and documents)
-
-## Appendix
-
-### Quick Reference Links
-
-**Documentation**:
-- Architecture Blueprint: `/project-documentation/architecture-output.md`
-- Local Development Guide: `/LOCAL_DEVELOPMENT.md`
-- GitHub Setup Guide: `/GITHUB-SETUP.md`
-- Environment Variables: `/.env.example`
-
-**Admin Tools**:
-- PostgreSQL Admin: http://localhost:8080
-- Redis Commander: http://localhost:8081
-- MinIO Console: http://localhost:9001
-
-**External Resources**:
-- Auth0 Dashboard: https://manage.auth0.com/
-- GitHub Repository: (Not yet configured)
-- AWS Console: (Not yet configured)
-
-### Contact Information
-
-**Team Contacts**:
-- DevOps Team: devops@berthcare.ca
-- On-Call Engineer: PagerDuty rotation
-- Technical Lead: TBD
-- Security Team: security@berthcare.ca
-
-**Support Channels**:
-- Slack: #berthcare-dev
-- Incident Response: #berthcare-incidents
-- General Questions: #berthcare-help
+This is a living document that reflects the as-built architecture of the BerthCare backend system. It is updated with each significant change to maintain accuracy.
 
 ---
 
-**Document Maintenance**:
-- This document should be updated with each deployment
-- Review and update quarterly for accuracy
-- Archive old versions in git history
-- Keep change log current with all modifications
+## Table of Contents
+
+1. [System Overview](#system-overview)
+2. [Service Architecture](#service-architecture)
+3. [Database Schema](#database-schema)
+4. [Authentication & Authorization](#authentication--authorization)
+5. [API Reference](#api-reference)
+6. [Data Flow Diagrams](#data-flow-diagrams)
+7. [Security Architecture](#security-architecture)
+8. [Infrastructure](#infrastructure)
+9. [Deployment](#deployment)
+
+---
+
+## System Overview
+
+### Architecture Style
+**Microservices Architecture** with independent services communicating via HTTP/REST and WebSocket protocols.
+
+### Technology Stack
+- **Runtime:** Node.js 18+ with TypeScript
+- **Framework:** Express.js
+- **Database:** PostgreSQL 14+ with connection pooling (PgBouncer)
+- **Cache:** Redis 7+
+- **Authentication:** Auth0 (JWT tokens)
+- **File Storage:** AWS S3 with server-side encryption
+- **Push Notifications:** Firebase Cloud Messaging (FCM)
+- **Email:** AWS SES
+- **Real-time:** Socket.io (WebSocket)
+
+### Design Principles
+1. **Separation of Concerns:** Each service handles a specific domain
+2. **Type Safety:** Full TypeScript coverage with strict mode
+3. **Security First:** Encryption at rest and in transit, RBAC, input validation
+4. **Testability:** Comprehensive unit and integration tests
+5. **Observability:** Structured logging, health checks, monitoring endpoints
+
+---
+
+## Service Architecture
+
+### Service Boundaries
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        API Gateway / Load Balancer               │
+└────────────────────────────┬────────────────────────────────────┘
+                             │
+        ┌────────────────────┼────────────────────┐
+        │                    │                    │
+        ▼                    ▼                    ▼
+┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│ User Service │    │Visit Service │    │ Sync Service │
+│   Port 3001  │    │  Port 3002   │    │  Port 3003   │
+└──────┬───────┘    └──────┬───────┘    └──────┬───────┘
+       │                   │                    │
+       │                   │                    │
+       ▼                   ▼                    ▼
+┌──────────────────────────────────────────────────────┐
+│              PostgreSQL Database (Port 5432)          │
+│              Redis Cache (Port 6379)                  │
+└──────────────────────────────────────────────────────┘
+       │                   │                    │
+       ▼                   ▼                    ▼
+┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│Notification  │    │Email Service │    │File Upload   │
+│   Service    │    │              │    │   Service    │
+│  Port 3004   │    │ (Embedded)   │    │ (Embedded)   │
+└──────────────┘    └──────────────┘    └──────────────┘
+       │                   │                    │
+       ▼                   ▼                    ▼
+┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│     FCM      │    │   AWS SES    │    │   AWS S3     │
+│  (External)  │    │  (External)  │    │  (External)  │
+└──────────────┘    └──────────────┘    └──────────────┘
+```
+
+### Service Details
+
+#### 1. User Service (Port 3001)
+**Purpose:** User authentication, authorization, and profile management
+
+**Responsibilities:**
+- JWT token validation and refresh
+- User RBAC (Role-Based Access Control)
+- User profile CRUD operations
+- Organization management
+- Device registration for mobile apps
+
+**Dependencies:**
+- PostgreSQL (users, roles, permissions tables)
+- Redis (session caching, token blacklist)
+- Auth0 (external authentication provider)
+
+**Key Endpoints:**
+- `POST /auth/login` - User authentication
+- `POST /auth/refresh` - Token refresh
+- `GET /api/users/me` - Get current user profile
+- `GET /api/users` - List users (admin)
+- `PUT /api/users/:id` - Update user
+- `POST /api/users/:id/role` - Assign role
+
+#### 2. Visit Service (Port 3002)
+**Purpose:** Visit scheduling, tracking, and documentation
+
+**Responsibilities:**
+- Visit lifecycle management (scheduled → in-progress → completed)
+- GPS location verification (100m urban, 500m rural)
+- Visit documentation and care activity tracking
+- Photo uploads with encryption
+- Visit reports and analytics
+
+**Dependencies:**
+- PostgreSQL (visits, photos, care_activities tables)
+- AWS S3 (encrypted photo storage)
+- Google Maps API (geocoding and location verification)
+
+**Key Endpoints:**
+- `GET /api/visits` - List visits with filters
+- `POST /api/visits/:id/check-in` - Check in to visit
+- `POST /api/visits/:id/documentation` - Update visit documentation
+- `POST /api/visits/:id/complete` - Complete visit
+- `POST /api/uploads/photo` - Upload visit photo
+
+#### 3. Sync Service (Port 3003)
+**Purpose:** Offline data synchronization and real-time updates
+
+**Responsibilities:**
+- Conflict-free data synchronization
+- Last-write-wins conflict resolution
+- Real-time WebSocket connections
+- Change broadcasting to connected clients
+- Sync state management
+
+**Dependencies:**
+- PostgreSQL (sync_state, sync_conflicts tables)
+- Socket.io (WebSocket server)
+- Redis (connection state management)
+
+**Key Endpoints:**
+- `POST /api/sync/pull` - Pull server changes
+- `POST /api/sync/push` - Push local changes
+- `WS /socket.io` - WebSocket connection
+
+**WebSocket Events:**
+- `authenticate` - Client authentication
+- `entity:changed` - Entity update broadcast
+- `sync:complete` - Sync completion notification
+
+#### 4. Notification Service (Port 3004)
+**Purpose:** Push notifications and user preferences
+
+**Responsibilities:**
+- FCM push notification delivery
+- Device token management
+- Notification preferences (quiet hours, type filtering)
+- Notification history and read status
+- Multi-device support
+
+**Dependencies:**
+- PostgreSQL (notifications, push_notification_tokens, notification_preferences tables)
+- Firebase Cloud Messaging (push delivery)
+
+**Key Endpoints:**
+- `POST /api/notifications/tokens` - Register device token
+- `POST /api/notifications/send` - Send notification
+- `GET /api/notifications` - Get user notifications
+- `PATCH /api/notifications/:id/read` - Mark as read
+- `GET /api/notifications/preferences` - Get preferences
+- `PUT /api/notifications/preferences` - Update preferences
+
+#### 5. Email Service (Embedded)
+**Purpose:** Transactional email delivery and tracking
+
+**Responsibilities:**
+- Template-based email generation
+- AWS SES integration
+- Bounce and complaint handling
+- Email suppression list management
+- Delivery statistics
+
+**Dependencies:**
+- PostgreSQL (email_logs, email_bounces tables)
+- AWS SES (email delivery)
+
+**Key Endpoints:**
+- `POST /api/email/send` - Send custom email
+- `POST /api/email/visit-report` - Send visit report
+- `POST /api/email/password-reset` - Send password reset
+- `POST /api/email/welcome` - Send welcome email
+- `GET /api/email/logs` - Get email logs
+- `POST /api/email/webhook/ses` - SES bounce/complaint webhook
+
+#### 6. File Upload Service (Embedded in Visit Service)
+**Purpose:** Secure file upload and storage
+
+**Responsibilities:**
+- Photo upload with validation
+- Thumbnail generation
+- S3 server-side encryption
+- File metadata management
+- MIME type validation
+
+**Dependencies:**
+- AWS S3 (encrypted file storage)
+- PostgreSQL (photos table)
+- Sharp (image processing)
+
+**Key Endpoints:**
+- `POST /api/uploads/photo` - Upload photo
+- `GET /api/uploads/photos/:id` - Get photo metadata
+
+---
+
+## Database Schema
+
+### Core Tables
+
+#### users
+```sql
+CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  auth0_id VARCHAR(255) UNIQUE NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  role VARCHAR(50) NOT NULL, -- nurse, coordinator, admin, family
+  organization_id UUID REFERENCES organizations(id),
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_users_auth0_id ON users(auth0_id);
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_organization ON users(organization_id);
+```
+
+#### visits
+```sql
+CREATE TABLE visits (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id UUID NOT NULL REFERENCES clients(id),
+  nurse_id UUID NOT NULL REFERENCES users(id),
+  scheduled_start TIMESTAMP NOT NULL,
+  scheduled_end TIMESTAMP NOT NULL,
+  actual_start TIMESTAMP,
+  actual_end TIMESTAMP,
+  status VARCHAR(50) NOT NULL, -- scheduled, in_progress, completed, cancelled
+  check_in_latitude DECIMAL(10, 8),
+  check_in_longitude DECIMAL(11, 8),
+  check_in_accuracy DECIMAL(10, 2),
+  location_verified BOOLEAN DEFAULT false,
+  verification_distance DECIMAL(10, 2),
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_visits_client ON visits(client_id);
+CREATE INDEX idx_visits_nurse ON visits(nurse_id);
+CREATE INDEX idx_visits_status ON visits(status);
+CREATE INDEX idx_visits_scheduled_start ON visits(scheduled_start);
+```
+
+#### photos
+```sql
+CREATE TABLE photos (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  visit_id UUID NOT NULL REFERENCES visits(id) ON DELETE CASCADE,
+  uploaded_by UUID NOT NULL REFERENCES users(id),
+  s3_key VARCHAR(500) NOT NULL,
+  s3_bucket VARCHAR(255) NOT NULL,
+  thumbnail_s3_key VARCHAR(500),
+  file_size INTEGER NOT NULL,
+  mime_type VARCHAR(100) NOT NULL,
+  encryption_key_id VARCHAR(255) NOT NULL, -- KMS key ID
+  is_encrypted BOOLEAN DEFAULT true,
+  width INTEGER,
+  height INTEGER,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_photos_visit ON photos(visit_id);
+CREATE INDEX idx_photos_uploaded_by ON photos(uploaded_by);
+```
+
+#### push_notification_tokens
+```sql
+CREATE TABLE push_notification_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  device_id VARCHAR(255) NOT NULL,
+  fcm_token TEXT NOT NULL,
+  platform VARCHAR(20) NOT NULL, -- ios, android, web
+  app_version VARCHAR(50),
+  is_active BOOLEAN DEFAULT true,
+  last_used_at TIMESTAMP DEFAULT NOW(),
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(device_id, user_id)
+);
+
+CREATE INDEX idx_tokens_user ON push_notification_tokens(user_id);
+CREATE INDEX idx_tokens_active ON push_notification_tokens(is_active);
+```
+
+#### notifications
+```sql
+CREATE TABLE notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type VARCHAR(50) NOT NULL, -- visit_reminder, team_alert, sync_update, family_update
+  title VARCHAR(255) NOT NULL,
+  body TEXT NOT NULL,
+  data JSONB,
+  priority VARCHAR(20) DEFAULT 'normal', -- high, normal, low
+  status VARCHAR(50) DEFAULT 'pending', -- pending, sent, failed, read
+  sent_at TIMESTAMP,
+  read_at TIMESTAMP,
+  error_message TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_notifications_user ON notifications(user_id);
+CREATE INDEX idx_notifications_status ON notifications(status);
+CREATE INDEX idx_notifications_created ON notifications(created_at DESC);
+```
+
+#### email_logs
+```sql
+CREATE TABLE email_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  recipient_email VARCHAR(255) NOT NULL,
+  recipient_name VARCHAR(255),
+  subject VARCHAR(500) NOT NULL,
+  type VARCHAR(50) NOT NULL, -- visit_report, password_reset, welcome, etc.
+  status VARCHAR(50) DEFAULT 'pending', -- pending, sent, failed, bounced, complained
+  message_id VARCHAR(255),
+  error_message TEXT,
+  metadata JSONB,
+  sent_at TIMESTAMP,
+  bounced_at TIMESTAMP,
+  complained_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_email_logs_recipient ON email_logs(recipient_email);
+CREATE INDEX idx_email_logs_status ON email_logs(status);
+CREATE INDEX idx_email_logs_created ON email_logs(created_at DESC);
+```
+
+#### sync_state
+```sql
+CREATE TABLE sync_state (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  entity_type VARCHAR(50) NOT NULL, -- visits, clients, care_plans, etc.
+  entity_id UUID NOT NULL,
+  last_synced_at TIMESTAMP NOT NULL,
+  version INTEGER DEFAULT 1,
+  checksum VARCHAR(64),
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(user_id, entity_type, entity_id)
+);
+
+CREATE INDEX idx_sync_state_user ON sync_state(user_id);
+CREATE INDEX idx_sync_state_entity ON sync_state(entity_type, entity_id);
+CREATE INDEX idx_sync_state_synced ON sync_state(last_synced_at);
+```
+
+### Database Relationships
+
+```
+organizations (1) ──< (N) users
+users (1) ──< (N) visits
+clients (1) ──< (N) visits
+visits (1) ──< (N) photos
+visits (1) ──< (N) care_activities
+users (1) ──< (N) push_notification_tokens
+users (1) ──< (N) notifications
+users (1) ──< (N) notification_preferences
+users (1) ──< (N) sync_state
+```
+
+---
+
+## Authentication & Authorization
+
+### Authentication Flow
+
+```
+┌──────────┐                                    ┌──────────┐
+│  Client  │                                    │  Auth0   │
+└────┬─────┘                                    └────┬─────┘
+     │                                                │
+     │ 1. Login Request (email/password)              │
+     │───────────────────────────────────────────────>│
+     │                                                │
+     │ 2. Validate Credentials                        │
+     │                                                │
+     │ 3. Return JWT Tokens                           │
+     │<───────────────────────────────────────────────│
+     │   (access_token, refresh_token, id_token)      │
+     │                                                │
+     ▼                                                │
+┌──────────────┐                                     │
+│ User Service │                                     │
+└──────┬───────┘                                     │
+       │                                              │
+       │ 4. Validate Access Token                    │
+       │<─────────────────────────────────────────────
+       │                                              │
+       │ 5. Extract User Claims                       │
+       │    (user_id, role, permissions)              │
+       │                                              │
+       │ 6. Check RBAC Permissions                    │
+       │                                              │
+       │ 7. Allow/Deny Request                        │
+       │                                              │
+```
+
+### Token Structure
+
+**Access Token (JWT):**
+```json
+{
+  "sub": "auth0|123456789",
+  "email": "nurse@example.com",
+  "role": "nurse",
+  "organization_id": "org-uuid",
+  "permissions": ["read:own_visits", "write:own_visits"],
+  "iat": 1704326400,
+  "exp": 1704412800
+}
+```
+
+**Refresh Token:**
+- Opaque token stored in Auth0
+- Used to obtain new access tokens
+- Expires after 30 days of inactivity
+
+### Role-Based Access Control (RBAC)
+
+#### Roles & Permissions Matrix
+
+| Permission | Nurse | Coordinator | Admin | Family |
+|------------|-------|-------------|-------|--------|
+| `read:own_visits` | ✅ | ✅ | ✅ | ✅ |
+| `write:own_visits` | ✅ | ✅ | ✅ | ❌ |
+| `read:all_visits` | ❌ | ✅ | ✅ | ❌ |
+| `write:all_visits` | ❌ | ✅ | ✅ | ❌ |
+| `read:users` | ❌ | ✅ | ✅ | ❌ |
+| `write:users` | ❌ | ❌ | ✅ | ❌ |
+| `manage:organization` | ❌ | ❌ | ✅ | ❌ |
+| `read:reports` | ❌ | ✅ | ✅ | ✅ |
+
+#### Middleware Chain
+
+```typescript
+// Example: Protected endpoint with RBAC
+router.get('/api/visits',
+  authenticate,                    // Validate JWT
+  requirePermission('read:all_visits'),  // Check permission
+  visitController.getVisits        // Handle request
+);
+```
+
+---
+
+## API Reference
+
+### Common Response Format
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "message": "Operation completed successfully",
+  "data": { /* response data */ }
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "error": "Error type",
+  "message": "Human-readable error message",
+  "errors": [ /* validation errors */ ]
+}
+```
+
+### HTTP Status Codes
+
+| Code | Meaning | Usage |
+|------|---------|-------|
+| 200 | OK | Successful GET, PUT, PATCH |
+| 201 | Created | Successful POST |
+| 204 | No Content | Successful DELETE |
+| 400 | Bad Request | Validation errors |
+| 401 | Unauthorized | Missing/invalid authentication |
+| 403 | Forbidden | Insufficient permissions |
+| 404 | Not Found | Resource doesn't exist |
+| 409 | Conflict | Resource conflict (e.g., duplicate) |
+| 429 | Too Many Requests | Rate limit exceeded |
+| 500 | Internal Server Error | Server error |
+
+### Rate Limiting
+
+**Authentication Endpoints:**
+- 10 requests per minute per IP
+- Applies to `/auth/login` and `/auth/refresh`
+
+**API Endpoints:**
+- 100 requests per minute per user
+- Configurable per endpoint
+
+---
+
+## Data Flow Diagrams
+
+### Visit Check-In Flow
+
+```
+┌────────┐                                              ┌──────────────┐
+│ Mobile │                                              │Visit Service │
+│  App   │                                              └──────┬───────┘
+└───┬────┘                                                     │
+    │                                                          │
+    │ 1. POST /api/visits/:id/check-in                        │
+    │    { latitude, longitude, accuracy, timestamp }         │
+    │─────────────────────────────────────────────────────────>│
+    │                                                          │
+    │                                                          │ 2. Validate JWT
+    │                                                          │
+    │                                                          │ 3. Get client address
+    │                                                          │
+    │                                                          ▼
+    │                                              ┌────────────────────┐
+    │                                              │ Google Maps API    │
+    │                                              └────────┬───────────┘
+    │                                                       │
+    │                                                       │ 4. Geocode address
+    │                                                       │
+    │                                                       │ 5. Calculate distance
+    │                                                       │
+    │                                              ┌────────▼───────────┐
+    │                                              │ Location Service   │
+    │                                              └────────┬───────────┘
+    │                                                       │
+    │                                                       │ 6. Verify location
+    │                                                       │    (100m urban / 500m rural)
+    │                                                       │
+    │                                              ┌────────▼───────────┐
+    │                                              │   PostgreSQL       │
+    │                                              └────────┬───────────┘
+    │                                                       │
+    │                                                       │ 7. Update visit
+    │                                                       │    - actual_start
+    │                                                       │    - location_verified
+    │                                                       │    - status = 'in_progress'
+    │                                                       │
+    │ 8. Response                                          │
+    │<─────────────────────────────────────────────────────┤
+    │    { visit_id, checked_in_at, location_verified }    │
+    │                                                       │
+```
+
+### Sync Flow (Pull)
+
+```
+┌────────┐                                    ┌─────────────┐
+│ Mobile │                                    │Sync Service │
+│  App   │                                    └──────┬──────┘
+└───┬────┘                                           │
+    │                                                │
+    │ 1. POST /api/sync/pull                        │
+    │    { last_sync_timestamp, entity_types }      │
+    │───────────────────────────────────────────────>│
+    │                                                │
+    │                                                │ 2. Query changes
+    │                                                │    WHERE updated_at > last_sync
+    │                                                │
+    │                                                ▼
+    │                                    ┌────────────────────┐
+    │                                    │    PostgreSQL      │
+    │                                    └────────┬───────────┘
+    │                                             │
+    │                                             │ 3. Return changed entities
+    │                                             │
+    │ 4. Response                                 │
+    │<────────────────────────────────────────────┤
+    │    {                                        │
+    │      changes: [                             │
+    │        { entity_type, entity_id, data }     │
+    │      ],                                     │
+    │      sync_timestamp                         │
+    │    }                                        │
+    │                                             │
+```
+
+---
+
+## Security Architecture
+
+### Encryption
+
+**Data at Rest:**
+- Database: PostgreSQL with encryption at rest (AWS RDS encryption)
+- Files: S3 server-side encryption (SSE-KMS)
+- Sensitive fields: Application-level encryption using AES-256-GCM
+
+**Data in Transit:**
+- TLS 1.3 for all HTTP connections
+- WSS (WebSocket Secure) for real-time connections
+
+### Input Validation
+
+**Layers:**
+1. **Schema Validation:** express-validator middleware
+2. **Type Validation:** TypeScript compile-time checks
+3. **Business Rules:** Service-layer validation
+4. **Database Constraints:** Foreign keys, unique constraints, check constraints
+
+### Security Headers
+
+```typescript
+// Configured via helmet.js
+{
+  contentSecurityPolicy: true,
+  crossOriginEmbedderPolicy: true,
+  crossOriginOpenerPolicy: true,
+  crossOriginResourcePolicy: true,
+  dnsPrefetchControl: true,
+  frameguard: true,
+  hidePoweredBy: true,
+  hsts: true,
+  ieNoOpen: true,
+  noSniff: true,
+  originAgentCluster: true,
+  permittedCrossDomainPolicies: true,
+  referrerPolicy: true,
+  xssFilter: true
+}
+```
+
+---
+
+## Infrastructure
+
+### Environment Variables
+
+**Required:**
+```bash
+# Database
+DATABASE_URL=postgresql://user:pass@host:5432/dbname
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=berthcare
+DB_USER=postgres
+DB_PASSWORD=secure_password
+
+# Redis
+REDIS_URL=redis://localhost:6379
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# Auth0
+AUTH0_DOMAIN=your-tenant.auth0.com
+AUTH0_AUDIENCE=https://api.berthcare.com
+AUTH0_CLIENT_ID=your_client_id
+AUTH0_CLIENT_SECRET=your_client_secret
+
+# AWS
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=your_access_key
+AWS_SECRET_ACCESS_KEY=your_secret_key
+S3_BUCKET_NAME=berthcare-uploads
+S3_KMS_KEY_ID=your_kms_key_id
+
+# Firebase
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_PRIVATE_KEY=your-private-key
+FIREBASE_CLIENT_EMAIL=your-client-email
+
+# SES
+SES_SENDER_EMAIL=noreply@berthcare.com
+SES_SENDER_NAME=BerthCare
+
+# Google Maps
+GOOGLE_MAPS_API_KEY=your_api_key
+
+# Application
+NODE_ENV=production
+PORT=3000
+LOG_LEVEL=info
+ALLOWED_ORIGINS=https://app.berthcare.com
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRY=24h
+```
+
+### Health Checks
+
+**Endpoints:**
+- `GET /health` - Overall service health
+- `GET /health/db` - Database connectivity
+- `GET /health/redis` - Redis connectivity
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-01-03T10:00:00Z",
+  "service": "user-service",
+  "version": "1.0.0",
+  "uptime": 86400
+}
+```
+
+---
+
+## Deployment
+
+### Service Ports
+
+| Service | Port | Protocol |
+|---------|------|----------|
+| User Service | 3001 | HTTP |
+| Visit Service | 3002 | HTTP |
+| Sync Service | 3003 | HTTP/WS |
+| Notification Service | 3004 | HTTP |
+
+### Deployment Checklist
+
+- [ ] Environment variables configured
+- [ ] Database migrations applied
+- [ ] Redis connection verified
+- [ ] AWS credentials configured
+- [ ] Auth0 tenant configured
+- [ ] Firebase project configured
+- [ ] Health checks passing
+- [ ] Logs aggregation configured
+- [ ] Monitoring alerts configured
+- [ ] Backup strategy implemented
+
+---
+
+## Change Log
+
+| Date | Version | Changes | Author |
+|------|---------|---------|--------|
+| 2025-01-03 | 1.0.0 | Initial architecture documentation | Backend Team |
+
+---
+
+**Document Maintainers:** Backend Development Team  
+**Review Frequency:** After each major feature release  
+**Next Review:** After Phase 5 completion
+
