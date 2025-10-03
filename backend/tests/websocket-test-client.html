@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Sync Test Client</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        h2 {
+            color: #666;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 5px;
+            border-left: 3px solid #007bff;
+            padding-left: 10px;
+        }
+        .log-entry.event {
+            border-left-color: #28a745;
+        }
+        .log-entry.error {
+            border-left-color: #dc3545;
+        }
+        .timestamp {
+            color: #6c757d;
+            font-size: 11px;
+        }
+        .event-type {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .clear-btn {
+            background: #6c757d;
+        }
+        .clear-btn:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔄 WebSocket Sync Test Client</h1>
+    
+    <div class="container">
+        <h2>Connection</h2>
+        <div id="status" class="status disconnected">Disconnected</div>
+        
+        <div class="controls">
+            <input type="text" id="userId" placeholder="User ID (UUID)" value="550e8400-e29b-41d4-a716-446655440001">
+            <input type="text" id="orgId" placeholder="Organization ID (optional)">
+            <button id="connectBtn" onclick="connect()">Connect</button>
+            <button id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Test Actions</h2>
+        <div class="controls">
+            <button onclick="requestSync()" id="syncBtn" disabled>Request Sync</button>
+            <button onclick="simulateChange()" id="changeBtn" disabled>Simulate Entity Change</button>
+            <button onclick="clearLog()" class="clear-btn">Clear Log</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Event Log</h2>
+        <div id="log" class="log">
+            <div class="log-entry">Waiting for connection...</div>
+        </div>
+    </div>
+
+    <script>
+        let socket = null;
+        const serverUrl = 'http://localhost:3003';
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = `
+                <span class="timestamp">[${timestamp}]</span>
+                <span class="event-type">${type.toUpperCase()}:</span>
+                ${message}
+            `;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStatus(connected) {
+            const statusDiv = document.getElementById('status');
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            const syncBtn = document.getElementById('syncBtn');
+            const changeBtn = document.getElementById('changeBtn');
+
+            if (connected) {
+                statusDiv.textContent = 'Connected';
+                statusDiv.className = 'status connected';
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                syncBtn.disabled = false;
+                changeBtn.disabled = false;
+            } else {
+                statusDiv.textContent = 'Disconnected';
+                statusDiv.className = 'status disconnected';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                syncBtn.disabled = true;
+                changeBtn.disabled = true;
+            }
+        }
+
+        function connect() {
+            const userId = document.getElementById('userId').value;
+            const orgId = document.getElementById('orgId').value;
+
+            if (!userId) {
+                alert('Please enter a User ID');
+                return;
+            }
+
+            log(`Connecting to ${serverUrl}...`);
+
+            socket = io(serverUrl, {
+                transports: ['websocket', 'polling'],
+                path: '/socket.io'
+            });
+
+            socket.on('connect', () => {
+                log('Socket connected, authenticating...', 'event');
+                socket.emit('authenticate', {
+                    user_id: userId,
+                    organization_id: orgId || undefined
+                });
+            });
+
+            socket.on('connection:established', (data) => {
+                log(`Authentication successful: ${JSON.stringify(data.data)}`, 'event');
+                updateStatus(true);
+            });
+
+            socket.on('entity:changed', (data) => {
+                log(`Entity changed: ${JSON.stringify(data.data, null, 2)}`, 'event');
+            });
+
+            socket.on('sync:complete', (data) => {
+                log(`Sync complete: ${JSON.stringify(data.data)}`, 'event');
+            });
+
+            socket.on('error', (data) => {
+                log(`Error: ${JSON.stringify(data)}`, 'error');
+            });
+
+            socket.on('disconnect', (reason) => {
+                log(`Disconnected: ${reason}`, 'error');
+                updateStatus(false);
+            });
+
+            socket.on('connect_error', (error) => {
+                log(`Connection error: ${error.message}`, 'error');
+                updateStatus(false);
+            });
+        }
+
+        function disconnect() {
+            if (socket) {
+                log('Disconnecting...');
+                socket.disconnect();
+                socket = null;
+                updateStatus(false);
+            }
+        }
+
+        function requestSync() {
+            if (!socket) return;
+            
+            const data = {
+                entity_types: ['visits', 'clients'],
+                last_sync_timestamp: new Date(Date.now() - 3600000).toISOString()
+            };
+            
+            log(`Requesting sync: ${JSON.stringify(data)}`);
+            socket.emit('sync:request', data);
+        }
+
+        function simulateChange() {
+            log('Note: Entity changes are broadcasted by the server when push operations occur', 'info');
+            log('Use the HTTP test-examples.http file to trigger actual changes', 'info');
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '<div class="log-entry">Log cleared</div>';
+        }
+
+        // Auto-connect on page load for testing
+        window.addEventListener('load', () => {
+            log('WebSocket test client loaded. Click Connect to start.');
+        });
+    </script>
+</body>
+</html>

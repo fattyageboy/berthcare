@@ -1,0 +1,158 @@
+### Sync Service Test Examples
+### Base URL: http://localhost:3003
+
+### Health Check
+GET http://localhost:3003/health
+
+###
+
+### Pull Changes - Initial Sync
+POST http://localhost:3003/api/sync/pull
+Content-Type: application/json
+x-user-id: 550e8400-e29b-41d4-a716-446655440001
+
+{
+  "last_sync_timestamp": "2024-01-01T00:00:00Z",
+  "entity_types": ["visits", "clients", "care_plans"]
+}
+
+###
+
+### Pull Changes - Incremental Sync
+POST http://localhost:3003/api/sync/pull
+Content-Type: application/json
+x-user-id: 550e8400-e29b-41d4-a716-446655440001
+
+{
+  "last_sync_timestamp": "2024-01-15T08:00:00Z",
+  "entity_types": ["visits"]
+}
+
+###
+
+### Push Changes - Single Update
+POST http://localhost:3003/api/sync/push
+Content-Type: application/json
+x-user-id: 550e8400-e29b-41d4-a716-446655440001
+
+{
+  "changes": [
+    {
+      "entity_type": "visits",
+      "entity_id": "550e8400-e29b-41d4-a716-446655440010",
+      "operation": "update",
+      "data": {
+        "status": "completed",
+        "actual_end": "2024-01-15T10:30:00Z",
+        "notes": "Visit completed successfully"
+      },
+      "local_timestamp": "2024-01-15T10:30:00Z"
+    }
+  ]
+}
+
+###
+
+### Push Changes - Multiple Updates
+POST http://localhost:3003/api/sync/push
+Content-Type: application/json
+x-user-id: 550e8400-e29b-41d4-a716-446655440001
+
+{
+  "changes": [
+    {
+      "entity_type": "visits",
+      "entity_id": "550e8400-e29b-41d4-a716-446655440010",
+      "operation": "update",
+      "data": {
+        "status": "in_progress",
+        "actual_start": "2024-01-15T09:00:00Z"
+      },
+      "local_timestamp": "2024-01-15T09:00:00Z"
+    },
+    {
+      "entity_type": "visits",
+      "entity_id": "550e8400-e29b-41d4-a716-446655440011",
+      "operation": "update",
+      "data": {
+        "status": "completed",
+        "actual_end": "2024-01-15T10:00:00Z"
+      },
+      "local_timestamp": "2024-01-15T10:00:00Z"
+    }
+  ]
+}
+
+###
+
+### Push Changes - Create New Visit
+POST http://localhost:3003/api/sync/push
+Content-Type: application/json
+x-user-id: 550e8400-e29b-41d4-a716-446655440001
+
+{
+  "changes": [
+    {
+      "entity_type": "visits",
+      "entity_id": "550e8400-e29b-41d4-a716-446655440099",
+      "operation": "create",
+      "data": {
+        "client_id": "550e8400-e29b-41d4-a716-446655440020",
+        "user_id": "550e8400-e29b-41d4-a716-446655440001",
+        "scheduled_start": "2024-01-16T09:00:00Z",
+        "scheduled_end": "2024-01-16T10:00:00Z",
+        "visit_type": "routine",
+        "status": "scheduled"
+      },
+      "local_timestamp": "2024-01-15T15:00:00Z"
+    }
+  ]
+}
+
+###
+
+### Error Case - Invalid Timestamp
+POST http://localhost:3003/api/sync/pull
+Content-Type: application/json
+x-user-id: 550e8400-e29b-41d4-a716-446655440001
+
+{
+  "last_sync_timestamp": "invalid-timestamp",
+  "entity_types": ["visits"]
+}
+
+###
+
+### Error Case - Missing User ID
+POST http://localhost:3003/api/sync/pull
+Content-Type: application/json
+
+{
+  "last_sync_timestamp": "2024-01-15T08:00:00Z",
+  "entity_types": ["visits"]
+}
+
+###
+
+### Error Case - Invalid Entity Type
+POST http://localhost:3003/api/sync/pull
+Content-Type: application/json
+x-user-id: 550e8400-e29b-41d4-a716-446655440001
+
+{
+  "last_sync_timestamp": "2024-01-15T08:00:00Z",
+  "entity_types": ["invalid_type"]
+}
+
+###
+
+### Error Case - Empty Changes Array
+POST http://localhost:3003/api/sync/push
+Content-Type: application/json
+x-user-id: 550e8400-e29b-41d4-a716-446655440001
+
+{
+  "changes": []
+}
+
+###
