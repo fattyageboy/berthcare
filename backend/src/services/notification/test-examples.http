@@ -1,0 +1,297 @@
+### Notification Service API Test Examples
+### Base URL
+@baseUrl = http://localhost:3000/api/notifications
+@authToken = your-jwt-token-here
+
+### ============================================================================
+### Device Token Management
+### ============================================================================
+
+### Register iOS Device Token
+POST {{baseUrl}}/tokens
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "device_id": "ios-device-12345",
+  "fcm_token": "fcm-token-example-ios-abcdef123456",
+  "platform": "ios",
+  "app_version": "1.0.0"
+}
+
+### Register Android Device Token
+POST {{baseUrl}}/tokens
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "device_id": "android-device-67890",
+  "fcm_token": "fcm-token-example-android-xyz789",
+  "platform": "android",
+  "app_version": "1.0.0"
+}
+
+### Register Web Device Token
+POST {{baseUrl}}/tokens
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "device_id": "web-browser-uuid",
+  "fcm_token": "fcm-token-example-web-browser",
+  "platform": "web"
+}
+
+### Deactivate Device Token
+DELETE {{baseUrl}}/tokens/token-uuid-here
+Authorization: Bearer {{authToken}}
+
+### ============================================================================
+### Send Notifications
+### ============================================================================
+
+### Send Visit Reminder (High Priority)
+POST {{baseUrl}}/send
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "user_id": "user-uuid-here",
+  "type": "visit_reminder",
+  "title": "Visit Reminder",
+  "body": "Your visit with John Doe starts in 30 minutes",
+  "data": {
+    "visit_id": "visit-uuid-123",
+    "client_id": "client-uuid-456",
+    "client_name": "John Doe",
+    "scheduled_start": "2025-10-03T10:30:00Z",
+    "location": "Vessel ABC"
+  },
+  "priority": "high"
+}
+
+### Send Team Alert (Urgent)
+POST {{baseUrl}}/send
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "user_id": "user-uuid-here",
+  "type": "team_alert",
+  "title": "Urgent: Team Alert",
+  "body": "Emergency situation on Vessel XYZ requires immediate response",
+  "data": {
+    "alert_type": "emergency",
+    "location": "Vessel XYZ",
+    "severity": "high",
+    "timestamp": "2025-10-03T14:30:00Z"
+  },
+  "priority": "high"
+}
+
+### Send Sync Update
+POST {{baseUrl}}/send
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "user_id": "user-uuid-here",
+  "type": "sync_update",
+  "title": "Sync Complete",
+  "body": "Your data has been synchronized successfully. 5 items updated.",
+  "data": {
+    "sync_id": "sync-uuid-789",
+    "items_synced": 5,
+    "sync_type": "full",
+    "completed_at": "2025-10-03T15:00:00Z"
+  },
+  "priority": "normal"
+}
+
+### Send Family Update
+POST {{baseUrl}}/send
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "user_id": "family-member-uuid",
+  "type": "family_update",
+  "title": "Visit Completed",
+  "body": "Care visit for John Doe has been completed successfully",
+  "data": {
+    "visit_id": "visit-uuid-123",
+    "client_id": "client-uuid-456",
+    "client_name": "John Doe",
+    "completed_at": "2025-10-03T11:00:00Z",
+    "nurse_name": "Jane Smith"
+  },
+  "priority": "normal"
+}
+
+### ============================================================================
+### Notification History
+### ============================================================================
+
+### Get Notifications (Default Pagination)
+GET {{baseUrl}}
+Authorization: Bearer {{authToken}}
+
+### Get Notifications (Custom Pagination)
+GET {{baseUrl}}?limit=20&offset=0
+Authorization: Bearer {{authToken}}
+
+### Get Notifications (Page 2)
+GET {{baseUrl}}?limit=20&offset=20
+Authorization: Bearer {{authToken}}
+
+### Mark Notification as Read
+PATCH {{baseUrl}}/notification-uuid-here/read
+Authorization: Bearer {{authToken}}
+
+### ============================================================================
+### Notification Preferences
+### ============================================================================
+
+### Get Current Preferences
+GET {{baseUrl}}/preferences
+Authorization: Bearer {{authToken}}
+
+### Update Preferences - Enable All
+PUT {{baseUrl}}/preferences
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "visit_reminders_enabled": true,
+  "team_alerts_enabled": true,
+  "sync_updates_enabled": true,
+  "family_updates_enabled": true
+}
+
+### Update Preferences - Disable Visit Reminders
+PUT {{baseUrl}}/preferences
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "visit_reminders_enabled": false
+}
+
+### Update Preferences - Set Quiet Hours
+PUT {{baseUrl}}/preferences
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "quiet_hours_start": "22:00",
+  "quiet_hours_end": "08:00"
+}
+
+### Update Preferences - Disable Sync Updates with Quiet Hours
+PUT {{baseUrl}}/preferences
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "sync_updates_enabled": false,
+  "quiet_hours_start": "23:00",
+  "quiet_hours_end": "07:00"
+}
+
+### Update Preferences - Remove Quiet Hours
+PUT {{baseUrl}}/preferences
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "quiet_hours_start": null,
+  "quiet_hours_end": null
+}
+
+### ============================================================================
+### Error Cases
+### ============================================================================
+
+### Invalid Platform
+POST {{baseUrl}}/tokens
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "device_id": "test-device",
+  "fcm_token": "test-token",
+  "platform": "invalid-platform"
+}
+
+### Missing Required Fields
+POST {{baseUrl}}/tokens
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "device_id": "test-device"
+}
+
+### Invalid Notification Type
+POST {{baseUrl}}/send
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "user_id": "user-uuid-here",
+  "type": "invalid_type",
+  "title": "Test",
+  "body": "Test notification"
+}
+
+### Invalid Priority
+POST {{baseUrl}}/send
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "user_id": "user-uuid-here",
+  "type": "visit_reminder",
+  "title": "Test",
+  "body": "Test notification",
+  "priority": "invalid-priority"
+}
+
+### Invalid Quiet Hours Format
+PUT {{baseUrl}}/preferences
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "quiet_hours_start": "25:00"
+}
+
+### ============================================================================
+### Batch Testing Scenarios
+### ============================================================================
+
+### Scenario 1: New User Setup
+# 1. Register device token
+# 2. Get default preferences
+# 3. Update preferences
+# 4. Send test notification
+
+### Scenario 2: Multi-Device User
+# 1. Register iOS device
+# 2. Register Android device
+# 3. Send notification (should go to both)
+# 4. Deactivate one device
+# 5. Send notification (should go to remaining device)
+
+### Scenario 3: Quiet Hours Testing
+# 1. Set quiet hours (22:00 - 08:00)
+# 2. Send normal priority notification during quiet hours (should be blocked)
+# 3. Send high priority team alert during quiet hours (should go through)
+# 4. Send notification outside quiet hours (should go through)
+
+### Scenario 4: Preference Testing
+# 1. Disable visit reminders
+# 2. Send visit reminder (should be blocked)
+# 3. Send team alert (should go through)
+# 4. Re-enable visit reminders
+# 5. Send visit reminder (should go through)
