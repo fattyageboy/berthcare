@@ -35,7 +35,7 @@ export interface SendEmailRequest {
   attachments?: EmailAttachment[];
   replyTo?: string;
   type: EmailType;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface EmailTemplate {
@@ -54,7 +54,7 @@ export interface EmailLog {
   status: EmailStatus;
   message_id?: string;
   error_message?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   sent_at?: Date;
   bounced_at?: Date;
   complained_at?: Date;

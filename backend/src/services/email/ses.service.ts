@@ -74,11 +74,12 @@ export class SESService {
         success: true,
         message_id: response.MessageId,
       };
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error('Failed to send email via SES:', error);
       return {
         success: false,
-        error: error.message || 'Unknown error',
+        error: errorMessage,
       };
     }
   }
@@ -142,11 +143,12 @@ export class SESService {
         success: true,
         message_id: response.MessageId,
       };
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error('Failed to send email with attachments via SES:', error);
       return {
         success: false,
-        error: error.message || 'Unknown error',
+        error: errorMessage,
       };
     }
   }
@@ -226,7 +228,7 @@ export class SESService {
   /**
    * Verify email address with SES
    */
-  async verifyEmailAddress(email: string): Promise<boolean> {
+  verifyEmailAddress(email: string): boolean {
     // This would typically call SES VerifyEmailIdentity
     // For now, we'll just log it
     logger.info(`Email verification requested for: ${email}`);

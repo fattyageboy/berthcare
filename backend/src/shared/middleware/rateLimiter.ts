@@ -4,6 +4,7 @@
  */
 
 import rateLimit from 'express-rate-limit';
+import { logger } from '../utils/logger';
 import { redis } from '../../config';
 
 /**
@@ -45,7 +46,7 @@ export const authRateLimiter = rateLimit({
           resetTime,
         };
       } catch (error) {
-        console.error('Rate limiter error:', error);
+        logger.error('Rate limiter error:', error);
         // Fallback to allowing request if Redis fails
         return {
           totalHits: 0,
@@ -60,7 +61,7 @@ export const authRateLimiter = rateLimit({
         if (!client) return;
         await client.decr(key);
       } catch (error) {
-        console.error('Rate limiter decrement error:', error);
+        logger.error('Rate limiter decrement error:', error);
       }
     },
 
@@ -70,7 +71,7 @@ export const authRateLimiter = rateLimit({
         if (!client) return;
         await client.del(key);
       } catch (error) {
-        console.error('Rate limiter reset error:', error);
+        logger.error('Rate limiter reset error:', error);
       }
     },
   },

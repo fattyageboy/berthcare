@@ -4,6 +4,7 @@
  */
 
 import { Response, NextFunction } from 'express';
+import { logger } from '../utils/logger';
 import {
   ApiResponse,
   AuthenticatedRequest,
@@ -43,7 +44,7 @@ export const requireRole = (...allowedRoles: UserRole[]) => {
       // User has required role, continue
       next();
     } catch (error) {
-      console.error('Role check error:', error);
+      logger.error('Role check error:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -99,7 +100,7 @@ export const requirePermission = (...requiredPermissions: Permission[]) => {
       // User has required permission, continue
       next();
     } catch (error) {
-      console.error('Permission check error:', error);
+      logger.error('Permission check error:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -155,7 +156,7 @@ export const requireAllPermissions = (...requiredPermissions: Permission[]) => {
       // User has all required permissions, continue
       next();
     } catch (error) {
-      console.error('Permission check error:', error);
+      logger.error('Permission check error:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -207,7 +208,7 @@ export const requireOwnResource = (paramName: string = 'userId') => {
       // User is accessing their own resource, continue
       next();
     } catch (error) {
-      console.error('Resource ownership check error:', error);
+      logger.error('Resource ownership check error:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -259,7 +260,7 @@ export const requireSameOrganization = (paramName: string = 'organizationId') =>
       // User is accessing resource in their organization, continue
       next();
     } catch (error) {
-      console.error('Organization check error:', error);
+      logger.error('Organization check error:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -317,7 +318,7 @@ export const requireRoleOrPermission = (
         message: 'Insufficient permissions to access this resource',
       } as ApiResponse<unknown>);
     } catch (error) {
-      console.error('Role or permission check error:', error);
+      logger.error('Role or permission check error:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',

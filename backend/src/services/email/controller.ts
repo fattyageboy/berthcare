@@ -30,7 +30,7 @@ export class EmailController {
         return;
       }
 
-      const request: SendEmailRequest = req.body;
+      const request = req.body as SendEmailRequest;
       const result = await this.emailService.sendEmail(request);
 
       if (result.success) {
@@ -62,12 +62,12 @@ export class EmailController {
         return;
       }
 
-      const { recipient_email, recipient_name, data } = req.body;
-      await this.emailService.sendVisitReport(
-        recipient_email,
-        recipient_name,
-        data as VisitReportEmailData
-      );
+      const { recipient_email, recipient_name, data } = req.body as {
+        recipient_email: string;
+        recipient_name: string;
+        data: VisitReportEmailData;
+      };
+      await this.emailService.sendVisitReport(recipient_email, recipient_name, data);
 
       res.status(200).json({
         message: 'Visit report email sent successfully',
@@ -90,12 +90,12 @@ export class EmailController {
         return;
       }
 
-      const { recipient_email, recipient_name, data } = req.body;
-      await this.emailService.sendPasswordReset(
-        recipient_email,
-        recipient_name,
-        data as PasswordResetEmailData
-      );
+      const { recipient_email, recipient_name, data } = req.body as {
+        recipient_email: string;
+        recipient_name: string;
+        data: PasswordResetEmailData;
+      };
+      await this.emailService.sendPasswordReset(recipient_email, recipient_name, data);
 
       res.status(200).json({
         message: 'Password reset email sent successfully',
@@ -112,12 +112,12 @@ export class EmailController {
    */
   sendWelcome = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { recipient_email, recipient_name, data } = req.body;
-      await this.emailService.sendWelcome(
-        recipient_email,
-        recipient_name,
-        data as WelcomeEmailData
-      );
+      const { recipient_email, recipient_name, data } = req.body as {
+        recipient_email: string;
+        recipient_name: string;
+        data: WelcomeEmailData;
+      };
+      await this.emailService.sendWelcome(recipient_email, recipient_name, data);
 
       res.status(200).json({
         message: 'Welcome email sent successfully',
@@ -134,12 +134,12 @@ export class EmailController {
    */
   sendWeeklySummary = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { recipient_email, recipient_name, data } = req.body;
-      await this.emailService.sendWeeklySummary(
-        recipient_email,
-        recipient_name,
-        data as WeeklySummaryEmailData
-      );
+      const { recipient_email, recipient_name, data } = req.body as {
+        recipient_email: string;
+        recipient_name: string;
+        data: WeeklySummaryEmailData;
+      };
+      await this.emailService.sendWeeklySummary(recipient_email, recipient_name, data);
 
       res.status(200).json({
         message: 'Weekly summary email sent successfully',
@@ -220,7 +220,7 @@ export class EmailController {
    */
   handleSESWebhook = async (req: Request, res: Response): Promise<void> => {
     try {
-      const notification = req.body;
+      const notification = req.body as { notificationType: string };
 
       if (notification.notificationType === 'Bounce') {
         await this.emailService.handleBounce(notification);

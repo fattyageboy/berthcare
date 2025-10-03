@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
+import { logger } from '../../shared/utils/logger';
 import { visitRepository } from './repository';
 import { ApiResponse } from '../../shared';
 
@@ -66,7 +67,7 @@ export class VisitController {
 
       res.json(response);
     } catch (error) {
-      console.error('Error retrieving visits:', error);
+      logger.error('Error retrieving visits:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to retrieve visits',
@@ -139,11 +140,11 @@ export class VisitController {
         verificationDistance = verification.distance;
 
         // Log verification result for debugging
-        console.warn(
+        logger.warn(
           `Location verification: ${locationVerified ? 'PASSED' : 'FAILED'} - Distance: ${verificationDistance}m`
         );
       } catch (error) {
-        console.error('Location verification failed:', error);
+        logger.error('Location verification failed:', error);
         // Continue with check-in even if verification fails (graceful degradation)
         locationVerified = false;
       }
@@ -173,7 +174,7 @@ export class VisitController {
 
       res.json(response);
     } catch (error) {
-      console.error('Error checking in to visit:', error);
+      logger.error('Error checking in to visit:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to check in to visit',
@@ -256,7 +257,7 @@ export class VisitController {
 
       res.json(response);
     } catch (error) {
-      console.error('Error updating visit documentation:', error);
+      logger.error('Error updating visit documentation:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to update visit documentation',
@@ -333,7 +334,7 @@ export class VisitController {
 
       res.json(response);
     } catch (error) {
-      console.error('Error verifying location:', error);
+      logger.error('Error verifying location:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to verify location',
@@ -418,7 +419,7 @@ export class VisitController {
 
       res.json(response);
     } catch (error) {
-      console.error('Error completing visit:', error);
+      logger.error('Error completing visit:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to complete visit',

@@ -15,6 +15,7 @@ import {
   Notification,
   NotificationPreferences,
   NotificationType,
+  PushNotificationToken,
 } from './types';
 
 export class NotificationService {
@@ -29,7 +30,10 @@ export class NotificationService {
   /**
    * Register device token for push notifications
    */
-  async registerDeviceToken(userId: string, tokenData: RegisterTokenRequest) {
+  async registerDeviceToken(
+    userId: string,
+    tokenData: RegisterTokenRequest
+  ): Promise<PushNotificationToken> {
     try {
       const token = await this.repository.registerToken(userId, tokenData);
       logger.info(`Device token registered for user ${userId}, device ${tokenData.device_id}`);

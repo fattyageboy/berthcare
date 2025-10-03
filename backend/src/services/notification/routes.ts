@@ -21,18 +21,25 @@ export function createNotificationRoutes(pool: Pool): Router {
   const controller = new NotificationController(notificationService);
 
   // Device token management
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   router.post('/tokens', registerTokenValidators, controller.registerToken);
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   router.delete('/tokens/:id', controller.deactivateToken);
 
   // Send notifications
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   router.post('/send', sendNotificationValidators, controller.sendNotification);
 
   // Get notifications
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   router.get('/', paginationValidators, controller.getNotifications);
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   router.patch('/:id/read', notificationIdValidator, controller.markAsRead);
 
   // Preferences
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   router.get('/preferences', controller.getPreferences);
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   router.put('/preferences', updatePreferencesValidators, controller.updatePreferences);
 
   return router;

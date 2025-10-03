@@ -15,7 +15,7 @@ export class FCMService {
     token: PushNotificationToken,
     title: string,
     body: string,
-    data?: Record<string, any>,
+    data?: Record<string, unknown>,
     priority: NotificationPriority = 'normal'
   ): Promise<{ success: boolean; error?: string }> {
     if (!isFCMConfigured()) {
@@ -31,13 +31,14 @@ export class FCMService {
 
       logger.info(`Push notification sent successfully to device ${token.device_id}`);
       return { success: true };
-    } catch (error: any) {
+    } catch (error) {
       logger.error(`Failed to send push notification to device ${token.device_id}:`, error);
 
       // Handle specific FCM errors
+      const errorCode = error && typeof error === 'object' && 'code' in error ? error.code : null;
       if (
-        error.code === 'messaging/invalid-registration-token' ||
-        error.code === 'messaging/registration-token-not-registered'
+        errorCode === 'messaging/invalid-registration-token' ||
+        errorCode === 'messaging/registration-token-not-registered'
       ) {
         return {
           success: false,
@@ -45,9 +46,10 @@ export class FCMService {
         };
       }
 
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return {
         success: false,
-        error: error.message || 'Unknown error',
+        error: errorMessage,
       };
     }
   }
@@ -59,7 +61,7 @@ export class FCMService {
     tokens: PushNotificationToken[],
     title: string,
     body: string,
-    data?: Record<string, any>,
+    data?: Record<string, unknown>,
     priority: NotificationPriority = 'normal'
   ): Promise<{
     successCount: number;
@@ -92,11 +94,11 @@ export class FCMService {
 
       const invalidTokens: string[] = [];
       response.responses.forEach((resp, idx) => {
-        if (!resp.success) {
-          const error = resp.error;
+        if (!resp.success && resp.error) {
+          const errorCode = resp.error.code;
           if (
-            error?.code === 'messaging/invalid-registration-token' ||
-            error?.code === 'messaging/registration-token-not-registered'
+            errorCode === 'messaging/invalid-registration-token' ||
+            errorCode === 'messaging/registration-token-not-registered'
           ) {
             invalidTokens.push(tokens[idx].fcm_token);
           }
@@ -129,10 +131,24 @@ export class FCMService {
     token: PushNotificationToken,
     title: string,
     body: string,
-    data?: Record<string, any>,
+    data?: Record<string, unknown>,
     priority: NotificationPriority = 'normal'
-  ): any {
-    const message: any = {
+  ): {
+    token: string;
+    notification: { title: string; body: string };
+    data?: Record<string, string>;
+    android?: unknown;
+    apns?: unknown;
+    webpush?: unknown;
+  } {
+    const message: {
+      token: string;
+      notification: { title: string; body: string };
+      data?: Record<string, string>;
+      android?: unknown;
+      apns?: unknown;
+      webpush?: unknown;
+    } = {
       token: token.fcm_token,
       notification: {
         title,
@@ -155,7 +171,7 @@ export class FCMService {
     switch (token.platform) {
       case 'android':
         message.android = {
-          priority: priority === 'high' ? 'high' : 'normal',
+          priority: priority === 'high' ? ('high' as const) : ('normal' as const),
           notification: {
             sound: 'default',
             channelId: 'berthcare_notifications',
@@ -200,7 +216,7 @@ export class FCMService {
     topic: string,
     title: string,
     body: string,
-    data?: Record<string, any>
+    data?: Record<string, unknown>
   ): Promise<{ success: boolean; error?: string }> {
     if (!isFCMConfigured()) {
       logger.warn('FCM not configured, skipping topic notification');
@@ -210,7 +226,11 @@ export class FCMService {
     try {
       const messaging = getMessaging();
 
-      const message: any = {
+      const message: {
+        topic: string;
+        notification: { title: string; body: string };
+        data?: Record<string, string>;
+      } = {
         topic,
         notification: {
           title,
@@ -232,11 +252,12 @@ export class FCMService {
 
       logger.info(`Topic notification sent successfully to topic: ${topic}`);
       return { success: true };
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error(`Failed to send topic notification to ${topic}:`, error);
       return {
         success: false,
-        error: error.message || 'Unknown error',
+        error: errorMessage,
       };
     }
   }

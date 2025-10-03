@@ -19,7 +19,7 @@ export class EmailRepository {
     type: EmailType;
     status: EmailStatus;
     message_id?: string;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
   }): Promise<EmailLog> {
     const query = `
       INSERT INTO email_logs (
@@ -40,7 +40,7 @@ export class EmailRepository {
     ];
 
     const result = await this.pool.query(query, values);
-    return result.rows[0];
+    return result.rows[0] as EmailLog;
   }
 
   /**
@@ -81,7 +81,7 @@ export class EmailRepository {
     `;
 
     const result = await this.pool.query(query, [email, limit, offset]);
-    return result.rows;
+    return result.rows as EmailLog[];
   }
 
   /**
@@ -100,7 +100,7 @@ export class EmailRepository {
     `;
 
     const result = await this.pool.query(query, [type, limit, offset]);
-    return result.rows;
+    return result.rows as EmailLog[];
   }
 
   /**
@@ -113,7 +113,7 @@ export class EmailRepository {
     `;
 
     const result = await this.pool.query(query, [email]);
-    return result.rows.length > 0 && result.rows[0].is_suppressed;
+    return result.rows.length > 0 && (result.rows[0] as { is_suppressed: boolean }).is_suppressed;
   }
 
   /**
@@ -192,7 +192,12 @@ export class EmailRepository {
     `;
 
     const result = await this.pool.query(query);
-    return result.rows[0];
+    return result.rows[0] as {
+      total_bounces: number;
+      permanent_bounces: number;
+      transient_bounces: number;
+      suppressed_emails: number;
+    };
   }
 
   /**
@@ -234,7 +239,7 @@ export class EmailRepository {
       WHERE 1=1
     `;
 
-    const values: any[] = [];
+    const values: Date[] = [];
     if (startDate) {
       values.push(startDate);
       query += ` AND created_at >= $${values.length}`;
@@ -245,7 +250,13 @@ export class EmailRepository {
     }
 
     const result = await this.pool.query(query, values);
-    const stats = result.rows[0];
+    const stats = result.rows[0] as {
+      total_sent: number;
+      successful: number;
+      failed: number;
+      bounced: number;
+      complained: number;
+    };
 
     const successRate =
       stats.total_sent > 0 ? Math.round((stats.successful / stats.total_sent) * 100) : 0;

@@ -3,9 +3,10 @@
  * Tests for Amazon SES integration
  */
 
+/* eslint-disable @typescript-eslint/unbound-method */
+
 import { SESService } from '../../../src/services/email/ses.service';
 import * as sesConfig from '../../../src/config/ses';
-import { logger } from '../../../src/shared/utils/logger';
 
 // Mock dependencies
 jest.mock('../../../src/config/ses');

@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { logger } from '../utils/logger';
 import { ApiResponse } from '../types';
 
 /**
@@ -37,7 +38,7 @@ export const errorHandler = (
 
   // Log error details for debugging
   if (statusCode === 500) {
-    console.error('Unhandled Error:', err);
+    logger.error('Unhandled Error:', err);
   }
 
   res.status(statusCode).json(errorResponse);

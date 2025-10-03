@@ -4,6 +4,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
+import { logger } from '../utils/logger';
 import { verifyToken } from '../utils';
 import { validateAccessToken } from '../../services/user/auth.service';
 import { ApiResponse, AuthenticatedRequest } from '../types';
@@ -95,7 +96,7 @@ export const authenticate = async (
     // Continue to next middleware
     next();
   } catch (error) {
-    console.error('Authentication error:', error);
+    logger.error('Authentication error:', error);
     res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -147,7 +148,7 @@ export const optionalAuth = async (
 
     next();
   } catch (error) {
-    console.error('Optional authentication error:', error);
+    logger.error('Optional authentication error:', error);
     next(); // Continue even on error
   }
 };

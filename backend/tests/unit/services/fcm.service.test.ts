@@ -3,6 +3,8 @@
  * Tests for Firebase Cloud Messaging integration
  */
 
+/* eslint-disable @typescript-eslint/unbound-method */
+
 import { FCMService } from '../../../src/services/notification/fcm.service';
 import * as fcmConfig from '../../../src/config/fcm';
 

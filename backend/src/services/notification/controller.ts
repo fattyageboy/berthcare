@@ -30,7 +30,7 @@ export class NotificationController {
         return;
       }
 
-      const tokenData: RegisterTokenRequest = req.body;
+      const tokenData = req.body as RegisterTokenRequest;
       const token = await this.notificationService.registerDeviceToken(userId, tokenData);
 
       res.status(201).json({
@@ -60,7 +60,7 @@ export class NotificationController {
         return;
       }
 
-      const request: SendNotificationRequest = req.body;
+      const request = req.body as SendNotificationRequest;
       const result = await this.notificationService.sendNotification(request);
 
       if (result.success) {
@@ -181,7 +181,7 @@ export class NotificationController {
         return;
       }
 
-      const preferencesData: UpdatePreferencesRequest = req.body;
+      const preferencesData = req.body as UpdatePreferencesRequest;
       const preferences = await this.notificationService.updatePreferences(userId, preferencesData);
 
       res.status(200).json({

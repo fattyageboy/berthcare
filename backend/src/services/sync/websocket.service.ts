@@ -1,5 +1,6 @@
 import { Server as HTTPServer } from 'http';
 import { Server as SocketIOServer, Socket } from 'socket.io';
+import { logger } from '../../shared/utils/logger';
 import { WebSocketUser, EntityChangeEvent } from './websocket.types';
 import { EntityType, SyncOperation } from './types';
 
@@ -29,8 +30,7 @@ export class WebSocketService {
     });
 
     this.setupEventHandlers();
-    // eslint-disable-next-line no-console
-    console.log('WebSocket server initialized');
+    logger.info('WebSocket server initialized');
   }
 
   /**
@@ -40,8 +40,7 @@ export class WebSocketService {
     if (!this.io) return;
 
     this.io.on('connection', (socket: Socket) => {
-      // eslint-disable-next-line no-console
-      console.log(`Client connected: ${socket.id}`);
+      logger.info(`Client connected: ${socket.id}`);
 
       // Handle authentication
       socket.on('authenticate', (data: { user_id: string; organization_id?: string }) => {
@@ -50,8 +49,7 @@ export class WebSocketService {
 
       // Handle sync request
       socket.on('sync:request', (data) => {
-        // eslint-disable-next-line no-console
-        console.log(`Sync request from ${socket.id}:`, data);
+        logger.info(`Sync request from ${socket.id}:`, data);
         // Sync requests are handled via HTTP endpoints
         // This event is for notification purposes
       });
@@ -63,8 +61,7 @@ export class WebSocketService {
 
       // Handle errors
       socket.on('error', (error) => {
-        // eslint-disable-next-line no-console
-        console.error(`Socket error for ${socket.id}:`, error);
+        logger.error(`Socket error for ${socket.id}:`, error);
       });
     });
   }
@@ -114,8 +111,7 @@ export class WebSocketService {
       },
     });
 
-    // eslint-disable-next-line no-console
-    console.log(`User authenticated: ${user_id} (socket: ${socket.id})`);
+    logger.info(`User authenticated: ${user_id} (socket: ${socket.id})`);
   }
 
   /**
@@ -124,12 +120,10 @@ export class WebSocketService {
   private handleDisconnection(socket: Socket): void {
     const user = this.connectedUsers.get(socket.id);
     if (user) {
-      // eslint-disable-next-line no-console
-      console.log(`User disconnected: ${user.userId} (socket: ${socket.id})`);
+      logger.info(`User disconnected: ${user.userId} (socket: ${socket.id})`);
       this.connectedUsers.delete(socket.id);
     } else {
-      // eslint-disable-next-line no-console
-      console.log(`Client disconnected: ${socket.id}`);
+      logger.info(`Client disconnected: ${socket.id}`);
     }
   }
 
@@ -145,7 +139,7 @@ export class WebSocketService {
     organizationId?: string
   ): void {
     if (!this.io) {
-      console.warn('WebSocket server not initialized');
+      logger.warn('WebSocket server not initialized');
       return;
     }
 
@@ -172,8 +166,7 @@ export class WebSocketService {
       this.io.to(`org:${organizationId}`).emit('entity:changed', event);
     }
 
-    // eslint-disable-next-line no-console
-    console.log(
+    logger.info(
       `Broadcasted ${operation} for ${entityType}:${entityId} to user:${userId}${
         organizationId ? ` and org:${organizationId}` : ''
       }`
@@ -223,8 +216,7 @@ export class WebSocketService {
     if (this.io) {
       this.io.disconnectSockets();
       this.connectedUsers.clear();
-      // eslint-disable-next-line no-console
-      console.log('All WebSocket clients disconnected');
+      logger.info('All WebSocket clients disconnected');
     }
   }
 

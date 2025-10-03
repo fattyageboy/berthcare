@@ -3,6 +3,8 @@
  * Tests for email business logic
  */
 
+/* eslint-disable @typescript-eslint/unbound-method */
+
 import { Pool } from 'pg';
 import { EmailService } from '../../../src/services/email/service';
 import { EmailRepository } from '../../../src/services/email/repository';

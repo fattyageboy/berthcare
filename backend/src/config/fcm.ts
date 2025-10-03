@@ -26,7 +26,7 @@ export function initializeFirebase(): admin.app.App {
     }
 
     // Parse service account key from environment variable
-    const serviceAccount = JSON.parse(serviceAccountKey);
+    const serviceAccount = JSON.parse(serviceAccountKey) as admin.ServiceAccount;
 
     firebaseApp = admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
@@ -34,7 +34,7 @@ export function initializeFirebase(): admin.app.App {
 
     logger.info('Firebase Admin SDK initialized successfully');
     return firebaseApp;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('Failed to initialize Firebase Admin SDK:', error);
     throw error;
   }

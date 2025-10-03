@@ -13,6 +13,7 @@ import {
   PasswordResetEmailData,
   WelcomeEmailData,
   WeeklySummaryEmailData,
+  EmailLog,
 } from './types';
 import {
   visitReportTemplate,
@@ -195,7 +196,19 @@ export class EmailService {
   /**
    * Handle SES bounce notification
    */
-  async handleBounce(notification: any): Promise<void> {
+  async handleBounce(notification: {
+    bounce: {
+      bounceType: string;
+      bounceSubType?: string;
+      bouncedRecipients: Array<{
+        emailAddress: string;
+        diagnosticCode?: string;
+      }>;
+    };
+    mail: {
+      messageId?: string;
+    };
+  }): Promise<void> {
     try {
       const { bounce, mail } = notification;
 
@@ -223,7 +236,16 @@ export class EmailService {
   /**
    * Handle SES complaint notification
    */
-  async handleComplaint(notification: any): Promise<void> {
+  async handleComplaint(notification: {
+    complaint: {
+      complainedRecipients: Array<{
+        emailAddress: string;
+      }>;
+    };
+    mail: {
+      messageId?: string;
+    };
+  }): Promise<void> {
     try {
       const { complaint, mail } = notification;
 
@@ -246,21 +268,36 @@ export class EmailService {
   /**
    * Get email logs for a recipient
    */
-  async getEmailLogs(email: string, limit: number = 50, offset: number = 0) {
+  async getEmailLogs(email: string, limit: number = 50, offset: number = 0): Promise<EmailLog[]> {
     return this.repository.getEmailLogsByRecipient(email, limit, offset);
   }
 
   /**
    * Get bounce statistics
    */
-  async getBounceStats() {
+  async getBounceStats(): Promise<{
+    total_bounces: number;
+    permanent_bounces: number;
+    transient_bounces: number;
+    suppressed_emails: number;
+  }> {
     return this.repository.getBounceStats();
   }
 
   /**
    * Get delivery statistics
    */
-  async getDeliveryStats(startDate?: Date, endDate?: Date) {
+  async getDeliveryStats(
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<{
+    total_sent: number;
+    successful: number;
+    failed: number;
+    bounced: number;
+    complained: number;
+    success_rate: number;
+  }> {
     return this.repository.getDeliveryStats(startDate, endDate);
   }
 

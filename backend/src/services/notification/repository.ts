@@ -47,7 +47,7 @@ export class NotificationRepository {
     ];
 
     const result = await this.pool.query(query, values);
-    return result.rows[0];
+    return result.rows[0] as PushNotificationToken;
   }
 
   /**
@@ -61,7 +61,7 @@ export class NotificationRepository {
     `;
 
     const result = await this.pool.query(query, [userId]);
-    return result.rows;
+    return result.rows as PushNotificationToken[];
   }
 
   /**
@@ -128,7 +128,7 @@ export class NotificationRepository {
     ];
 
     const result = await this.pool.query(query, values);
-    return result.rows[0];
+    return result.rows[0] as Notification;
   }
 
   /**
@@ -180,7 +180,7 @@ export class NotificationRepository {
     `;
 
     const result = await this.pool.query(query, [userId, limit, offset]);
-    return result.rows;
+    return result.rows as Notification[];
   }
 
   /**
@@ -193,7 +193,7 @@ export class NotificationRepository {
     `;
 
     const result = await this.pool.query(query, [userId]);
-    return parseInt(result.rows[0].count, 10);
+    return parseInt((result.rows[0] as { count: string }).count, 10);
   }
 
   /**
@@ -206,7 +206,7 @@ export class NotificationRepository {
     `;
 
     const result = await this.pool.query(query, [userId]);
-    return result.rows[0] || null;
+    return (result.rows[0] as NotificationPreferences | undefined) || null;
   }
 
   /**
@@ -250,7 +250,7 @@ export class NotificationRepository {
     ];
 
     const result = await this.pool.query(query, values);
-    return result.rows[0];
+    return result.rows[0] as NotificationPreferences;
   }
 
   /**

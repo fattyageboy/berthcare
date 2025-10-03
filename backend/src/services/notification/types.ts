@@ -30,7 +30,7 @@ export interface Notification {
   type: NotificationType;
   title: string;
   body: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   priority: NotificationPriority;
   status: NotificationStatus;
   sent_at?: Date;
@@ -65,7 +65,7 @@ export interface SendNotificationRequest {
   type: NotificationType;
   title: string;
   body: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   priority?: NotificationPriority;
 }
 

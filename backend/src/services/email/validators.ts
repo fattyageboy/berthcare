@@ -7,11 +7,22 @@ import { body, query } from 'express-validator';
 
 export const sendEmailValidators = [
   body('to')
-    .custom((value) => {
+    .custom((value: unknown) => {
       if (Array.isArray(value)) {
-        return value.every((r) => r.email && typeof r.email === 'string');
+        return value.every(
+          (r: unknown) =>
+            typeof r === 'object' &&
+            r !== null &&
+            'email' in r &&
+            typeof (r as { email: unknown }).email === 'string'
+        );
       }
-      return value.email && typeof value.email === 'string';
+      return (
+        typeof value === 'object' &&
+        value !== null &&
+        'email' in value &&
+        typeof (value as { email: unknown }).email === 'string'
+      );
     })
     .withMessage('Valid recipient email(s) required'),
   body('subject')

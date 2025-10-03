@@ -3,6 +3,8 @@
  * Tests for notification business logic
  */
 
+/* eslint-disable @typescript-eslint/unbound-method */
+
 import { Pool } from 'pg';
 import { NotificationService } from '../../../src/services/notification/service';
 import { NotificationRepository } from '../../../src/services/notification/repository';
@@ -315,6 +317,7 @@ describe('NotificationService', () => {
       const now = new Date();
       now.setHours(23, 30); // 11:30 PM
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       jest.spyOn(global, 'Date').mockImplementation(() => now as any);
 
       const mockPrefs = {
