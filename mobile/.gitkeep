@@ -1,0 +1,10 @@
+# Mobile Application Directory
+
+This directory will contain the mobile application scaffold for BerthCare.
+
+## Planned Structure
+- React Native or Flutter mobile app
+- Integration with backend APIs
+- Push notification support
+- Offline-first architecture
+- Photo upload capabilities
