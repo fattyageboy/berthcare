@@ -7,6 +7,7 @@
 import { Router, Response } from 'express';
 import { authenticate, requirePermission } from '../../shared/middleware';
 import { ApiResponse, AuthenticatedRequest, Permission } from '../../shared/types';
+import { logger } from '../../shared/utils/logger';
 
 const router = Router();
 
@@ -17,9 +18,7 @@ const router = Router();
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 router.get(
   '/my-visits',
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   authenticate,
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   requirePermission(Permission.READ_OWN_VISITS),
   (req: AuthenticatedRequest, res: Response): void => {
     try {
@@ -35,7 +34,7 @@ router.get(
         },
       } as ApiResponse<{ userId: string | undefined; visits: unknown[]; message: string }>);
     } catch (error) {
-      console.error('Get my visits error:', error);
+      logger.error('Get my visits error:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -52,9 +51,7 @@ router.get(
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 router.post(
   '/',
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   authenticate,
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   requirePermission(Permission.WRITE_OWN_VISITS),
   (req: AuthenticatedRequest, res: Response): void => {
     try {
@@ -93,7 +90,7 @@ router.post(
         message: string;
       }>);
     } catch (error) {
-      console.error('Create visit error:', error);
+      logger.error('Create visit error:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -110,9 +107,7 @@ router.post(
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 router.get(
   '/',
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   authenticate,
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   requirePermission(Permission.READ_ALL_VISITS),
   (req: AuthenticatedRequest, res: Response): void => {
     try {
@@ -129,7 +124,7 @@ router.get(
         },
       } as ApiResponse<{ visits: unknown[]; filters: Record<string, unknown>; message: string }>);
     } catch (error) {
-      console.error('Get all visits error:', error);
+      logger.error('Get all visits error:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -146,9 +141,7 @@ router.get(
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 router.get(
   '/:visitId',
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   authenticate,
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const { visitId } = req.params;
@@ -192,7 +185,7 @@ router.get(
         } as ApiResponse<{ visitId: string; message: string }>);
       }
     } catch (error) {
-      console.error('Get visit error:', error);
+      logger.error('Get visit error:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -209,9 +202,7 @@ router.get(
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 router.put(
   '/:visitId',
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   authenticate,
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const { visitId } = req.params;
@@ -269,7 +260,7 @@ router.put(
         return;
       }
     } catch (error) {
-      console.error('Update visit error:', error);
+      logger.error('Update visit error:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -286,9 +277,7 @@ router.put(
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 router.delete(
   '/:visitId',
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   authenticate,
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   requirePermission(Permission.WRITE_ALL_VISITS),
   (req: AuthenticatedRequest, res: Response): void => {
     try {
@@ -303,7 +292,7 @@ router.delete(
         },
       } as ApiResponse<{ visitId: string; message: string }>);
     } catch (error) {
-      console.error('Delete visit error:', error);
+      logger.error('Delete visit error:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -320,9 +309,7 @@ router.delete(
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 router.get(
   '/nurse/:nurseId',
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   authenticate,
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   requirePermission(Permission.READ_ALL_VISITS),
   (req: AuthenticatedRequest, res: Response): void => {
     try {
@@ -338,7 +325,7 @@ router.get(
         },
       } as ApiResponse<{ nurseId: string; visits: unknown[]; message: string }>);
     } catch (error) {
-      console.error('Get nurse visits error:', error);
+      logger.error('Get nurse visits error:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',

@@ -1,0 +1,313 @@
+### Email Service API Test Examples
+### Base URL
+@baseUrl = http://localhost:3000/api/email
+@authToken = your-jwt-token-here
+
+### ============================================================================
+### Send Emails
+### ============================================================================
+
+### Send Visit Report Email
+POST {{baseUrl}}/visit-report
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "recipient_email": "family@example.com",
+  "recipient_name": "Jane Doe",
+  "data": {
+    "visit_id": "550e8400-e29b-41d4-a716-446655440000",
+    "client_name": "John Smith",
+    "nurse_name": "Mary Johnson",
+    "visit_date": "October 3, 2025",
+    "visit_type": "Personal Care",
+    "duration": "2 hours",
+    "notes": "Visit completed successfully. Client was in good spirits and cooperative throughout the visit.",
+    "care_activities": [
+      "Assisted with bathing and personal hygiene",
+      "Medication administration",
+      "Vital signs monitoring",
+      "Light meal preparation"
+    ],
+    "medications": [
+      "Aspirin 81mg - Administered at 10:00 AM",
+      "Lisinopril 10mg - Administered at 10:00 AM"
+    ],
+    "vital_signs": {
+      "Blood Pressure": "120/80 mmHg",
+      "Heart Rate": "72 bpm",
+      "Temperature": "98.6°F",
+      "Oxygen Saturation": "98%"
+    }
+  }
+}
+
+### Send Password Reset Email
+POST {{baseUrl}}/password-reset
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "recipient_email": "user@example.com",
+  "recipient_name": "John Doe",
+  "data": {
+    "user_name": "John Doe",
+    "reset_link": "https://app.berthcare.com/reset-password?token=abc123def456",
+    "expiry_hours": 24
+  }
+}
+
+### Send Welcome Email
+POST {{baseUrl}}/welcome
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "recipient_email": "newuser@example.com",
+  "recipient_name": "New User",
+  "data": {
+    "user_name": "New User",
+    "role": "Registered Nurse",
+    "login_link": "https://app.berthcare.com/login",
+    "support_email": "support@berthcare.com"
+  }
+}
+
+### Send Weekly Summary Email
+POST {{baseUrl}}/weekly-summary
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "recipient_email": "nurse@example.com",
+  "recipient_name": "Mary Johnson",
+  "data": {
+    "user_name": "Mary Johnson",
+    "week_start": "September 27, 2025",
+    "week_end": "October 3, 2025",
+    "total_visits": 25,
+    "completed_visits": 23,
+    "missed_visits": 2,
+    "total_hours": 50,
+    "highlights": [
+      "Completed all scheduled visits on time",
+      "Received positive feedback from 5 families",
+      "Administered medications without errors",
+      "Mentored new team member"
+    ]
+  }
+}
+
+### Send Custom Email
+POST {{baseUrl}}/send
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "to": {
+    "email": "user@example.com",
+    "name": "John Doe"
+  },
+  "subject": "Important System Notification",
+  "html": "<h1>System Notification</h1><p>This is an important update about your account.</p>",
+  "text": "System Notification\n\nThis is an important update about your account.",
+  "type": "system_notification"
+}
+
+### Send Email with Multiple Recipients
+POST {{baseUrl}}/send
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "to": [
+    {
+      "email": "user1@example.com",
+      "name": "User One"
+    },
+    {
+      "email": "user2@example.com",
+      "name": "User Two"
+    }
+  ],
+  "subject": "Team Announcement",
+  "html": "<h1>Team Announcement</h1><p>Important update for the team.</p>",
+  "type": "system_notification"
+}
+
+### ============================================================================
+### Email Logs and Statistics
+### ============================================================================
+
+### Get Email Logs for Recipient
+GET {{baseUrl}}/logs?email=user@example.com&limit=50&offset=0
+Authorization: Bearer {{authToken}}
+
+### Get Email Logs (Page 2)
+GET {{baseUrl}}/logs?email=user@example.com&limit=20&offset=20
+Authorization: Bearer {{authToken}}
+
+### Get Bounce Statistics
+GET {{baseUrl}}/stats/bounces
+Authorization: Bearer {{authToken}}
+
+### Get Delivery Statistics (All Time)
+GET {{baseUrl}}/stats/delivery
+Authorization: Bearer {{authToken}}
+
+### Get Delivery Statistics (Date Range)
+GET {{baseUrl}}/stats/delivery?start_date=2025-09-01&end_date=2025-10-03
+Authorization: Bearer {{authToken}}
+
+### Check if Email is Suppressed
+GET {{baseUrl}}/suppressed/user@example.com
+Authorization: Bearer {{authToken}}
+
+### Check Bounced Email
+GET {{baseUrl}}/suppressed/bounced@example.com
+Authorization: Bearer {{authToken}}
+
+### ============================================================================
+### SES Webhook (Bounce/Complaint Handling)
+### ============================================================================
+
+### Simulate Bounce Notification
+POST {{baseUrl}}/webhook/ses
+Content-Type: application/json
+
+{
+  "notificationType": "Bounce",
+  "bounce": {
+    "bounceType": "Permanent",
+    "bounceSubType": "General",
+    "bouncedRecipients": [
+      {
+        "emailAddress": "bounced@example.com",
+        "status": "5.1.1",
+        "diagnosticCode": "smtp; 550 5.1.1 user unknown"
+      }
+    ],
+    "timestamp": "2025-10-03T10:00:00.000Z"
+  },
+  "mail": {
+    "messageId": "0000014a-1234-5678-9abc-def012345678-000000",
+    "timestamp": "2025-10-03T09:59:00.000Z",
+    "source": "noreply@berthcare.com",
+    "destination": ["bounced@example.com"]
+  }
+}
+
+### Simulate Complaint Notification
+POST {{baseUrl}}/webhook/ses
+Content-Type: application/json
+
+{
+  "notificationType": "Complaint",
+  "complaint": {
+    "complainedRecipients": [
+      {
+        "emailAddress": "complaint@example.com"
+      }
+    ],
+    "timestamp": "2025-10-03T10:00:00.000Z",
+    "complaintFeedbackType": "abuse"
+  },
+  "mail": {
+    "messageId": "0000014a-1234-5678-9abc-def012345678-000000",
+    "timestamp": "2025-10-03T09:59:00.000Z",
+    "source": "noreply@berthcare.com",
+    "destination": ["complaint@example.com"]
+  }
+}
+
+### ============================================================================
+### SES Mailbox Simulator (Testing)
+### ============================================================================
+
+### Test Successful Delivery
+POST {{baseUrl}}/send
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "to": {
+    "email": "success@simulator.amazonses.com",
+    "name": "Success Test"
+  },
+  "subject": "Test Successful Delivery",
+  "html": "<p>This should be delivered successfully.</p>",
+  "type": "system_notification"
+}
+
+### Test Bounce
+POST {{baseUrl}}/send
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "to": {
+    "email": "bounce@simulator.amazonses.com",
+    "name": "Bounce Test"
+  },
+  "subject": "Test Bounce",
+  "html": "<p>This should bounce.</p>",
+  "type": "system_notification"
+}
+
+### Test Complaint
+POST {{baseUrl}}/send
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "to": {
+    "email": "complaint@simulator.amazonses.com",
+    "name": "Complaint Test"
+  },
+  "subject": "Test Complaint",
+  "html": "<p>This should generate a complaint.</p>",
+  "type": "system_notification"
+}
+
+### ============================================================================
+### Error Cases
+### ============================================================================
+
+### Invalid Email Address
+POST {{baseUrl}}/send
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "to": {
+    "email": "invalid-email",
+    "name": "Invalid"
+  },
+  "subject": "Test",
+  "html": "<p>Test</p>",
+  "type": "system_notification"
+}
+
+### Missing Required Fields
+POST {{baseUrl}}/visit-report
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "recipient_email": "user@example.com"
+}
+
+### Invalid Email Type
+POST {{baseUrl}}/send
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "to": {
+    "email": "user@example.com",
+    "name": "User"
+  },
+  "subject": "Test",
+  "html": "<p>Test</p>",
+  "type": "invalid_type"
+}

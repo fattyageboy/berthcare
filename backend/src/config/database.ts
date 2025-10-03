@@ -1,4 +1,5 @@
 import { Pool, PoolClient, PoolConfig, QueryResult } from 'pg';
+import { logger } from '../shared/utils/logger';
 
 /**
  * PostgreSQL Database Configuration and Connection Management
@@ -51,15 +52,15 @@ class DatabaseConnection {
 
       // Handle pool errors
       this.pool.on('error', (err) => {
-        console.error('Unexpected database pool error:', err);
+        logger.error('Unexpected database pool error:', err);
       });
 
       // Test connection
       const client = await this.pool.connect();
-      console.error('PostgreSQL connection pool established successfully');
+      logger.info('PostgreSQL connection pool established successfully');
       client.release();
     } catch (error) {
-      console.error('Failed to establish database connection:', error);
+      logger.error('Failed to establish database connection:', error);
       throw error;
     }
   }
@@ -170,7 +171,7 @@ class DatabaseConnection {
   public async disconnect(): Promise<void> {
     if (this.pool) {
       await this.pool.end();
-      console.error('Database connection pool closed');
+      logger.info('Database connection pool closed');
       this.pool = null;
     }
   }

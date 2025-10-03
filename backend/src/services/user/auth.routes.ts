@@ -7,6 +7,7 @@ import { Router, Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 import { authRateLimiter } from '../../shared/middleware';
 import { ApiResponse, LoginRequest, RefreshTokenRequest, AuthResponse } from '../../shared/types';
+import { logger } from '../../shared/utils/logger';
 import { login, refreshAccessToken } from './auth.service';
 import { validateLogin, validateRefreshToken } from './validation';
 
@@ -20,7 +21,6 @@ router.post(
   '/login',
   authRateLimiter,
   validateLogin,
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   async (req: Request, res: Response): Promise<void> => {
     try {
       // Check for validation errors
@@ -80,7 +80,7 @@ router.post(
       }
 
       // Generic error response
-      console.error('Login error:', error);
+      logger.error('Login error:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -98,7 +98,6 @@ router.post(
   '/refresh',
   authRateLimiter,
   validateRefreshToken,
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   async (req: Request, res: Response): Promise<void> => {
     try {
       // Check for validation errors
@@ -167,7 +166,7 @@ router.post(
       }
 
       // Generic error response
-      console.error('Token refresh error:', error);
+      logger.error('Token refresh error:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',

@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { logger } from '../utils/logger';
 
 /**
  * Request logging middleware
@@ -12,11 +13,11 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction): 
     const logMessage = `${req.method} ${req.path} ${res.statusCode} - ${duration}ms`;
 
     if (res.statusCode >= 500) {
-      console.error(logMessage);
+      logger.error(logMessage);
     } else if (res.statusCode >= 400) {
-      console.warn(logMessage);
+      logger.warn(logMessage);
     } else {
-      console.error(logMessage);
+      logger.info(logMessage);
     }
   });
 

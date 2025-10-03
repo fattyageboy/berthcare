@@ -1,4 +1,5 @@
 import Redis, { RedisOptions } from 'ioredis';
+import { logger } from '../shared/utils/logger';
 
 /**
  * Redis Configuration and Connection Management
@@ -55,30 +56,30 @@ class RedisConnection {
 
       // Event handlers
       this.client.on('connect', () => {
-        console.error('Redis connection established');
+        logger.info('Redis connection established');
       });
 
       this.client.on('ready', () => {
-        console.error('Redis client ready');
+        logger.info('Redis client ready');
       });
 
       this.client.on('error', (err) => {
-        console.error('Redis client error:', err);
+        logger.error('Redis client error:', err);
       });
 
       this.client.on('close', () => {
-        console.error('Redis connection closed');
+        logger.info('Redis connection closed');
       });
 
       this.client.on('reconnecting', () => {
-        console.error('Redis client reconnecting...');
+        logger.info('Redis client reconnecting...');
       });
 
       // Wait for connection to be ready
       await this.waitForReady();
-      console.error('Redis connection pool established successfully');
+      logger.info('Redis connection pool established successfully');
     } catch (error) {
-      console.error('Failed to establish Redis connection:', error);
+      logger.error('Failed to establish Redis connection:', error);
       throw error;
     }
   }
@@ -117,7 +118,7 @@ class RedisConnection {
   private defaultRetryStrategy(times: number): number | void {
     const delay = Math.min(times * 50, 2000);
     if (times > 10) {
-      console.error('Redis connection retry limit exceeded');
+      logger.error('Redis connection retry limit exceeded');
       return undefined; // Stop retrying
     }
     return delay;
@@ -213,7 +214,7 @@ class RedisConnection {
         };
       } catch (infoError) {
         // Server info is optional, continue without it
-        console.warn('Failed to retrieve Redis server info:', infoError);
+        logger.warn('Failed to retrieve Redis server info:', infoError);
       }
 
       return {
@@ -258,7 +259,7 @@ class RedisConnection {
   public async disconnect(): Promise<void> {
     if (this.client) {
       await this.client.quit();
-      console.error('Redis connection closed');
+      logger.info('Redis connection closed');
       this.client = null;
     }
   }

@@ -11,6 +11,7 @@ import {
   requireSameOrganization,
 } from '../../shared/middleware';
 import { ApiResponse, AuthenticatedRequest, UserRole, Permission } from '../../shared/types';
+import { logger } from '../../shared/utils/logger';
 
 const router = Router();
 
@@ -27,7 +28,7 @@ router.get('/me', authenticate, (req: AuthenticatedRequest, res: Response): void
       data: req.user,
     } as ApiResponse<typeof req.user>);
   } catch (error) {
-    console.error('Get user profile error:', error);
+    logger.error('Get user profile error:', error);
     res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -43,9 +44,7 @@ router.get('/me', authenticate, (req: AuthenticatedRequest, res: Response): void
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 router.get(
   '/:userId',
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   authenticate,
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const { userId } = req.params;
@@ -82,7 +81,7 @@ router.get(
         data: req.user,
       } as ApiResponse<typeof req.user>);
     } catch (error) {
-      console.error('Get user error:', error);
+      logger.error('Get user error:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -98,9 +97,7 @@ router.get(
  */
 router.get(
   '/',
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   authenticate,
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   requirePermission(Permission.READ_USERS),
   (_req: AuthenticatedRequest, res: Response): void => {
     try {
@@ -114,7 +111,7 @@ router.get(
         },
       } as ApiResponse<{ users: unknown[]; message: string }>);
     } catch (error) {
-      console.error('List users error:', error);
+      logger.error('List users error:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -131,9 +128,7 @@ router.get(
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 router.put(
   '/:userId',
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   authenticate,
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const { userId } = req.params;
@@ -170,7 +165,7 @@ router.put(
         },
       } as ApiResponse<{ id: string; message: string }>);
     } catch (error) {
-      console.error('Update user error:', error);
+      logger.error('Update user error:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -186,9 +181,7 @@ router.put(
  */
 router.delete(
   '/:userId',
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   authenticate,
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   requireRole(UserRole.ADMIN, UserRole.SUPERVISOR),
   (req: AuthenticatedRequest, res: Response): void => {
     try {
@@ -203,7 +196,7 @@ router.delete(
         },
       } as ApiResponse<{ id: string; message: string }>);
     } catch (error) {
-      console.error('Delete user error:', error);
+      logger.error('Delete user error:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -219,9 +212,7 @@ router.delete(
  */
 router.post(
   '/:userId/assign-role',
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   authenticate,
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   requirePermission(Permission.ASSIGN_ROLES),
   (req: AuthenticatedRequest, res: Response): void => {
     try {
@@ -250,7 +241,7 @@ router.post(
         },
       } as ApiResponse<{ userId: string; newRole: string; message: string }>);
     } catch (error) {
-      console.error('Assign role error:', error);
+      logger.error('Assign role error:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -266,11 +257,8 @@ router.post(
  */
 router.get(
   '/organization/:organizationId',
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   authenticate,
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   requireSameOrganization('organizationId'),
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   requirePermission(Permission.READ_USERS),
   (req: AuthenticatedRequest, res: Response): void => {
     try {
@@ -286,7 +274,7 @@ router.get(
         },
       } as ApiResponse<{ organizationId: string; users: unknown[]; message: string }>);
     } catch (error) {
-      console.error('Get organization users error:', error);
+      logger.error('Get organization users error:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',

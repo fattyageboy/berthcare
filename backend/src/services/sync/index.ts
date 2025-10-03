@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import { createServer } from 'http';
 import { config } from '../../config';
 import { configureSecurity, errorHandler, requestLogger, ServiceStatus } from '../../shared';
+import { logger } from '../../shared/utils/logger';
 import syncRoutes from './routes';
 import { websocketService } from './websocket.service';
 
@@ -48,20 +49,16 @@ app.use(errorHandler);
 
 // Start server
 const server = httpServer.listen(PORT, () => {
-  // eslint-disable-next-line no-console
-  console.error(`Sync service listening on port ${PORT}`);
-  // eslint-disable-next-line no-console
-  console.error(`WebSocket server ready at ws://localhost:${PORT}/socket.io`);
+  logger.info(`Sync service listening on port ${PORT}`);
+  logger.info(`WebSocket server ready at ws://localhost:${PORT}/socket.io`);
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  // eslint-disable-next-line no-console
-  console.log('SIGTERM received, closing connections...');
+  logger.info('SIGTERM received, closing connections...');
   websocketService.disconnectAll();
   server.close(() => {
-    // eslint-disable-next-line no-console
-    console.log('Server closed');
+    logger.info('Server closed');
     process.exit(0);
   });
 });

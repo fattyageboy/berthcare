@@ -7,6 +7,7 @@ import {
   HealthCheckResponse,
   ServiceStatus,
 } from '../../shared';
+import { logger } from '../../shared/utils/logger';
 import authRoutes from './auth.routes';
 import userRoutes from './user.routes';
 import visitRoutes from './visit.routes';
@@ -30,9 +31,9 @@ const initializeConnections = async (): Promise<void> => {
   try {
     await database.connect();
     await redis.connect();
-    console.error('All connections initialized successfully');
+    logger.info('All connections initialized successfully');
   } catch (error) {
-    console.error('Failed to initialize connections:', error);
+    logger.error('Failed to initialize connections:', error);
     // Don't exit in development, allow service to start
     if (config.nodeEnv === 'production') {
       process.exit(1);
@@ -154,18 +155,18 @@ app.use(errorHandler);
 
 // Start server and initialize connections
 const server = app.listen(PORT, () => {
-  console.error(`User service listening on port ${PORT}`);
+  logger.info(`User service listening on port ${PORT}`);
   void initializeConnections();
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  console.error('SIGTERM received, shutting down gracefully...');
+  logger.info('SIGTERM received, shutting down gracefully...');
   server.close(() => {
     void (async () => {
       await database.disconnect();
       await redis.disconnect();
-      console.error('Server closed');
+      logger.info('Server closed');
       process.exit(0);
     })();
   });

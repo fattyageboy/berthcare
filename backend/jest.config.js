@@ -22,6 +22,13 @@ module.exports = {
     'src/services/file-upload/photo.service.ts',
     'src/services/file-upload/s3.service.ts',
     'src/services/file-upload/multer.config.ts',
+    'src/services/notification/repository.ts',
+    'src/services/notification/fcm.service.ts',
+    'src/services/notification/service.ts',
+    'src/services/email/repository.ts',
+    'src/services/email/ses.service.ts',
+    'src/services/email/service.ts',
+    'src/services/email/templates.ts',
   ],
   coverageThreshold: {
     global: {

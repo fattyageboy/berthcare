@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
+import { logger } from '../../shared/utils/logger';
 import { syncService } from './service';
 import { ApiResponse } from '../../shared';
 import { PullRequest, PushRequest } from './types';
@@ -49,7 +50,7 @@ export class SyncController {
 
       res.json(response);
     } catch (error) {
-      console.error('Error pulling changes:', error);
+      logger.error('Error pulling changes:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to pull changes',
@@ -97,7 +98,7 @@ export class SyncController {
 
       res.json(response);
     } catch (error) {
-      console.error('Error pushing changes:', error);
+      logger.error('Error pushing changes:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to push changes',

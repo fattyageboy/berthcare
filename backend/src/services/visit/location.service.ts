@@ -1,4 +1,5 @@
 import { Client as GoogleMapsClient, GeocodeResult } from '@googlemaps/google-maps-services-js';
+import { logger } from '../../shared/utils/logger';
 
 /**
  * Location Verification Service
@@ -35,7 +36,7 @@ export class LocationVerificationService {
     this.apiKey = process.env.GOOGLE_MAPS_API_KEY || '';
 
     if (!this.apiKey) {
-      console.warn('GOOGLE_MAPS_API_KEY not configured - location verification will fail');
+      logger.warn('GOOGLE_MAPS_API_KEY not configured - location verification will fail');
     }
   }
 
@@ -70,7 +71,7 @@ export class LocationVerificationService {
         longitude: location.lng,
       };
     } catch (error) {
-      console.error('Geocoding error:', error);
+      logger.error('Geocoding error:', error);
       throw new Error('Failed to geocode address');
     }
   }
@@ -138,7 +139,7 @@ export class LocationVerificationService {
 
       return isApproximate || !hasUrbanIndicators;
     } catch (error) {
-      console.error('Rural area detection error:', error);
+      logger.error('Rural area detection error:', error);
       // Default to rural (more permissive) on error
       return true;
     }

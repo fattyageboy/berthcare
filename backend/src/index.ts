@@ -1,4 +1,5 @@
 import { config, validateConfig } from './config';
+import { logger } from './shared/utils/logger';
 
 /**
  * Main entry point for BerthCare backend services
@@ -8,12 +9,12 @@ import { config, validateConfig } from './config';
 // Validate configuration on startup
 validateConfig();
 
-console.error('='.repeat(50));
-console.error('BerthCare Backend Services');
-console.error('='.repeat(50));
-console.error(`Environment: ${config.nodeEnv}`);
-console.error(`Port: ${config.port}`);
-console.error('='.repeat(50));
+logger.info('='.repeat(50));
+logger.info('BerthCare Backend Services');
+logger.info('='.repeat(50));
+logger.info(`Environment: ${config.nodeEnv}`);
+logger.info(`Port: ${config.port}`);
+logger.info('='.repeat(50));
 
 // Import and start individual services
 // Note: In production, each service would run in its own process/container
@@ -25,9 +26,9 @@ console.error('='.repeat(50));
 // import './services/sync';
 // import './services/notification';
 
-console.error('\nTo start individual services:');
-console.error('  User Service:         ts-node src/services/user');
-console.error('  Visit Service:        ts-node src/services/visit');
-console.error('  Sync Service:         ts-node src/services/sync');
-console.error('  Notification Service: ts-node src/services/notification');
-console.error('='.repeat(50));
+logger.info('\nTo start individual services:');
+logger.info('  User Service:         ts-node src/services/user');
+logger.info('  Visit Service:        ts-node src/services/visit');
+logger.info('  Sync Service:         ts-node src/services/sync');
+logger.info('  Notification Service: ts-node src/services/notification');
+logger.info('='.repeat(50));
