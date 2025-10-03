@@ -235,11 +235,11 @@ export class NotificationService {
       const isInQuietHours =
         preferences.quiet_hours_start <= preferences.quiet_hours_end
           ? // Normal range (e.g., 22:00 to 23:00)
-            currentTime >= preferences.quiet_hours_start &&
-            currentTime <= preferences.quiet_hours_end
+          currentTime >= preferences.quiet_hours_start &&
+          currentTime <= preferences.quiet_hours_end
           : // Spans midnight (e.g., 22:00 to 08:00)
-            currentTime >= preferences.quiet_hours_start ||
-            currentTime <= preferences.quiet_hours_end;
+          currentTime >= preferences.quiet_hours_start ||
+          currentTime <= preferences.quiet_hours_end;
 
       if (isInQuietHours) {
         // Don't block high-priority team alerts during quiet hours

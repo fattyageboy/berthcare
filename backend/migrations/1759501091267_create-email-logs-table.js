@@ -123,10 +123,10 @@ exports.up = (pgm) => {
   pgm.createIndex('email_bounces', 'email', { name: 'idx_email_bounces_email', unique: true });
   pgm.createIndex('email_bounces', 'is_suppressed', { name: 'idx_email_bounces_suppressed' });
 
-  pgm.sql(\`
+  pgm.sql(`
     COMMENT ON TABLE email_logs IS 'Email delivery history and tracking';
     COMMENT ON TABLE email_bounces IS 'Email bounce tracking and suppression list';
-  \`);
+  `);
 };
 
 exports.down = (pgm) => {

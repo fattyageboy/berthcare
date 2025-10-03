@@ -416,11 +416,11 @@ users (1) ──< (N) sync_state
      │   (access_token, refresh_token, id_token)      │
      │                                                │
      ▼                                                │
-┌──────────────┐                                     │
-│ User Service │                                     │
-└──────┬───────┘                                     │
+┌──────────────┐                                      │
+│ User Service │                                      │
+└──────┬───────┘                                      │
        │                                              │
-       │ 4. Validate Access Token                    │
+       │ 4. Validate Access Token                     │
        │<─────────────────────────────────────────────
        │                                              │
        │ 5. Extract User Claims                       │
@@ -456,16 +456,16 @@ users (1) ──< (N) sync_state
 
 #### Roles & Permissions Matrix
 
-| Permission | Nurse | Coordinator | Admin | Family |
-|------------|-------|-------------|-------|--------|
-| `read:own_visits` | ✅ | ✅ | ✅ | ✅ |
-| `write:own_visits` | ✅ | ✅ | ✅ | ❌ |
-| `read:all_visits` | ❌ | ✅ | ✅ | ❌ |
-| `write:all_visits` | ❌ | ✅ | ✅ | ❌ |
-| `read:users` | ❌ | ✅ | ✅ | ❌ |
-| `write:users` | ❌ | ❌ | ✅ | ❌ |
-| `manage:organization` | ❌ | ❌ | ✅ | ❌ |
-| `read:reports` | ❌ | ✅ | ✅ | ✅ |
+| Permission            | Nurse | Coordinator | Admin | Family |
+|-----------------------|-------|-------------|-------|--------|
+| `read:own_visits`     | ✅    | ✅          | ✅     | ✅     |
+| `write:own_visits`.   | ✅    | ✅          | ✅     | ❌     |
+| `read:all_visits`     | ❌    | ✅          | ✅     | ❌     |
+| `write:all_visits`    | ❌    | ✅          | ✅     | ❌     |
+| `read:users`          | ❌    | ✅          | ✅     | ❌     |
+| `write:users`         | ❌    | ❌          | ✅     | ❌     |
+| `manage:organization` | ❌    | ❌          | ✅     | ❌     |
+| `read:reports`        | ❌    | ✅          | ✅     | ✅     |
 
 #### Middleware Chain
 
@@ -505,18 +505,18 @@ router.get('/api/visits',
 
 ### HTTP Status Codes
 
-| Code | Meaning | Usage |
-|------|---------|-------|
-| 200 | OK | Successful GET, PUT, PATCH |
-| 201 | Created | Successful POST |
-| 204 | No Content | Successful DELETE |
-| 400 | Bad Request | Validation errors |
-| 401 | Unauthorized | Missing/invalid authentication |
-| 403 | Forbidden | Insufficient permissions |
-| 404 | Not Found | Resource doesn't exist |
-| 409 | Conflict | Resource conflict (e.g., duplicate) |
-| 429 | Too Many Requests | Rate limit exceeded |
-| 500 | Internal Server Error | Server error |
+| Code | Meaning               | Usage                               |
+|------|-----------------------|-------------------------------------|
+| 200  | OK                    | Successful GET, PUT, PATCH          |
+| 201  | Created               | Successful POST                     |
+| 204  | No Content            | Successful DELETE                   |
+| 400  | Bad Request           | Validation errors                   |
+| 401  | Unauthorized          | Missing/invalid authentication      |
+| 403  | Forbidden             | Insufficient permissions            |
+| 404  | Not Found             | Resource doesn't exist              |
+| 409  | Conflict              | Resource conflict (e.g., duplicate) |
+| 429  | Too Many Requests     | Rate limit exceeded                 |
+| 500  | Internal Server Error | Server error                        |
 
 ### Rate Limiting
 
@@ -540,8 +540,8 @@ router.get('/api/visits',
 │  App   │                                              └──────┬───────┘
 └───┬────┘                                                     │
     │                                                          │
-    │ 1. POST /api/visits/:id/check-in                        │
-    │    { latitude, longitude, accuracy, timestamp }         │
+    │ 1. POST /api/visits/:id/check-in                         │
+    │    { latitude, longitude, accuracy, timestamp }          │
     │─────────────────────────────────────────────────────────>│
     │                                                          │
     │                                                          │ 2. Validate JWT

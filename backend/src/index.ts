@@ -20,15 +20,11 @@ logger.info('='.repeat(50));
 // Note: In production, each service would run in its own process/container
 // For development, you can start them individually or together
 
-// Uncomment to auto-start all services:
-// import './services/user';
-// import './services/visit';
-// import './services/sync';
-// import './services/notification';
+// Auto-start all services in development:
+import './services/user';
+import './services/visit';
+import './services/sync';
+import './services/notification';
 
-logger.info('\nTo start individual services:');
-logger.info('  User Service:         ts-node src/services/user');
-logger.info('  Visit Service:        ts-node src/services/visit');
-logger.info('  Sync Service:         ts-node src/services/sync');
-logger.info('  Notification Service: ts-node src/services/notification');
+logger.info('\nStarting all services...');
 logger.info('='.repeat(50));

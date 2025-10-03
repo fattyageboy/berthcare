@@ -58,9 +58,23 @@ exports.up = (pgm) => {
 
   // Sync operation ENUM
   pgm.createType('sync_operation', ['create', 'update', 'delete']);
+
+  // Create trigger function for updating updated_at timestamp
+  pgm.sql(`
+    CREATE OR REPLACE FUNCTION update_updated_at_column()
+    RETURNS TRIGGER AS $$
+    BEGIN
+      NEW.updated_at = NOW();
+      RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+  `);
 };
 
 exports.down = (pgm) => {
+  // Drop trigger function
+  pgm.sql('DROP FUNCTION IF EXISTS update_updated_at_column CASCADE;');
+  
   // Drop ENUMs in reverse order to avoid dependency issues
   pgm.dropType('sync_operation');
   pgm.dropType('family_access_level');
