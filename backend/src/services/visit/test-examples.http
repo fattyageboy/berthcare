@@ -1,0 +1,201 @@
+### Visit Service API Test Examples
+### Use with REST Client extension in VS Code or similar HTTP client
+
+@baseUrl = http://localhost:3002
+@userId = 550e8400-e29b-41d4-a716-446655440000
+@visitId = 650e8400-e29b-41d4-a716-446655440001
+
+### 1. Health Check
+GET {{baseUrl}}/health
+
+### 2. Get Visits - Basic
+GET {{baseUrl}}/api/visits?date_from=2024-01-01&date_to=2024-12-31
+x-user-id: {{userId}}
+
+### 3. Get Visits - With Filters
+GET {{baseUrl}}/api/visits?date_from=2024-01-01&date_to=2024-12-31&status=scheduled,in_progress&page=1&per_page=20
+x-user-id: {{userId}}
+
+### 4. Get Visits - By Client
+GET {{baseUrl}}/api/visits?date_from=2024-01-01&date_to=2024-12-31&client_id=750e8400-e29b-41d4-a716-446655440002
+x-user-id: {{userId}}
+
+### 5. Verify Location (Before Check-In)
+POST {{baseUrl}}/api/visits/{{visitId}}/verify-location
+Content-Type: application/json
+x-user-id: {{userId}}
+
+{
+  "location": {
+    "latitude": 51.0447,
+    "longitude": -114.0719,
+    "accuracy": 5.0
+  }
+}
+
+### 6. Check In to Visit (with automatic location verification)
+POST {{baseUrl}}/api/visits/{{visitId}}/check-in
+Content-Type: application/json
+x-user-id: {{userId}}
+
+{
+  "location": {
+    "latitude": 51.0447,
+    "longitude": -114.0719,
+    "accuracy": 5.0
+  },
+  "timestamp": "2024-01-15T09:05:00Z"
+}
+
+### 7. Update Visit Documentation - Vital Signs
+PUT {{baseUrl}}/api/visits/{{visitId}}/documentation
+Content-Type: application/json
+x-user-id: {{userId}}
+
+{
+  "documentation": {
+    "vital_signs": {
+      "blood_pressure": "120/80",
+      "heart_rate": 72,
+      "temperature": 36.5,
+      "recorded_at": "2024-01-15T09:30:00Z"
+    }
+  }
+}
+
+### 8. Update Visit Documentation - Activities
+PUT {{baseUrl}}/api/visits/{{visitId}}/documentation
+Content-Type: application/json
+x-user-id: {{userId}}
+
+{
+  "documentation": {
+    "activities_completed": [
+      "personal_hygiene",
+      "medication_administration"
+    ],
+    "observations": "Client in good spirits, no concerns noted",
+    "care_plan_adherence": "full_compliance"
+  },
+  "notes": "Client requested assistance with shower"
+}
+
+### 9. Update Visit Documentation - With Photos
+PUT {{baseUrl}}/api/visits/{{visitId}}/documentation
+Content-Type: application/json
+x-user-id: {{userId}}
+
+{
+  "documentation": {
+    "observations": "Wound healing well, no signs of infection"
+  },
+  "photos": ["photo-uuid-1", "photo-uuid-2"]
+}
+
+### 10. Complete Visit - Minimal
+POST {{baseUrl}}/api/visits/{{visitId}}/complete
+Content-Type: application/json
+x-user-id: {{userId}}
+
+{}
+
+### 11. Complete Visit - With Documentation
+POST {{baseUrl}}/api/visits/{{visitId}}/complete
+Content-Type: application/json
+x-user-id: {{userId}}
+
+{
+  "documentation": {
+    "vital_signs": {
+      "blood_pressure": "118/78",
+      "heart_rate": 70
+    },
+    "observations": "Visit completed successfully"
+  }
+}
+
+### 12. Complete Visit - With Signature and Location
+POST {{baseUrl}}/api/visits/{{visitId}}/complete
+Content-Type: application/json
+x-user-id: {{userId}}
+
+{
+  "documentation": {
+    "vital_signs": {
+      "blood_pressure": "120/80",
+      "heart_rate": 72
+    }
+  },
+  "signature": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+  "location": {
+    "latitude": 51.0447,
+    "longitude": -114.0719,
+    "accuracy": 5.0
+  }
+}
+
+### Error Cases
+
+### 13. Invalid Date Range
+GET {{baseUrl}}/api/visits?date_from=2024-12-31&date_to=2024-01-01
+x-user-id: {{userId}}
+
+### 14. Invalid Status
+GET {{baseUrl}}/api/visits?date_from=2024-01-01&date_to=2024-12-31&status=invalid_status
+x-user-id: {{userId}}
+
+### 15. Missing Required Fields
+POST {{baseUrl}}/api/visits/{{visitId}}/check-in
+Content-Type: application/json
+x-user-id: {{userId}}
+
+{
+  "location": {
+    "latitude": 51.0447
+  }
+}
+
+### 16. Invalid GPS Coordinates
+POST {{baseUrl}}/api/visits/{{visitId}}/check-in
+Content-Type: application/json
+x-user-id: {{userId}}
+
+{
+  "location": {
+    "latitude": 91.0,
+    "longitude": -114.0719,
+    "accuracy": 5.0
+  },
+  "timestamp": "2024-01-15T09:05:00Z"
+}
+
+### 17. Invalid Vital Signs
+PUT {{baseUrl}}/api/visits/{{visitId}}/documentation
+Content-Type: application/json
+x-user-id: {{userId}}
+
+{
+  "documentation": {
+    "vital_signs": {
+      "heart_rate": 350,
+      "temperature": 50.0
+    }
+  }
+}
+
+### 18. Missing Authentication
+GET {{baseUrl}}/api/visits?date_from=2024-01-01&date_to=2024-12-31
+
+### 19. Invalid Visit ID
+POST {{baseUrl}}/api/visits/invalid-uuid/check-in
+Content-Type: application/json
+x-user-id: {{userId}}
+
+{
+  "location": {
+    "latitude": 51.0447,
+    "longitude": -114.0719,
+    "accuracy": 5.0
+  },
+  "timestamp": "2024-01-15T09:05:00Z"
+}
