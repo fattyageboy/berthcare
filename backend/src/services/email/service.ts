@@ -33,7 +33,9 @@ export class EmailService {
   /**
    * Send email
    */
-  async sendEmail(request: SendEmailRequest): Promise<{ success: boolean; message_id?: string; error?: string }> {
+  async sendEmail(
+    request: SendEmailRequest
+  ): Promise<{ success: boolean; message_id?: string; error?: string }> {
     try {
       // Convert recipients to array
       const recipients = Array.isArray(request.to) ? request.to : [request.to];
@@ -101,7 +103,11 @@ export class EmailService {
   /**
    * Send visit report email
    */
-  async sendVisitReport(recipientEmail: string, recipientName: string, data: VisitReportEmailData): Promise<void> {
+  async sendVisitReport(
+    recipientEmail: string,
+    recipientName: string,
+    data: VisitReportEmailData
+  ): Promise<void> {
     const template = visitReportTemplate(data);
 
     await this.sendEmail({
@@ -120,7 +126,11 @@ export class EmailService {
   /**
    * Send password reset email
    */
-  async sendPasswordReset(recipientEmail: string, recipientName: string, data: PasswordResetEmailData): Promise<void> {
+  async sendPasswordReset(
+    recipientEmail: string,
+    recipientName: string,
+    data: PasswordResetEmailData
+  ): Promise<void> {
     const template = passwordResetTemplate(data);
 
     await this.sendEmail({
@@ -138,7 +148,11 @@ export class EmailService {
   /**
    * Send welcome email
    */
-  async sendWelcome(recipientEmail: string, recipientName: string, data: WelcomeEmailData): Promise<void> {
+  async sendWelcome(
+    recipientEmail: string,
+    recipientName: string,
+    data: WelcomeEmailData
+  ): Promise<void> {
     const template = welcomeTemplate(data);
 
     await this.sendEmail({
@@ -157,7 +171,11 @@ export class EmailService {
   /**
    * Send weekly summary email
    */
-  async sendWeeklySummary(recipientEmail: string, recipientName: string, data: WeeklySummaryEmailData): Promise<void> {
+  async sendWeeklySummary(
+    recipientEmail: string,
+    recipientName: string,
+    data: WeeklySummaryEmailData
+  ): Promise<void> {
     const template = weeklySummaryTemplate(data);
 
     await this.sendEmail({

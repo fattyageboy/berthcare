@@ -43,9 +43,7 @@ export class NotificationService {
   /**
    * Send notification to a user
    */
-  async sendNotification(
-    request: SendNotificationRequest
-  ): Promise<NotificationDeliveryResult> {
+  async sendNotification(request: SendNotificationRequest): Promise<NotificationDeliveryResult> {
     try {
       // Check user preferences
       const preferences = await this.repository.getPreferences(request.user_id);

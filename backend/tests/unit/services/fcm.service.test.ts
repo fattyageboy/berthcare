@@ -107,12 +107,10 @@ describe('FCMService', () => {
     it('should include data payload in message', async () => {
       mockMessaging.send.mockResolvedValueOnce('message-id');
 
-      await service.sendToToken(
-        mockToken,
-        'Title',
-        'Body',
-        { visit_id: 'visit-123', client_name: 'John Doe' }
-      );
+      await service.sendToToken(mockToken, 'Title', 'Body', {
+        visit_id: 'visit-123',
+        client_name: 'John Doe',
+      });
 
       expect(mockMessaging.send).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -196,17 +194,10 @@ describe('FCMService', () => {
       mockMessaging.sendEach.mockResolvedValueOnce({
         successCount: 2,
         failureCount: 0,
-        responses: [
-          { success: true },
-          { success: true },
-        ],
+        responses: [{ success: true }, { success: true }],
       });
 
-      const result = await service.sendToMultipleTokens(
-        mockTokens,
-        'Title',
-        'Body'
-      );
+      const result = await service.sendToMultipleTokens(mockTokens, 'Title', 'Body');
 
       expect(result.successCount).toBe(2);
       expect(result.failureCount).toBe(0);
@@ -220,17 +211,10 @@ describe('FCMService', () => {
       mockMessaging.sendEach.mockResolvedValueOnce({
         successCount: 1,
         failureCount: 1,
-        responses: [
-          { success: true },
-          { success: false, error: error1 },
-        ],
+        responses: [{ success: true }, { success: false, error: error1 }],
       });
 
-      const result = await service.sendToMultipleTokens(
-        mockTokens,
-        'Title',
-        'Body'
-      );
+      const result = await service.sendToMultipleTokens(mockTokens, 'Title', 'Body');
 
       expect(result.successCount).toBe(1);
       expect(result.failureCount).toBe(1);

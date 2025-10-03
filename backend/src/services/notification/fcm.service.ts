@@ -5,10 +5,7 @@
 
 import { getMessaging, isFCMConfigured } from '../../config/fcm';
 import { logger } from '../../shared/utils/logger';
-import {
-  NotificationPriority,
-  PushNotificationToken,
-} from './types';
+import { NotificationPriority, PushNotificationToken } from './types';
 
 export class FCMService {
   /**
@@ -38,8 +35,10 @@ export class FCMService {
       logger.error(`Failed to send push notification to device ${token.device_id}:`, error);
 
       // Handle specific FCM errors
-      if (error.code === 'messaging/invalid-registration-token' ||
-          error.code === 'messaging/registration-token-not-registered') {
+      if (
+        error.code === 'messaging/invalid-registration-token' ||
+        error.code === 'messaging/registration-token-not-registered'
+      ) {
         return {
           success: false,
           error: 'Invalid or unregistered token',
@@ -86,9 +85,7 @@ export class FCMService {
 
     try {
       const messaging = getMessaging();
-      const messages = tokens.map(token =>
-        this.buildMessage(token, title, body, data, priority)
-      );
+      const messages = tokens.map((token) => this.buildMessage(token, title, body, data, priority));
 
       // Send all messages in batch
       const response = await messaging.sendEach(messages);
@@ -97,8 +94,10 @@ export class FCMService {
       response.responses.forEach((resp, idx) => {
         if (!resp.success) {
           const error = resp.error;
-          if (error?.code === 'messaging/invalid-registration-token' ||
-              error?.code === 'messaging/registration-token-not-registered') {
+          if (
+            error?.code === 'messaging/invalid-registration-token' ||
+            error?.code === 'messaging/registration-token-not-registered'
+          ) {
             invalidTokens.push(tokens[idx].fcm_token);
           }
         }
@@ -143,10 +142,13 @@ export class FCMService {
 
     // Convert data to string values (FCM requirement)
     if (data) {
-      message.data = Object.entries(data).reduce((acc, [key, value]) => {
-        acc[key] = typeof value === 'string' ? value : JSON.stringify(value);
-        return acc;
-      }, {} as Record<string, string>);
+      message.data = Object.entries(data).reduce(
+        (acc, [key, value]) => {
+          acc[key] = typeof value === 'string' ? value : JSON.stringify(value);
+          return acc;
+        },
+        {} as Record<string, string>
+      );
     }
 
     // Platform-specific configuration
@@ -217,10 +219,13 @@ export class FCMService {
       };
 
       if (data) {
-        message.data = Object.entries(data).reduce((acc, [key, value]) => {
-          acc[key] = typeof value === 'string' ? value : JSON.stringify(value);
-          return acc;
-        }, {} as Record<string, string>);
+        message.data = Object.entries(data).reduce(
+          (acc, [key, value]) => {
+            acc[key] = typeof value === 'string' ? value : JSON.stringify(value);
+            return acc;
+          },
+          {} as Record<string, string>
+        );
       }
 
       await messaging.send(message);

@@ -8,7 +8,10 @@ declare namespace Express {
     user?: {
       id: string;
       email: string;
+      first_name: string;
+      last_name: string;
       role: string;
+      organization_id: string | null;
     };
   }
 }

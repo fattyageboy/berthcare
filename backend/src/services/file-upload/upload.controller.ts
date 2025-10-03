@@ -42,10 +42,7 @@ export class UploadController {
 
       // Get user ID from authenticated request
       // TODO: Replace with actual user ID from auth middleware
-      interface AuthRequest extends Request {
-        user?: { id: string };
-      }
-      const uploadedBy = (req as AuthRequest).user?.id || 'system';
+      const uploadedBy = req.user?.id || 'system';
 
       // Upload photo
       const result = await photoService.uploadPhoto({

@@ -42,12 +42,14 @@ describe('EmailRepository', () => {
       };
 
       const mockResult = {
-        rows: [{
-          id: 'log-uuid',
-          ...logData,
-          created_at: new Date(),
-          updated_at: new Date(),
-        }],
+        rows: [
+          {
+            id: 'log-uuid',
+            ...logData,
+            created_at: new Date(),
+            updated_at: new Date(),
+          },
+        ],
       };
 
       mockQuery.mockResolvedValueOnce(mockResult);
@@ -69,10 +71,11 @@ describe('EmailRepository', () => {
 
       await repository.updateEmailStatus('message-123', 'sent');
 
-      expect(mockQuery).toHaveBeenCalledWith(
-        expect.stringContaining('UPDATE email_logs'),
-        ['sent', null, 'message-123']
-      );
+      expect(mockQuery).toHaveBeenCalledWith(expect.stringContaining('UPDATE email_logs'), [
+        'sent',
+        null,
+        'message-123',
+      ]);
     });
   });
 
@@ -128,9 +131,7 @@ describe('EmailRepository', () => {
       const result = await repository.getBounceStats();
 
       expect(result).toEqual(mockStats);
-      expect(mockQuery).toHaveBeenCalledWith(
-        expect.stringContaining('COUNT(*) FILTER')
-      );
+      expect(mockQuery).toHaveBeenCalledWith(expect.stringContaining('COUNT(*) FILTER'));
     });
   });
 
@@ -184,10 +185,11 @@ describe('EmailRepository', () => {
       const result = await repository.getEmailLogsByType('visit_report', 50, 0);
 
       expect(result).toEqual(mockLogs);
-      expect(mockQuery).toHaveBeenCalledWith(
-        expect.stringContaining('WHERE type = $1'),
-        ['visit_report', 50, 0]
-      );
+      expect(mockQuery).toHaveBeenCalledWith(expect.stringContaining('WHERE type = $1'), [
+        'visit_report',
+        50,
+        0,
+      ]);
     });
   });
 
@@ -197,10 +199,9 @@ describe('EmailRepository', () => {
 
       await repository.recordComplaint('complaint@example.com');
 
-      expect(mockQuery).toHaveBeenCalledWith(
-        expect.stringContaining('INSERT INTO email_bounces'),
-        ['complaint@example.com']
-      );
+      expect(mockQuery).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO email_bounces'), [
+        'complaint@example.com',
+      ]);
     });
   });
 
@@ -211,9 +212,7 @@ describe('EmailRepository', () => {
       const result = await repository.deleteOldEmailLogs(90);
 
       expect(result).toBe(50);
-      expect(mockQuery).toHaveBeenCalledWith(
-        expect.stringContaining("INTERVAL '90 days'")
-      );
+      expect(mockQuery).toHaveBeenCalledWith(expect.stringContaining("INTERVAL '90 days'"));
     });
 
     it('should use default 90 days if not specified', async () => {
@@ -231,13 +230,15 @@ describe('EmailRepository', () => {
       const endDate = new Date('2025-12-31');
 
       mockQuery.mockResolvedValueOnce({
-        rows: [{
-          total_sent: 100,
-          successful: 95,
-          failed: 3,
-          bounced: 1,
-          complained: 1,
-        }],
+        rows: [
+          {
+            total_sent: 100,
+            successful: 95,
+            failed: 3,
+            bounced: 1,
+            complained: 1,
+          },
+        ],
       });
 
       await repository.getDeliveryStats(startDate, endDate);
@@ -250,13 +251,15 @@ describe('EmailRepository', () => {
 
     it('should handle zero total sent', async () => {
       mockQuery.mockResolvedValueOnce({
-        rows: [{
-          total_sent: 0,
-          successful: 0,
-          failed: 0,
-          bounced: 0,
-          complained: 0,
-        }],
+        rows: [
+          {
+            total_sent: 0,
+            successful: 0,
+            failed: 0,
+            bounced: 0,
+            complained: 0,
+          },
+        ],
       });
 
       const result = await repository.getDeliveryStats();

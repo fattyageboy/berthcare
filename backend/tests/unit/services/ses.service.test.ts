@@ -53,11 +53,7 @@ describe('SESService', () => {
         { email: 'user2@example.com', name: 'User 2' },
       ];
 
-      const result = await service.sendEmail(
-        recipients,
-        'Test Subject',
-        '<h1>Test</h1>'
-      );
+      const result = await service.sendEmail(recipients, 'Test Subject', '<h1>Test</h1>');
 
       expect(result.success).toBe(true);
       expect(mockSESClient.send).toHaveBeenCalled();

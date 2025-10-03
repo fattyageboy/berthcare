@@ -22,7 +22,7 @@ describe('EmailService', () => {
   beforeEach(() => {
     mockPool = {} as Pool;
     service = new EmailService(mockPool);
-    
+
     // Get mocked instances
     mockRepository = (service as any).repository;
     mockSESService = (service as any).sesService;
@@ -77,11 +77,13 @@ describe('EmailService', () => {
     it('should send email with attachments', async () => {
       const requestWithAttachments = {
         ...mockRequest,
-        attachments: [{
-          filename: 'doc.pdf',
-          content: Buffer.from('PDF'),
-          contentType: 'application/pdf',
-        }],
+        attachments: [
+          {
+            filename: 'doc.pdf',
+            content: Buffer.from('PDF'),
+            contentType: 'application/pdf',
+          },
+        ],
       };
 
       mockRepository.isEmailSuppressed.mockResolvedValueOnce(false);
@@ -359,9 +361,7 @@ describe('EmailService', () => {
     it('should handle complaint notification', async () => {
       const notification = {
         complaint: {
-          complainedRecipients: [
-            { emailAddress: 'complaint@example.com' },
-          ],
+          complainedRecipients: [{ emailAddress: 'complaint@example.com' }],
         },
         mail: {
           messageId: 'message-123',
@@ -403,7 +403,11 @@ describe('EmailService', () => {
       const result = await service.getEmailLogs('user@example.com', 50, 0);
 
       expect(result).toEqual(mockLogs);
-      expect(mockRepository.getEmailLogsByRecipient).toHaveBeenCalledWith('user@example.com', 50, 0);
+      expect(mockRepository.getEmailLogsByRecipient).toHaveBeenCalledWith(
+        'user@example.com',
+        50,
+        0
+      );
     });
   });
 

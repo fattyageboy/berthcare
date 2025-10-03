@@ -34,14 +34,14 @@ export class SESService {
 
       // Convert recipients to array
       const recipients = Array.isArray(to) ? to : [to];
-      const toAddresses = recipients.map(r => r.name ? `${r.name} <${r.email}>` : r.email);
+      const toAddresses = recipients.map((r) => (r.name ? `${r.name} <${r.email}>` : r.email));
 
       const command = new SendEmailCommand({
         Source: fromAddress,
         Destination: {
           ToAddresses: toAddresses,
-          CcAddresses: cc?.map(r => r.name ? `${r.name} <${r.email}>` : r.email),
-          BccAddresses: bcc?.map(r => r.name ? `${r.name} <${r.email}>` : r.email),
+          CcAddresses: cc?.map((r) => (r.name ? `${r.name} <${r.email}>` : r.email)),
+          BccAddresses: bcc?.map((r) => (r.name ? `${r.name} <${r.email}>` : r.email)),
         },
         Message: {
           Subject: {
@@ -53,10 +53,12 @@ export class SESService {
               Data: html,
               Charset: 'UTF-8',
             },
-            Text: text ? {
-              Data: text,
-              Charset: 'UTF-8',
-            } : undefined,
+            Text: text
+              ? {
+                  Data: text,
+                  Charset: 'UTF-8',
+                }
+              : undefined,
           },
         },
         ReplyToAddresses: replyTo ? [replyTo] : undefined,
@@ -64,7 +66,9 @@ export class SESService {
 
       const response = await sesClient.send(command);
 
-      logger.info(`Email sent successfully to ${toAddresses.join(', ')}, MessageId: ${response.MessageId}`);
+      logger.info(
+        `Email sent successfully to ${toAddresses.join(', ')}, MessageId: ${response.MessageId}`
+      );
 
       return {
         success: true,
@@ -105,7 +109,7 @@ export class SESService {
 
       // Convert recipients to array
       const recipients = Array.isArray(to) ? to : [to];
-      const toAddresses = recipients.map(r => r.name ? `${r.name} <${r.email}>` : r.email);
+      const toAddresses = recipients.map((r) => (r.name ? `${r.name} <${r.email}>` : r.email));
 
       // Build MIME message with attachments
       const boundary = `----=_Part_${Date.now()}_${Math.random().toString(36).substring(7)}`;
@@ -130,7 +134,9 @@ export class SESService {
 
       const response = await sesClient.send(command);
 
-      logger.info(`Email with attachments sent successfully to ${toAddresses.join(', ')}, MessageId: ${response.MessageId}`);
+      logger.info(
+        `Email with attachments sent successfully to ${toAddresses.join(', ')}, MessageId: ${response.MessageId}`
+      );
 
       return {
         success: true,
@@ -162,21 +168,21 @@ export class SESService {
   ): string {
     let message = `From: ${from}\r\n`;
     message += `To: ${to.join(', ')}\r\n`;
-    
+
     if (cc && cc.length > 0) {
-      const ccAddresses = cc.map(r => r.name ? `${r.name} <${r.email}>` : r.email);
+      const ccAddresses = cc.map((r) => (r.name ? `${r.name} <${r.email}>` : r.email));
       message += `Cc: ${ccAddresses.join(', ')}\r\n`;
     }
-    
+
     if (bcc && bcc.length > 0) {
-      const bccAddresses = bcc.map(r => r.name ? `${r.name} <${r.email}>` : r.email);
+      const bccAddresses = bcc.map((r) => (r.name ? `${r.name} <${r.email}>` : r.email));
       message += `Bcc: ${bccAddresses.join(', ')}\r\n`;
     }
-    
+
     if (replyTo) {
       message += `Reply-To: ${replyTo}\r\n`;
     }
-    
+
     message += `Subject: ${subject}\r\n`;
     message += `MIME-Version: 1.0\r\n`;
     message += `Content-Type: multipart/mixed; boundary="${boundary}"\r\n\r\n`;
@@ -204,11 +210,11 @@ export class SESService {
       message += `Content-Type: ${attachment.contentType}; name="${attachment.filename}"\r\n`;
       message += `Content-Transfer-Encoding: base64\r\n`;
       message += `Content-Disposition: attachment; filename="${attachment.filename}"\r\n\r\n`;
-      
+
       const content = Buffer.isBuffer(attachment.content)
         ? attachment.content.toString('base64')
         : Buffer.from(attachment.content).toString('base64');
-      
+
       message += `${content}\r\n\r\n`;
     }
 

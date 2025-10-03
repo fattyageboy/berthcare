@@ -5,11 +5,7 @@
 
 export type NotificationPlatform = 'ios' | 'android' | 'web';
 
-export type NotificationType =
-  | 'visit_reminder'
-  | 'team_alert'
-  | 'sync_update'
-  | 'family_update';
+export type NotificationType = 'visit_reminder' | 'team_alert' | 'sync_update' | 'family_update';
 
 export type NotificationPriority = 'high' | 'normal' | 'low';
 

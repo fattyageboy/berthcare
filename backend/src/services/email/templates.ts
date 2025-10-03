@@ -129,7 +129,11 @@ function baseTemplate(content: string): string {
 /**
  * Visit Report Email Template
  */
-export function visitReportTemplate(data: VisitReportEmailData): { subject: string; html: string; text: string } {
+export function visitReportTemplate(data: VisitReportEmailData): {
+  subject: string;
+  html: string;
+  text: string;
+} {
   const content = `
     <h2>Visit Report: ${data.client_name}</h2>
     <p>A care visit has been completed. Here are the details:</p>
@@ -161,27 +165,39 @@ export function visitReportTemplate(data: VisitReportEmailData): { subject: stri
 
     <h3>Care Activities</h3>
     <ul>
-      ${data.care_activities.map(activity => `<li>${activity}</li>`).join('')}
+      ${data.care_activities.map((activity) => `<li>${activity}</li>`).join('')}
     </ul>
 
-    ${data.medications && data.medications.length > 0 ? `
+    ${
+      data.medications && data.medications.length > 0
+        ? `
       <h3>Medications Administered</h3>
       <ul>
-        ${data.medications.map(med => `<li>${med}</li>`).join('')}
+        ${data.medications.map((med) => `<li>${med}</li>`).join('')}
       </ul>
-    ` : ''}
+    `
+        : ''
+    }
 
-    ${data.vital_signs ? `
+    ${
+      data.vital_signs
+        ? `
       <h3>Vital Signs</h3>
       <table>
-        ${Object.entries(data.vital_signs).map(([key, value]) => `
+        ${Object.entries(data.vital_signs)
+          .map(
+            ([key, value]) => `
           <tr>
             <th>${key}:</th>
             <td>${value}</td>
           </tr>
-        `).join('')}
+        `
+          )
+          .join('')}
       </table>
-    ` : ''}
+    `
+        : ''
+    }
 
     <h3>Notes</h3>
     <p>${data.notes}</p>
@@ -201,9 +217,9 @@ Visit Type: ${data.visit_type}
 Duration: ${data.duration}
 
 Care Activities:
-${data.care_activities.map(a => `- ${a}`).join('\n')}
+${data.care_activities.map((a) => `- ${a}`).join('\n')}
 
-${data.medications ? `Medications:\n${data.medications.map(m => `- ${m}`).join('\n')}\n` : ''}
+${data.medications ? `Medications:\n${data.medications.map((m) => `- ${m}`).join('\n')}\n` : ''}
 
 Notes: ${data.notes}
 
@@ -220,7 +236,11 @@ View full report: ${process.env.APP_URL}/visits/${data.visit_id}
 /**
  * Password Reset Email Template
  */
-export function passwordResetTemplate(data: PasswordResetEmailData): { subject: string; html: string; text: string } {
+export function passwordResetTemplate(data: PasswordResetEmailData): {
+  subject: string;
+  html: string;
+  text: string;
+} {
   const content = `
     <h2>Password Reset Request</h2>
     <p>Hello ${data.user_name},</p>
@@ -269,7 +289,11 @@ Never share this link with anyone.
 /**
  * Welcome Email Template
  */
-export function welcomeTemplate(data: WelcomeEmailData): { subject: string; html: string; text: string } {
+export function welcomeTemplate(data: WelcomeEmailData): {
+  subject: string;
+  html: string;
+  text: string;
+} {
   const content = `
     <h2>Welcome to BerthCare! 🎉</h2>
     <p>Hello ${data.user_name},</p>
@@ -324,10 +348,13 @@ We're excited to have you on board!
 /**
  * Weekly Summary Email Template
  */
-export function weeklySummaryTemplate(data: WeeklySummaryEmailData): { subject: string; html: string; text: string } {
-  const completionRate = data.total_visits > 0 
-    ? Math.round((data.completed_visits / data.total_visits) * 100) 
-    : 0;
+export function weeklySummaryTemplate(data: WeeklySummaryEmailData): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const completionRate =
+    data.total_visits > 0 ? Math.round((data.completed_visits / data.total_visits) * 100) : 0;
 
   const content = `
     <h2>Your Weekly Summary</h2>
@@ -360,12 +387,16 @@ export function weeklySummaryTemplate(data: WeeklySummaryEmailData): { subject: 
       </table>
     </div>
 
-    ${data.highlights.length > 0 ? `
+    ${
+      data.highlights.length > 0
+        ? `
       <h3>Highlights</h3>
       <ul>
-        ${data.highlights.map(highlight => `<li>${highlight}</li>`).join('')}
+        ${data.highlights.map((highlight) => `<li>${highlight}</li>`).join('')}
       </ul>
-    ` : ''}
+    `
+        : ''
+    }
 
     <p style="text-align: center; margin-top: 30px;">
       <a href="${process.env.APP_URL}/dashboard" class="button">View Dashboard</a>
@@ -388,7 +419,7 @@ Visit Statistics:
 - Completion Rate: ${completionRate}%
 - Total Hours: ${data.total_hours}
 
-${data.highlights.length > 0 ? `Highlights:\n${data.highlights.map(h => `- ${h}`).join('\n')}\n` : ''}
+${data.highlights.length > 0 ? `Highlights:\n${data.highlights.map((h) => `- ${h}`).join('\n')}\n` : ''}
 
 View Dashboard: ${process.env.APP_URL}/dashboard
 

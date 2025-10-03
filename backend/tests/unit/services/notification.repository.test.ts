@@ -39,14 +39,16 @@ describe('NotificationRepository', () => {
       };
 
       const mockResult = {
-        rows: [{
-          id: 'token-uuid',
-          user_id: 'user-123',
-          ...tokenData,
-          is_active: true,
-          created_at: new Date(),
-          updated_at: new Date(),
-        }],
+        rows: [
+          {
+            id: 'token-uuid',
+            user_id: 'user-123',
+            ...tokenData,
+            is_active: true,
+            created_at: new Date(),
+            updated_at: new Date(),
+          },
+        ],
       };
 
       mockQuery.mockResolvedValueOnce(mockResult);
@@ -93,11 +95,13 @@ describe('NotificationRepository', () => {
       };
 
       const mockResult = {
-        rows: [{
-          id: 'notif-uuid',
-          ...notification,
-          created_at: new Date(),
-        }],
+        rows: [
+          {
+            id: 'notif-uuid',
+            ...notification,
+            created_at: new Date(),
+          },
+        ],
       };
 
       mockQuery.mockResolvedValueOnce(mockResult);
@@ -116,10 +120,11 @@ describe('NotificationRepository', () => {
 
       await repository.updateNotificationStatus('notif-123', 'sent');
 
-      expect(mockQuery).toHaveBeenCalledWith(
-        expect.stringContaining('UPDATE notifications'),
-        ['sent', null, 'notif-123']
-      );
+      expect(mockQuery).toHaveBeenCalledWith(expect.stringContaining('UPDATE notifications'), [
+        'sent',
+        null,
+        'notif-123',
+      ]);
     });
   });
 
@@ -130,10 +135,9 @@ describe('NotificationRepository', () => {
       const result = await repository.getUnreadCount('user-123');
 
       expect(result).toBe(5);
-      expect(mockQuery).toHaveBeenCalledWith(
-        expect.stringContaining("status != 'read'"),
-        ['user-123']
-      );
+      expect(mockQuery).toHaveBeenCalledWith(expect.stringContaining("status != 'read'"), [
+        'user-123',
+      ]);
     });
   });
 
@@ -196,10 +200,9 @@ describe('NotificationRepository', () => {
 
       await repository.markAsRead('notif-123');
 
-      expect(mockQuery).toHaveBeenCalledWith(
-        expect.stringContaining('UPDATE notifications'),
-        ['notif-123']
-      );
+      expect(mockQuery).toHaveBeenCalledWith(expect.stringContaining('UPDATE notifications'), [
+        'notif-123',
+      ]);
     });
   });
 
@@ -215,10 +218,11 @@ describe('NotificationRepository', () => {
       const result = await repository.getNotificationsByUserId('user-123', 20, 10);
 
       expect(result).toEqual(mockNotifications);
-      expect(mockQuery).toHaveBeenCalledWith(
-        expect.stringContaining('LIMIT $2 OFFSET $3'),
-        ['user-123', 20, 10]
-      );
+      expect(mockQuery).toHaveBeenCalledWith(expect.stringContaining('LIMIT $2 OFFSET $3'), [
+        'user-123',
+        20,
+        10,
+      ]);
     });
   });
 
@@ -234,13 +238,15 @@ describe('NotificationRepository', () => {
       };
 
       const mockResult = {
-        rows: [{
-          id: 'pref-uuid',
-          user_id: 'user-123',
-          ...preferences,
-          created_at: new Date(),
-          updated_at: new Date(),
-        }],
+        rows: [
+          {
+            id: 'pref-uuid',
+            user_id: 'user-123',
+            ...preferences,
+            created_at: new Date(),
+            updated_at: new Date(),
+          },
+        ],
       };
 
       mockQuery.mockResolvedValueOnce(mockResult);
@@ -260,9 +266,7 @@ describe('NotificationRepository', () => {
       const result = await repository.deleteOldNotifications(90);
 
       expect(result).toBe(25);
-      expect(mockQuery).toHaveBeenCalledWith(
-        expect.stringContaining("INTERVAL '90 days'")
-      );
+      expect(mockQuery).toHaveBeenCalledWith(expect.stringContaining("INTERVAL '90 days'"));
     });
 
     it('should use default 90 days if not specified', async () => {

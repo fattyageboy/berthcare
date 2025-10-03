@@ -212,7 +212,10 @@ export class EmailRepository {
   /**
    * Get email delivery statistics
    */
-  async getDeliveryStats(startDate?: Date, endDate?: Date): Promise<{
+  async getDeliveryStats(
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<{
     total_sent: number;
     successful: number;
     failed: number;
@@ -244,9 +247,8 @@ export class EmailRepository {
     const result = await this.pool.query(query, values);
     const stats = result.rows[0];
 
-    const successRate = stats.total_sent > 0
-      ? Math.round((stats.successful / stats.total_sent) * 100)
-      : 0;
+    const successRate =
+      stats.total_sent > 0 ? Math.round((stats.successful / stats.total_sent) * 100) : 0;
 
     return {
       ...stats,

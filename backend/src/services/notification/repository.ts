@@ -106,7 +106,9 @@ export class NotificationRepository {
   /**
    * Create a notification record
    */
-  async createNotification(notification: Omit<Notification, 'id' | 'created_at' | 'updated_at'>): Promise<Notification> {
+  async createNotification(
+    notification: Omit<Notification, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<Notification> {
     const query = `
       INSERT INTO notifications (
         user_id, type, title, body, data, priority, status

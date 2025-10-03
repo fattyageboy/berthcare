@@ -19,7 +19,8 @@ export function initializeSES(): SESClient {
   try {
     const region = process.env.AWS_SES_REGION || process.env.AWS_REGION || 'us-east-1';
     const accessKeyId = process.env.AWS_SES_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
-    const secretAccessKey = process.env.AWS_SES_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
+    const secretAccessKey =
+      process.env.AWS_SES_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
 
     if (!accessKeyId || !secretAccessKey) {
       logger.warn('AWS SES credentials not configured. Email sending will be disabled.');
@@ -62,7 +63,8 @@ export function getSESClient(): SESClient {
  */
 export function isSESConfigured(): boolean {
   const accessKeyId = process.env.AWS_SES_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
-  const secretAccessKey = process.env.AWS_SES_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
+  const secretAccessKey =
+    process.env.AWS_SES_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
   return !!(accessKeyId && secretAccessKey);
 }
 

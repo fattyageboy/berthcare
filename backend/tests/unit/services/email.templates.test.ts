@@ -20,10 +20,7 @@ describe('Email Templates', () => {
       visit_type: 'Personal Care',
       duration: '2 hours',
       notes: 'Visit completed successfully',
-      care_activities: [
-        'Assisted with bathing',
-        'Medication administration',
-      ],
+      care_activities: ['Assisted with bathing', 'Medication administration'],
       medications: ['Aspirin 81mg'],
       vital_signs: {
         'Blood Pressure': '120/80 mmHg',
@@ -177,10 +174,7 @@ describe('Email Templates', () => {
       completed_visits: 23,
       missed_visits: 2,
       total_hours: 50,
-      highlights: [
-        'Completed all visits on time',
-        'Received positive feedback',
-      ],
+      highlights: ['Completed all visits on time', 'Received positive feedback'],
     };
 
     it('should generate weekly summary email', () => {

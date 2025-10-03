@@ -22,7 +22,7 @@ describe('NotificationService', () => {
   beforeEach(() => {
     mockPool = {} as Pool;
     service = new NotificationService(mockPool);
-    
+
     // Get mocked instances
     mockRepository = (service as any).repository;
     mockFCMService = (service as any).fcmService;
@@ -129,10 +129,7 @@ describe('NotificationService', () => {
       expect(result.success).toBe(true);
       expect(result.tokens_sent).toBe(1);
       expect(result.tokens_failed).toBe(0);
-      expect(mockRepository.updateNotificationStatus).toHaveBeenCalledWith(
-        'notif-uuid',
-        'sent'
-      );
+      expect(mockRepository.updateNotificationStatus).toHaveBeenCalledWith('notif-uuid', 'sent');
     });
 
     it('should block notification if user preferences disabled', async () => {

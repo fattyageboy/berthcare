@@ -63,7 +63,11 @@ export class EmailController {
       }
 
       const { recipient_email, recipient_name, data } = req.body;
-      await this.emailService.sendVisitReport(recipient_email, recipient_name, data as VisitReportEmailData);
+      await this.emailService.sendVisitReport(
+        recipient_email,
+        recipient_name,
+        data as VisitReportEmailData
+      );
 
       res.status(200).json({
         message: 'Visit report email sent successfully',
@@ -87,7 +91,11 @@ export class EmailController {
       }
 
       const { recipient_email, recipient_name, data } = req.body;
-      await this.emailService.sendPasswordReset(recipient_email, recipient_name, data as PasswordResetEmailData);
+      await this.emailService.sendPasswordReset(
+        recipient_email,
+        recipient_name,
+        data as PasswordResetEmailData
+      );
 
       res.status(200).json({
         message: 'Password reset email sent successfully',
@@ -105,7 +113,11 @@ export class EmailController {
   sendWelcome = async (req: Request, res: Response): Promise<void> => {
     try {
       const { recipient_email, recipient_name, data } = req.body;
-      await this.emailService.sendWelcome(recipient_email, recipient_name, data as WelcomeEmailData);
+      await this.emailService.sendWelcome(
+        recipient_email,
+        recipient_name,
+        data as WelcomeEmailData
+      );
 
       res.status(200).json({
         message: 'Welcome email sent successfully',
@@ -123,7 +135,11 @@ export class EmailController {
   sendWeeklySummary = async (req: Request, res: Response): Promise<void> => {
     try {
       const { recipient_email, recipient_name, data } = req.body;
-      await this.emailService.sendWeeklySummary(recipient_email, recipient_name, data as WeeklySummaryEmailData);
+      await this.emailService.sendWeeklySummary(
+        recipient_email,
+        recipient_name,
+        data as WeeklySummaryEmailData
+      );
 
       res.status(200).json({
         message: 'Weekly summary email sent successfully',

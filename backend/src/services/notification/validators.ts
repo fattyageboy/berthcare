@@ -13,11 +13,7 @@ export const registerTokenValidators = [
     .withMessage('Device ID is required')
     .isLength({ max: 255 })
     .withMessage('Device ID must be less than 255 characters'),
-  body('fcm_token')
-    .isString()
-    .trim()
-    .notEmpty()
-    .withMessage('FCM token is required'),
+  body('fcm_token').isString().trim().notEmpty().withMessage('FCM token is required'),
   body('platform')
     .isIn(['ios', 'android', 'web'])
     .withMessage('Platform must be ios, android, or web'),
@@ -30,9 +26,7 @@ export const registerTokenValidators = [
 ];
 
 export const sendNotificationValidators = [
-  body('user_id')
-    .isUUID()
-    .withMessage('Valid user ID is required'),
+  body('user_id').isUUID().withMessage('Valid user ID is required'),
   body('type')
     .isIn(['visit_reminder', 'team_alert', 'sync_update', 'family_update'])
     .withMessage('Invalid notification type'),
@@ -43,15 +37,8 @@ export const sendNotificationValidators = [
     .withMessage('Title is required')
     .isLength({ max: 255 })
     .withMessage('Title must be less than 255 characters'),
-  body('body')
-    .isString()
-    .trim()
-    .notEmpty()
-    .withMessage('Body is required'),
-  body('data')
-    .optional()
-    .isObject()
-    .withMessage('Data must be an object'),
+  body('body').isString().trim().notEmpty().withMessage('Body is required'),
+  body('data').optional().isObject().withMessage('Data must be an object'),
   body('priority')
     .optional()
     .isIn(['high', 'normal', 'low'])
@@ -86,9 +73,7 @@ export const updatePreferencesValidators = [
 ];
 
 export const notificationIdValidator = [
-  param('id')
-    .isUUID()
-    .withMessage('Valid notification ID is required'),
+  param('id').isUUID().withMessage('Valid notification ID is required'),
 ];
 
 export const paginationValidators = [
@@ -96,8 +81,5 @@ export const paginationValidators = [
     .optional()
     .isInt({ min: 1, max: 100 })
     .withMessage('Limit must be between 1 and 100'),
-  query('offset')
-    .optional()
-    .isInt({ min: 0 })
-    .withMessage('Offset must be a non-negative integer'),
+  query('offset').optional().isInt({ min: 0 }).withMessage('Offset must be a non-negative integer'),
 ];

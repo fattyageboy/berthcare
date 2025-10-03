@@ -7,11 +7,7 @@ import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 import { NotificationService } from './service';
 import { logger } from '../../shared/utils/logger';
-import {
-  RegisterTokenRequest,
-  SendNotificationRequest,
-  UpdatePreferencesRequest,
-} from './types';
+import { RegisterTokenRequest, SendNotificationRequest, UpdatePreferencesRequest } from './types';
 
 export class NotificationController {
   constructor(private notificationService: NotificationService) {}
@@ -186,10 +182,7 @@ export class NotificationController {
       }
 
       const preferencesData: UpdatePreferencesRequest = req.body;
-      const preferences = await this.notificationService.updatePreferences(
-        userId,
-        preferencesData
-      );
+      const preferences = await this.notificationService.updatePreferences(userId, preferencesData);
 
       res.status(200).json({
         message: 'Preferences updated successfully',
