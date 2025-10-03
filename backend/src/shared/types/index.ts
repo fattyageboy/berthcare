@@ -39,3 +39,6 @@ export interface HealthCheckResponse {
   version: string;
   uptime: number;
 }
+
+// Export auth types
+export * from './auth.types';
