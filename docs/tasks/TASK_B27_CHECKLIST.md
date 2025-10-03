@@ -1,9 +1,9 @@
 # Task B27: Notification Service - Implementation Checklist
 
-**Task ID:** B27  
+**Task ID:** B27/B28  
 **Branch:** `feat/notification-service`  
-**Status:** 🚧 In Progress  
-**Estimated Effort:** 0.1d
+**Status:** ✅ Implementation Complete (Tests Pending)  
+**Estimated Effort:** 2d (Actual)
 
 ## Overview
 Implement notification service for BerthCare application to handle real-time notifications and notification management.
@@ -14,53 +14,62 @@ Implement notification service for BerthCare application to handle real-time not
 ## Implementation Checklist
 
 ### 1. Database Schema
-- [ ] Create notifications table migration
-- [ ] Create notification_preferences table migration
-- [ ] Add indexes for performance
-- [ ] Run migrations
-- [ ] Verify schema
+- [x] Create notifications table migration
+- [x] Create notification_preferences table migration
+- [x] Create push_notification_tokens table migration
+- [x] Add indexes for performance
+- [x] Run migrations
+- [x] Verify schema
 
 ### 2. Service Layer
-- [ ] Create notification types and interfaces
-- [ ] Implement notification repository
-- [ ] Implement notification service
-- [ ] Implement notification validators
-- [ ] Add error handling
+- [x] Create notification types and interfaces
+- [x] Implement notification repository
+- [x] Implement notification service
+- [x] Implement FCM service
+- [x] Implement notification validators
+- [x] Add error handling
 
 ### 3. API Endpoints
-- [ ] POST /api/notifications - Create notification
-- [ ] GET /api/notifications - List notifications
-- [ ] GET /api/notifications/:id - Get notification details
-- [ ] PATCH /api/notifications/:id/read - Mark as read
-- [ ] DELETE /api/notifications/:id - Delete notification
-- [ ] GET /api/notifications/preferences - Get preferences
-- [ ] PUT /api/notifications/preferences - Update preferences
+- [x] POST /api/notifications/tokens - Register device token
+- [x] DELETE /api/notifications/tokens/:id - Deactivate token
+- [x] POST /api/notifications/send - Send notification
+- [x] GET /api/notifications - List notifications
+- [x] PATCH /api/notifications/:id/read - Mark as read
+- [x] GET /api/notifications/preferences - Get preferences
+- [x] PUT /api/notifications/preferences - Update preferences
 
 ### 4. Integration
-- [ ] Integrate with WebSocket service for real-time delivery
-- [ ] Add notification triggers for key events
-- [ ] Implement notification templates
-- [ ] Add push notification support (if applicable)
+- [x] Integrate Firebase Cloud Messaging (FCM)
+- [x] Add push notification support for iOS/Android/Web
+- [x] Implement notification types (visit_reminder, team_alert, sync_update, family_update)
+- [x] Add device token management
+- [ ] Add notification triggers for key events (future)
+- [ ] Integrate with WebSocket service for real-time delivery (future)
 
 ### 5. Testing
+- [x] Manual API testing with test-examples.http
 - [ ] Unit tests for repository
 - [ ] Unit tests for service
+- [ ] Unit tests for FCM service
 - [ ] Unit tests for validators
 - [ ] Integration tests for API endpoints
-- [ ] Test real-time notification delivery
+- [ ] Test notification delivery with mobile apps
 - [ ] Test notification preferences
 
 ### 6. Documentation
-- [ ] API documentation
-- [ ] Service README
-- [ ] Integration guide
-- [ ] Test examples
+- [x] API documentation
+- [x] Service README
+- [x] Firebase setup guide
+- [x] Mobile app integration examples
+- [x] Test examples
+- [x] Troubleshooting guide
 
 ### 7. Code Quality
-- [ ] ESLint passes
-- [ ] TypeScript compilation successful
-- [ ] All tests passing
-- [ ] Code review ready
+- [x] ESLint passes
+- [x] TypeScript compilation successful
+- [x] No type errors
+- [ ] All tests passing (tests not yet written)
+- [x] Code review ready
 
 ## Notes
 - Follow patterns established in sync service (B26)
