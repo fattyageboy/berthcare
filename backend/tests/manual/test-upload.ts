@@ -1,10 +1,10 @@
 /**
  * Test script for photo upload functionality
- * Run with: ts-node src/services/file-upload/test-upload.ts
+ * Run with: ts-node tests/manual/test-upload.ts
  */
 
-import { s3Service } from './s3.service';
-import { buckets } from '../../config/s3';
+import { s3Service } from '../../src/services/file-upload/s3.service';
+import { buckets } from '../../src/config/s3';
 
 async function testS3Connection() {
   console.log('Testing S3/MinIO connection...');
