@@ -46,8 +46,8 @@ mobile/
 
 - Node.js >= 20
 - React Native development environment set up
-- iOS: Xcode and CocoaPods
-- Android: Android Studio and SDK
+- **iOS (macOS only):** Xcode and CocoaPods - See [IOS_SETUP_GUIDE.md](./IOS_SETUP_GUIDE.md)
+- **Android:** Android Studio and SDK - See [ANDROID_SETUP_GUIDE.md](./ANDROID_SETUP_GUIDE.md)
 
 ### Installation
 
@@ -65,17 +65,23 @@ bundle exec pod install
 cd ..
 ```
 
+**Note:** If you encounter issues with iOS setup, see the detailed [iOS Setup Guide](./IOS_SETUP_GUIDE.md).
+
 ### Running the App
 
-#### iOS
+#### iOS (macOS only)
 ```bash
 npm run ios
 ```
+
+**Prerequisites:** Xcode must be fully installed and configured. See [IOS_SETUP_GUIDE.md](./IOS_SETUP_GUIDE.md) for detailed instructions.
 
 #### Android
 ```bash
 npm run android
 ```
+
+**Prerequisites:** Android Studio, SDK, and emulator must be set up. See [ANDROID_SETUP_GUIDE.md](./ANDROID_SETUP_GUIDE.md) for detailed instructions.
 
 ### Development
 
