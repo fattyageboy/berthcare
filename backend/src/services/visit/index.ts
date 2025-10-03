@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { config } from '../../config';
+import { config, database } from '../../config';
 import {
   configureSecurity,
   errorHandler,
@@ -8,6 +8,7 @@ import {
   HealthCheckResponse,
   ServiceStatus,
 } from '../../shared';
+import visitRoutes from './routes';
 
 /**
  * Visit Service
@@ -23,6 +24,20 @@ app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
 configureSecurity(app);
 
+// Initialize database connection
+const initializeConnections = async (): Promise<void> => {
+  try {
+    await database.connect();
+    console.error('Database connection initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize database connection:', error);
+    // Don't exit in development, allow service to start
+    if (config.nodeEnv === 'production') {
+      process.exit(1);
+    }
+  }
+};
+
 // Health check endpoint
 app.get('/health', (_req: Request, res: Response) => {
   const healthResponse: HealthCheckResponse = {
@@ -36,11 +51,14 @@ app.get('/health', (_req: Request, res: Response) => {
 });
 
 // API routes
-app.get('/api/visits', (_req: Request, res: Response) => {
+app.use('/api', visitRoutes);
+
+// Legacy endpoint for backward compatibility
+app.get('/api/visits-legacy', (_req: Request, res: Response) => {
   const response: ApiResponse<string> = {
     success: true,
     message: 'Visit service is running',
-    data: 'GET /api/visits endpoint',
+    data: 'Use GET /api/visits with query parameters',
   };
   res.json(response);
 });
@@ -48,9 +66,22 @@ app.get('/api/visits', (_req: Request, res: Response) => {
 // Error handling middleware (must be last)
 app.use(errorHandler);
 
-// Start server
+// Start server and initialize connections
 const server = app.listen(PORT, () => {
   console.error(`Visit service listening on port ${PORT}`);
+  void initializeConnections();
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.error('SIGTERM received, shutting down gracefully...');
+  server.close(() => {
+    void (async () => {
+      await database.disconnect();
+      console.error('Server closed');
+      process.exit(0);
+    })();
+  });
 });
 
 export default server;

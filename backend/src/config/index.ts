@@ -1,7 +1,9 @@
 import dotenv from 'dotenv';
+import path from 'path';
 
-// Load environment variables
-dotenv.config();
+// Load environment variables from appropriate .env file
+const envFile = process.env.NODE_ENV === 'test' ? '.env.test' : '.env';
+dotenv.config({ path: path.join(__dirname, '../../', envFile) });
 
 /**
  * Application configuration
