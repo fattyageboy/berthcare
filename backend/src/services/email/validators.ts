@@ -3,7 +3,7 @@
  * Request validation for email endpoints
  */
 
-import { body, param, query } from 'express-validator';
+import { body, query } from 'express-validator';
 
 export const sendEmailValidators = [
   body('to')

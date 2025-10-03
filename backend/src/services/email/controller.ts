@@ -169,7 +169,7 @@ export class EmailController {
    * GET /api/email/stats/bounces
    * Get bounce statistics
    */
-  getBounceStats = async (req: Request, res: Response): Promise<void> => {
+  getBounceStats = async (_req: Request, res: Response): Promise<void> => {
     try {
       const stats = await this.emailService.getBounceStats();
 
