@@ -1,0 +1,11 @@
+# Visit Service Feature Branch
+
+This branch is initialized for implementing the visit service functionality.
+Task: B12 - Visit Service Implementation
+
+The visit service will provide:
+- Visit scheduling and management
+- Visit status tracking
+- Integration with patient and caregiver services
+- Visit billing and payment processing
+- Visit history and reporting
