@@ -8,6 +8,7 @@ import {
   HealthCheckResponse,
   ServiceStatus,
 } from '../../shared';
+import uploadRoutes from '../file-upload/upload.routes';
 import visitRoutes from './routes';
 
 /**
@@ -62,6 +63,9 @@ app.get('/api/visits-legacy', (_req: Request, res: Response) => {
   };
   res.json(response);
 });
+
+// File upload routes
+app.use('/api/uploads', uploadRoutes);
 
 // Error handling middleware (must be last)
 app.use(errorHandler);

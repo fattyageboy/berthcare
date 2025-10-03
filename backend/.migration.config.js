@@ -6,6 +6,9 @@ module.exports = {
   // Migration directory
   dir: 'migrations',
 
+  // Ignore non-migration files
+  ignorePattern: '.*\\.md$',
+
   // Database connection (from environment)
   databaseUrl: process.env.DATABASE_URL || {
     host: process.env.DB_HOST || 'localhost',
