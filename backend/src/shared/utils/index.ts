@@ -33,3 +33,9 @@ export const isValidUUID = (uuid: string): boolean => {
 
 // Export JWT utilities
 export * from './jwt.utils';
+
+// Export logger
+export { logger } from './logger';
+
+// Export encryption service
+export { encryptionService, EncryptionService } from './encryption';

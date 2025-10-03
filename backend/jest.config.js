@@ -18,6 +18,10 @@ module.exports = {
     'src/shared/middleware/auth.ts',
     'src/shared/middleware/rbac.ts',
     'src/shared/utils/jwt.utils.ts',
+    'src/services/file-upload/upload.controller.ts',
+    'src/services/file-upload/photo.service.ts',
+    'src/services/file-upload/s3.service.ts',
+    'src/services/file-upload/multer.config.ts',
   ],
   coverageThreshold: {
     global: {
