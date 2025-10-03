@@ -1,6 +1,6 @@
 // Visit slice - visit state management
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Visit } from '@types';
+import { Visit } from '../../types';
 
 interface VisitState {
   visits: Visit[];
@@ -25,7 +25,7 @@ const visitSlice = createSlice({
       state.currentVisit = action.payload;
     },
     updateVisit: (state, action: PayloadAction<Visit>) => {
-      const index = state.visits.findIndex(v => v.id === action.payload.id);
+      const index = state.visits.findIndex((v: Visit) => v.id === action.payload.id);
       if (index !== -1) {
         state.visits[index] = action.payload;
       }

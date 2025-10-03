@@ -1,6 +1,6 @@
 // Sync slice - synchronization state management
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { SyncState } from '@types';
+import { SyncState } from '../../types';
 
 const initialState: SyncState = {
   lastSyncedAt: '',
