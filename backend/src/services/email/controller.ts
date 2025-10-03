@@ -220,7 +220,8 @@ export class EmailController {
    */
   handleSESWebhook = async (req: Request, res: Response): Promise<void> => {
     try {
-      const notification = req.body as { notificationType: string };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const notification = req.body as any;
 
       if (notification.notificationType === 'Bounce') {
         await this.emailService.handleBounce(notification);

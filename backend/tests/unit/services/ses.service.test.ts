@@ -7,6 +7,7 @@
 
 import { SESService } from '../../../src/services/email/ses.service';
 import * as sesConfig from '../../../src/config/ses';
+import { logger } from '../../../src/shared/utils/logger';
 
 // Mock dependencies
 jest.mock('../../../src/config/ses');
@@ -219,8 +220,8 @@ describe('SESService', () => {
   });
 
   describe('verifyEmailAddress', () => {
-    it('should verify email address', async () => {
-      const result = await service.verifyEmailAddress('test@example.com');
+    it('should verify email address', () => {
+      const result = service.verifyEmailAddress('test@example.com');
 
       expect(result).toBe(true);
       expect(logger.info).toHaveBeenCalledWith(

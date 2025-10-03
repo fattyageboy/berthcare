@@ -133,22 +133,10 @@ export class FCMService {
     body: string,
     data?: Record<string, unknown>,
     priority: NotificationPriority = 'normal'
-  ): {
-    token: string;
-    notification: { title: string; body: string };
-    data?: Record<string, string>;
-    android?: unknown;
-    apns?: unknown;
-    webpush?: unknown;
-  } {
-    const message: {
-      token: string;
-      notification: { title: string; body: string };
-      data?: Record<string, string>;
-      android?: unknown;
-      apns?: unknown;
-      webpush?: unknown;
-    } = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ): any {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const message: any = {
       token: token.fcm_token,
       notification: {
         title,
