@@ -16,7 +16,7 @@ import {
 } from './types';
 
 export class EmailController {
-  constructor(private emailService: EmailService) {}
+  constructor(private emailService: EmailService) { }
 
   /**
    * POST /api/email/send
