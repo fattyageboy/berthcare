@@ -4,12 +4,11 @@ import {
   configureSecurity,
   errorHandler,
   requestLogger,
+  ApiResponse,
   HealthCheckResponse,
   ServiceStatus,
 } from '../../shared';
 import authRoutes from './auth.routes';
-import userRoutes from './user.routes';
-import visitRoutes from './visit.routes';
 
 /**
  * User Service
@@ -143,11 +142,15 @@ app.get('/health/redis', (_req: Request, res: Response) => {
 // Authentication routes
 app.use('/auth', authRoutes);
 
-// User management routes (with RBAC)
-app.use('/api/users', userRoutes);
-
-// Visit management routes (with RBAC)
-app.use('/api/visits', visitRoutes);
+// API routes
+app.get('/api/users', (_req: Request, res: Response) => {
+  const response: ApiResponse<string> = {
+    success: true,
+    message: 'User service is running',
+    data: 'GET /api/users endpoint',
+  };
+  res.json(response);
+});
 
 // Error handling middleware (must be last)
 app.use(errorHandler);
