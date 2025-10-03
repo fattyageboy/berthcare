@@ -3,7 +3,7 @@
  * Verifies encryption and decryption functionality
  */
 
-import { EncryptionService } from '../../shared/utils/encryption';
+import { EncryptionService } from '../../../src/shared/utils/encryption';
 
 describe('EncryptionService', () => {
   let encryptionService: EncryptionService;
