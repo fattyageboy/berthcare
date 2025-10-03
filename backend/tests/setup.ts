@@ -16,6 +16,7 @@ process.env.GOOGLE_MAPS_API_KEY = 'test-api-key';
 jest.mock('../src/services/visit/location.service', () => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const actual = jest.requireActual('../src/services/visit/location.service');
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     ...actual,
