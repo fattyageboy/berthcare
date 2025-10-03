@@ -47,9 +47,9 @@ export const verifyToken = (token: string): TokenPayload => {
     const decoded = jwt.verify(token, config.security.jwtSecret, {
       issuer: 'berthcare-auth',
       audience: 'berthcare-api',
-    }) as TokenPayload;
+    });
 
-    return decoded;
+    return decoded as TokenPayload;
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
       throw new Error('Token has expired');
@@ -66,8 +66,13 @@ export const verifyToken = (token: string): TokenPayload => {
  */
 export const getTokenExpiration = (token: string): Date | null => {
   try {
-    const decoded = jwt.decode(token) as jwt.JwtPayload;
-    if (decoded && decoded.exp) {
+    const decoded = jwt.decode(token);
+    if (
+      decoded &&
+      typeof decoded === 'object' &&
+      'exp' in decoded &&
+      typeof decoded.exp === 'number'
+    ) {
       return new Date(decoded.exp * 1000);
     }
     return null;

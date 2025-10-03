@@ -56,12 +56,12 @@ export const verifyCredentials = async (
 
     // Use Resource Owner Password Grant
     // Note: This requires the connection to be configured in Auth0
-    const response = await client.oauth.passwordGrant({
+    const response = (await client.oauth.passwordGrant({
       username: email,
       password: password,
       realm: 'Username-Password-Authentication', // Default Auth0 database connection
       scope: 'openid profile email',
-    });
+    })) as { data: { access_token?: string } };
 
     if (!response.data.access_token) {
       throw new Error('Invalid credentials');
