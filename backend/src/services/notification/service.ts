@@ -232,10 +232,16 @@ export class NotificationService {
       const now = new Date();
       const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-      if (
-        currentTime >= preferences.quiet_hours_start &&
-        currentTime <= preferences.quiet_hours_end
-      ) {
+      const isInQuietHours =
+        preferences.quiet_hours_start <= preferences.quiet_hours_end
+          ? // Normal range (e.g., 22:00 to 23:00)
+            currentTime >= preferences.quiet_hours_start &&
+            currentTime <= preferences.quiet_hours_end
+          : // Spans midnight (e.g., 22:00 to 08:00)
+            currentTime >= preferences.quiet_hours_start ||
+            currentTime <= preferences.quiet_hours_end;
+
+      if (isInQuietHours) {
         // Don't block high-priority team alerts during quiet hours
         if (type !== 'team_alert') {
           return false;
