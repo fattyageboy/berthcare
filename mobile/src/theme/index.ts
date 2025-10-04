@@ -3,6 +3,10 @@
  * Centralized export for all design tokens
  */
 
+import { colors as colorsImport } from './colors';
+import { typography as typographyImport, fontWeights as fontWeightsImport } from './typography';
+import { spacing as spacingImport } from './spacing';
+
 export { colors } from './colors';
 export type { Colors } from './colors';
 
@@ -14,10 +18,10 @@ export type { Spacing } from './spacing';
 
 // Combined theme object for convenience
 export const theme = {
-  colors: require('./colors').colors,
-  typography: require('./typography').typography,
-  fontWeights: require('./typography').fontWeights,
-  spacing: require('./spacing').spacing,
+  colors: colorsImport,
+  typography: typographyImport,
+  fontWeights: fontWeightsImport,
+  spacing: spacingImport,
 } as const;
 
 export type Theme = typeof theme;
