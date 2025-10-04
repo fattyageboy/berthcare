@@ -1,6 +1,7 @@
 // Login screen - authentication
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { colors, typography, spacing } from '../theme';
 
 const LoginScreen: React.FC = () => {
   return (
@@ -16,16 +17,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.background.primary,
+    padding: spacing.lg,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 8,
+    ...typography.mobile.h1,
+    color: colors.primary.main,
+    marginBottom: spacing.sm,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
+    ...typography.mobile.body,
+    color: colors.text.secondary,
   },
 });
 

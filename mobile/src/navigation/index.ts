@@ -1,3 +1,5 @@
 // Navigation barrel export
 export { default as AppNavigator } from './AppNavigator';
-export type { RootStackParamList } from './AppNavigator';
+export { default as TabNavigator } from './TabNavigator';
+export * from './types';
+export * from './linking';

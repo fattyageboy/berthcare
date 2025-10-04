@@ -29,6 +29,5 @@ const syncSlice = createSlice({
   },
 });
 
-export const { setSyncState, startSync, completeSync, incrementPendingChanges } =
-  syncSlice.actions;
+export const { setSyncState, startSync, completeSync, incrementPendingChanges } = syncSlice.actions;
 export default syncSlice.reducer;

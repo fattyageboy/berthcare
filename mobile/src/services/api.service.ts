@@ -3,9 +3,7 @@ import axios, { AxiosInstance, AxiosError } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ApiError, ApiResponse } from '../types';
 
-const API_BASE_URL = __DEV__
-  ? 'http://localhost:3000'
-  : 'https://api.berthcare.ca';
+const API_BASE_URL = __DEV__ ? 'http://localhost:3000' : 'https://api.berthcare.ca';
 
 class ApiService {
   private client: AxiosInstance;
