@@ -1,0 +1,49 @@
+# CODEOWNERS - Code Review Assignments
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything in the repo
+* @technical-manager
+
+# Mobile application
+/mobile/ @frontend-engineer @technical-manager
+
+# Backend services
+/backend/ @backend-engineer @technical-manager
+
+# Infrastructure and DevOps
+/infrastructure/ @devops-engineer @technical-manager
+/.github/ @devops-engineer
+/docker-compose.yml @devops-engineer
+/Dockerfile* @devops-engineer
+
+# Design documentation
+/design-documentation/ @ux-ui-designer @frontend-engineer
+
+# Project documentation
+/project-documentation/ @technical-manager @system-architect
+
+# Security-sensitive files
+/backend/src/auth/ @security-analyst @backend-engineer
+/backend/src/middleware/security.ts @security-analyst @backend-engineer
+/.env.example @security-analyst @devops-engineer
+
+# Database schemas and migrations
+/backend/src/database/ @backend-engineer @system-architect
+/backend/migrations/ @backend-engineer @system-architect
+
+# Testing
+**/*.test.ts @qa-engineer
+**/*.test.tsx @qa-engineer
+**/*.spec.ts @qa-engineer
+**/*.spec.tsx @qa-engineer
+/mobile/__tests__/ @qa-engineer @frontend-engineer
+/backend/__tests__/ @qa-engineer @backend-engineer
+
+# CI/CD pipelines
+/.github/workflows/ @devops-engineer @technical-manager
+
+# Configuration files
+package.json @technical-manager
+tsconfig.json @technical-manager
+.eslintrc.* @technical-manager
+.prettierrc.* @technical-manager
