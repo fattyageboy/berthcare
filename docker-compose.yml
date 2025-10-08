@@ -1,0 +1,126 @@
+# BerthCare Local Development Environment
+# Docker Compose configuration for PostgreSQL 15, Redis 7, and LocalStack (S3 emulation)
+# Philosophy: "If users need a manual, the design has failed" - Just run `docker-compose up`
+
+services:
+  # PostgreSQL 15 - Server Source of Truth
+  # ACID compliance, relational integrity, complex queries
+  postgres:
+    image: postgres:15-alpine
+    container_name: berthcare-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: berthcare_dev
+      POSTGRES_USER: berthcare
+      POSTGRES_PASSWORD: berthcare_local_dev_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U berthcare -d berthcare_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - berthcare-network
+
+  # Redis 7 - Performance Layer
+  # Session management, API caching, rate limiting, presence tracking
+  redis:
+    image: redis:7-alpine
+    container_name: berthcare-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass berthcare_redis_password
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - berthcare-network
+
+  # LocalStack - AWS S3 Emulation
+  # Photo storage, signatures, documents for local development
+  localstack:
+    image: localstack/localstack:latest
+    container_name: berthcare-localstack
+    restart: unless-stopped
+    environment:
+      SERVICES: s3
+      DEBUG: 0
+      DATA_DIR: /tmp/localstack/data
+      AWS_DEFAULT_REGION: ca-central-1
+      EDGE_PORT: 4566
+    ports:
+      - "4566:4566"
+      - "4571:4571"
+    volumes:
+      - localstack_data:/tmp/localstack
+      - ./scripts/init-s3.sh:/etc/localstack/init/ready.d/init-s3.sh
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - berthcare-network
+
+  # PostgreSQL Admin UI (optional, for development convenience)
+  # Access at http://localhost:5050
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: berthcare-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: dev@berthcare.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - berthcare-network
+    profiles:
+      - tools
+
+  # Redis Commander (optional, for development convenience)
+  # Access at http://localhost:8081
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: berthcare-redis-commander
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: local:berthcare-redis:6379:0:berthcare_redis_password
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - berthcare-network
+    profiles:
+      - tools
+
+networks:
+  berthcare-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  localstack_data:
+    driver: local
+  pgadmin_data:
+    driver: local

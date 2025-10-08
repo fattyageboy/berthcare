@@ -97,26 +97,46 @@ berthcare/
 ### Prerequisites
 - Node.js 20 LTS
 - npm or yarn
-- Expo CLI
-- Docker (for local development)
-- AWS CLI (for deployment)
+- Docker Desktop (for local development)
+- Expo CLI (optional, for mobile development)
 
-### Local Development Setup
+### Quick Start - Local Development
+
+Get the entire development environment running in 3 commands:
 
 ```bash
-# Clone the repository
-git clone https://github.com/[organization]/berthcare.git
-cd berthcare
+# 1. Copy environment configuration
+cp .env.example .env
 
+# 2. Start all services (PostgreSQL, Redis, LocalStack S3)
+docker-compose up --build
+
+# 3. Verify everything is running
+docker-compose ps
+```
+
+That's it! You now have:
+- **PostgreSQL 15** running on `localhost:5432`
+- **Redis 7** running on `localhost:6379`
+- **LocalStack S3** running on `localhost:4566`
+
+For detailed setup instructions, troubleshooting, and advanced usage, see [Local Setup Guide](./docs/local-setup.md).
+
+### Running the Backend
+
+```bash
 # Install dependencies
 npm install
 
-# Start local development environment
-docker-compose up --build
+# Start backend development server
+npm run dev:backend
+```
 
-# Run mobile app
-cd mobile
-npm start
+### Running the Mobile App
+
+```bash
+# Start Expo development server
+npm run dev:mobile
 ```
 
 ## Development Workflow
@@ -169,10 +189,23 @@ For technical support, please contact: support@berthcare.ca
 
 ## Documentation
 
-- [Architecture Blueprint](./project-documentation/architecture-output.md)
+### Architecture & Planning
+- [System Architecture](./docs/architecture.md) - Complete system architecture documentation
+- [Architecture Diagrams](./docs/architecture-diagram.md) - Visual architecture diagrams
+- [Architecture Blueprint](./project-documentation/architecture-output.md) - Original design blueprint
 - [MVP Specification](./project-documentation/mvp.md)
 - [Design System](./design-documentation/README.md)
 - [Task Plan](./project-documentation/task-plan.md)
+
+### Setup Guides
+- [Local Development Setup](./docs/local-setup.md)
+- [CI/CD Setup](./docs/ci-setup.md)
+- [Twilio Configuration](./docs/twilio-setup.md)
+- [Monitoring Setup](./docs/monitoring-setup.md)
+
+### Quick References
+- [Twilio Quick Reference](./docs/twilio-quick-reference.md)
+- [Monitoring Quick Reference](./docs/monitoring-quick-reference.md)
 
 ---
 

@@ -1,0 +1,450 @@
+{
+  "graph": {
+    "nodes": {
+      "backend": {
+        "name": "backend",
+        "type": "app",
+        "data": {
+          "root": "apps/backend",
+          "name": "backend",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "apps/backend/src",
+          "projectType": "application",
+          "tags": [
+            "type:app",
+            "scope:backend"
+          ],
+          "targets": {
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/apps/backend",
+                "main": "apps/backend/src/index.ts",
+                "tsConfig": "apps/backend/tsconfig.json",
+                "assets": [
+                  "apps/backend/src/assets"
+                ]
+              },
+              "configurations": {},
+              "parallelism": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true
+            },
+            "serve": {
+              "executor": "@nx/js:node",
+              "options": {
+                "buildTarget": "backend:build"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "options": {
+                "lintFilePatterns": [
+                  "apps/backend/**/*.ts"
+                ]
+              },
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/apps/backend"
+              ],
+              "options": {
+                "jestConfig": "apps/backend/jest.config.js",
+                "passWithNoTests": true
+              },
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^production",
+                "{workspaceRoot}/jest.config.js"
+              ],
+              "cache": true
+            }
+          },
+          "implicitDependencies": []
+        }
+      },
+      "mobile": {
+        "name": "mobile",
+        "type": "app",
+        "data": {
+          "root": "apps/mobile",
+          "name": "mobile",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "apps/mobile/src",
+          "projectType": "application",
+          "tags": [
+            "type:app",
+            "scope:mobile",
+            "platform:react-native"
+          ],
+          "targets": {
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "options": {
+                "lintFilePatterns": [
+                  "apps/mobile/**/*.{ts,tsx}"
+                ]
+              },
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/apps/mobile"
+              ],
+              "options": {
+                "jestConfig": "apps/mobile/jest.config.js",
+                "passWithNoTests": true
+              },
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^production",
+                "{workspaceRoot}/jest.config.js"
+              ],
+              "cache": true
+            },
+            "type-check": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "tsc --noEmit -p apps/mobile/tsconfig.json"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^production"
+              ],
+              "cache": true
+            }
+          },
+          "implicitDependencies": []
+        }
+      },
+      "shared": {
+        "name": "shared",
+        "type": "lib",
+        "data": {
+          "root": "libs/shared",
+          "name": "shared",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/shared/src",
+          "projectType": "library",
+          "tags": [
+            "type:lib",
+            "scope:shared"
+          ],
+          "targets": {
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/libs/shared",
+                "main": "libs/shared/src/index.ts",
+                "tsConfig": "libs/shared/tsconfig.json",
+                "assets": [
+                  "libs/shared/*.md"
+                ]
+              },
+              "configurations": {},
+              "parallelism": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "options": {
+                "lintFilePatterns": [
+                  "libs/shared/**/*.ts"
+                ]
+              },
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/libs/shared"
+              ],
+              "options": {
+                "jestConfig": "libs/shared/jest.config.js",
+                "passWithNoTests": true
+              },
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^production",
+                "{workspaceRoot}/jest.config.js"
+              ],
+              "cache": true
+            }
+          },
+          "implicitDependencies": []
+        }
+      },
+      "berthcare": {
+        "name": "berthcare",
+        "type": "app",
+        "data": {
+          "root": ".",
+          "name": "berthcare",
+          "tags": [
+            "npm:private"
+          ],
+          "metadata": {
+            "targetGroups": {
+              "NPM Scripts": [
+                "lint",
+                "lint:affected",
+                "format:check",
+                "format",
+                "type-check",
+                "type-check:affected",
+                "test",
+                "test:affected",
+                "test:watch",
+                "test:coverage",
+                "build",
+                "build:affected"
+              ]
+            },
+            "description": "BerthCare - Home care management platform",
+            "js": {
+              "packageName": "berthcare",
+              "packageVersion": "1.0.0",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "targets": {
+            "lint": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "lint"
+              },
+              "metadata": {
+                "scriptContent": "nx run-many -t lint",
+                "runCommand": "npm run lint"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "lint:affected": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "lint:affected"
+              },
+              "metadata": {
+                "scriptContent": "nx affected -t lint",
+                "runCommand": "npm run lint:affected"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "format:check": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "format:check"
+              },
+              "metadata": {
+                "scriptContent": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+                "runCommand": "npm run format:check"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "format": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "format"
+              },
+              "metadata": {
+                "scriptContent": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+                "runCommand": "npm run format"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "type-check": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "type-check"
+              },
+              "metadata": {
+                "scriptContent": "nx run-many -t type-check",
+                "runCommand": "npm run type-check"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^production"
+              ],
+              "cache": true
+            },
+            "type-check:affected": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "type-check:affected"
+              },
+              "metadata": {
+                "scriptContent": "nx affected -t type-check",
+                "runCommand": "npm run type-check:affected"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test"
+              },
+              "metadata": {
+                "scriptContent": "nx run-many -t test",
+                "runCommand": "npm run test"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^production",
+                "{workspaceRoot}/jest.config.js"
+              ],
+              "cache": true
+            },
+            "test:affected": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:affected"
+              },
+              "metadata": {
+                "scriptContent": "nx affected -t test",
+                "runCommand": "npm run test:affected"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test:watch": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:watch"
+              },
+              "metadata": {
+                "scriptContent": "jest --watch",
+                "runCommand": "npm run test:watch"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test:coverage": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:coverage"
+              },
+              "metadata": {
+                "scriptContent": "nx run-many -t test --coverage",
+                "runCommand": "npm run test:coverage"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "build"
+              },
+              "metadata": {
+                "scriptContent": "nx run-many -t build",
+                "runCommand": "npm run build"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true
+            },
+            "build:affected": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "build:affected"
+              },
+              "metadata": {
+                "scriptContent": "nx affected -t build",
+                "runCommand": "npm run build:affected"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "implicitDependencies": []
+        }
+      }
+    },
+    "dependencies": {
+      "backend": [],
+      "mobile": [],
+      "shared": [],
+      "berthcare": []
+    }
+  }
+}
