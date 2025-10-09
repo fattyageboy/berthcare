@@ -101,3 +101,8 @@ serviceAccount.json
 .nx/workspace-data
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
+
+# Exclude documentation and agent folders
+.claude/
+design-documentation/
+project-documentation/

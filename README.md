@@ -7,6 +7,8 @@
 
 BerthCare is a mobile-first home care documentation platform designed to eliminate the 50% of shift time wasted on duplicate data entry and after-hours paperwork. Built with an offline-first architecture, BerthCare enables nurses and care aides to document care at the point of service, reducing documentation time from 15-20 minutes per visit to under 10 minutes.
 
+For the full system architecture context, see [`project-documentation/architecture-output.md`](project-documentation/architecture-output.md) (v2.0.0).
+
 ## Philosophy
 
 > "Simplicity is the ultimate sophistication. Start with the user experience, then work backwards to the technology."
