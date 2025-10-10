@@ -1,0 +1,26 @@
+# BerthCare Staging Environment Configuration
+# Copy this file to terraform.tfvars and update values
+
+# Project Configuration
+project_name = "berthcare"
+environment  = "staging"
+aws_region   = "ca-central-1"
+
+# Networking Configuration
+vpc_cidr             = "10.0.0.0/16"
+availability_zones   = ["ca-central-1a", "ca-central-1b"]
+public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24"]
+private_subnet_cidrs = ["10.0.11.0/24", "10.0.12.0/24"]
+
+# Database Configuration
+db_instance_class        = "db.t4g.medium"
+db_allocated_storage     = 100
+db_max_allocated_storage = 500
+db_name                  = "berthcare"
+db_username              = "berthcare_admin"
+
+# Cache Configuration
+redis_node_type = "cache.t4g.micro"
+
+# Monitoring Configuration
+alarm_email = "devops@berthcare.ca"

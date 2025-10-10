@@ -1,0 +1,41 @@
+{
+  "name": "mobile",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/mobile/src",
+  "projectType": "application",
+  "tags": ["type:app", "platform:mobile"],
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "expo start",
+        "cwd": "apps/mobile"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "expo export --platform ios --output-dir dist/ios",
+          "expo export --platform android --output-dir dist/android"
+        ],
+        "cwd": "apps/mobile",
+        "parallel": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/mobile/**/*.{ts,tsx,js,jsx}"]
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "jest",
+        "cwd": "apps/mobile"
+      }
+    }
+  }
+}
