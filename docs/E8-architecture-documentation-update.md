@@ -112,7 +112,7 @@ This task consolidates all infrastructure decisions, resource configurations, an
 
 **Rationale:**
 - Rural connectivity unreliable
-- Nurses can't wait for network
+- caregivers can't wait for network
 - Data loss unacceptable
 
 **Implementation:**
@@ -131,7 +131,7 @@ This task consolidates all infrastructure decisions, resource configurations, an
 
 **Implementation:**
 - One-tap voice alert button
-- Coordinator receives phone call
+- coordinator receives phone call
 - Voice message playback
 - SMS backup if no answer
 

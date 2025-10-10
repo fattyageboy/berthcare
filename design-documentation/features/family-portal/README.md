@@ -230,7 +230,7 @@ Reply PLAN for care plan summary
 **System Actions:**
 
 1. Detect reply keyword
-2. Retrieve assigned nurse contact info
+2. Retrieve assigned caregiver contact info
 3. Initiate callback request in staff system
 4. Send contact information to family
 5. Log communication request
@@ -276,7 +276,7 @@ She'll call you within 2 hours.
 ```
 Hi {family_name},
 
-Your {relationship} had a great day today. {nurse_name}
+Your {relationship} had a great day today. {caregiver_name}
 visited at {visit_time}, everything went well. Next visit
 {next_visit_day} at {next_visit_time}.
 
@@ -287,7 +287,7 @@ Reply CALL | DETAILS | PLAN
 
 **Tone:** Reassuring, warm, concise  
 **Character Count:** 120-160 (single SMS)  
-**Personalization:** Name, relationship, nurse, times
+**Personalization:** Name, relationship, caregiver, times
 
 ### State 2: Minor Concern Identified
 
@@ -298,12 +298,12 @@ Reply CALL | DETAILS | PLAN
 ```
 Hi {family_name},
 
-{nurse_name} visited your {relationship} at {visit_time}
-today. She noticed {concern_description}. {nurse_name}
+{caregiver_name} visited your {relationship} at {visit_time}
+today. She noticed {concern_description}. {caregiver_name}
 will follow up {follow_up_timing} and keep you posted.
 
 Reply CALL for immediate callback
-Reply DETAILS for nurse's notes
+Reply DETAILS for caregiver's notes
 ```
 
 **Tone:** Honest, calm, action-oriented  
@@ -320,7 +320,7 @@ Reply DETAILS for nurse's notes
 Hi {family_name},
 
 Today's {original_time} visit was rescheduled to
-{new_time} due to {reason}. {nurse_name} will be
+{new_time} due to {reason}. {caregiver_name} will be
 there at {new_time}.
 
 Reply CALL if you have concerns
@@ -337,7 +337,7 @@ Reply CALL if you have concerns
 **Message Template:**
 
 ```
-URGENT: {nurse_name} identified a concern during
+URGENT: {caregiver_name} identified a concern during
 today's visit with your {relationship}. Please call
 the care team immediately at {phone_number}.
 
@@ -543,8 +543,8 @@ function generateDailyMessage(client, visits, familyMember) {
   if (todayVisit.urgentFlag) {
     return templates.urgent({
       concern: todayVisit.urgentDescription,
-      nurse: todayVisit.nurseName,
-      phone: todayVisit.nursePhone,
+      caregiver: todayVisit.caregiverName,
+      phone: todayVisit.caregiverPhone,
     });
   }
 
@@ -560,7 +560,7 @@ function generateDailyMessage(client, visits, familyMember) {
   // Rule 3: Minor concern
   if (todayVisit.concernFlag) {
     return templates.concern({
-      nurse: todayVisit.nurseName,
+      caregiver: todayVisit.caregiverName,
       concern: todayVisit.concernDescription,
       followUp: todayVisit.followUpPlan,
     });
@@ -569,7 +569,7 @@ function generateDailyMessage(client, visits, familyMember) {
   // Rule 4: Routine positive
   return templates.routine({
     clientName: client.preferredName,
-    nurse: todayVisit.nurseName,
+    caregiver: todayVisit.caregiverName,
     visitTime: todayVisit.startTime,
     nextVisit: nextVisit.scheduledTime,
   });
@@ -582,7 +582,7 @@ function generateDailyMessage(client, visits, familyMember) {
 
 - Client profile (name, relationship to family)
 - Family member contact (phone, language preference)
-- Visit records (date, time, nurse, notes, flags)
+- Visit records (date, time, caregiver, notes, flags)
 - Care plan (medications, schedule, goals)
 - Communication log (messages sent, replies received)
 
@@ -639,7 +639,7 @@ POST /api/communications
 POST /api/callbacks
 {
   familyMemberId: "456",
-  nurseId: "789",
+  caregiverId: "789",
   priority: "routine",
   requestedAt: "2025-10-07T18:05:23Z"
 }
@@ -683,7 +683,7 @@ if (smsDeliveryFailed) {
     sendEmail(familyMember.email, messageContent);
 
     // Alert care coordinator
-    notifyCoordinator({
+    notifycoordinator({
       issue: 'SMS delivery failed',
       client: clientId,
       family: familyMemberId,
@@ -700,7 +700,7 @@ if (phoneNumberInvalid) {
   flagForReview(familyMemberId, 'invalid_phone');
 
   // Notify care coordinator
-  notifyCoordinator({
+  notifycoordinator({
     issue: 'Invalid phone number',
     family: familyMemberId,
     action: 'Update contact information',
@@ -712,24 +712,24 @@ if (phoneNumberInvalid) {
 
 ## Onboarding Flow
 
-### Initial Setup (Care Coordinator)
+### Initial Setup (Care coordinator)
 
 **Step 1: Collect Contact Information**
 
 ```
 During client enrollment:
 
-Care Coordinator: "Who should receive daily updates
+Care coordinator: "Who should receive daily updates
 about [client name]'s care?"
 
 Family: "Me - I'm their daughter Jennifer."
 
-Care Coordinator: "What's the best cell number to
+Care coordinator: "What's the best cell number to
 reach you?"
 
 Family: "403-555-1234"
 
-Care Coordinator: "Would you prefer messages in
+Care coordinator: "Would you prefer messages in
 English or French?"
 
 Family: "English is fine."
@@ -918,9 +918,9 @@ Footer: "Prefer text messages? Reply with your cell number."
 **Enrollment Conversation:**
 
 ```
-Care Coordinator: "What's the best way to reach you?"
+Care coordinator: "What's the best way to reach you?"
 Family: "I don't have a cell phone."
-Care Coordinator: "No problem. We can send daily emails instead.
+Care coordinator: "No problem. We can send daily emails instead.
 What's your email address?"
 ```
 
@@ -1194,7 +1194,7 @@ CREATE TABLE communications (
 CREATE TABLE callback_requests (
   id UUID PRIMARY KEY,
   family_member_id UUID REFERENCES family_members(id),
-  nurse_id UUID REFERENCES staff(id),
+  caregiver_id UUID REFERENCES staff(id),
   priority VARCHAR(20), -- 'routine', 'urgent'
   status VARCHAR(50), -- 'pending', 'completed', 'cancelled'
   requested_at TIMESTAMP DEFAULT NOW(),
@@ -1256,7 +1256,7 @@ async function generateDailyMessage(client, familyMember) {
   const message = template
     .replace('{family_name}', familyMember.name)
     .replace('{relationship}', client.relationshipTerm)
-    .replace('{nurse_name}', todayVisit.nurseName)
+    .replace('{caregiver_name}', todayVisit.caregiverName)
     .replace('{visit_time}', formatTime(todayVisit.startTime))
     .replace('{next_visit_day}', formatDay(nextVisit.date))
     .replace('{next_visit_time}', formatTime(nextVisit.startTime));
@@ -1604,7 +1604,7 @@ async function sendSMS(to, body) {
 **Video Call Scheduling:**
 
 - User demand threshold: 20% of families requesting
-- Implementation: Reply VIDEO to schedule Zoom/Teams call with nurse
+- Implementation: Reply VIDEO to schedule Zoom/Teams call with caregiver
 - Use case: Complex care discussions, family meetings
 - Cost impact: Minimal (existing video infrastructure)
 

@@ -6,6 +6,6 @@
     "declaration": true,
     "types": ["node"]
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "tests/auth-utils.test.ts", "tests/index.test.ts"],
   "exclude": ["node_modules", "dist", "jest.config.ts", "**/*.spec.ts", "**/*.test.ts"]
 }

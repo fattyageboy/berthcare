@@ -12,7 +12,7 @@
 
 > "Start with the user experience, then work backwards to the technology."
 
-BerthCare's architecture is designed to be **invisible**. Nurses shouldn't think about the app—they should think about their patients. Every technical decision traces back to a single question: **Does this help a nurse provide better care?**
+BerthCare's architecture is designed to be **invisible**. caregivers shouldn't think about the app—they should think about their patients. Every technical decision traces back to a single question: **Does this help a caregiver provide better care?**
 
 This isn't just a technical system. It's a carefully orchestrated experience where technology fades into the background, enabling human connection and quality care delivery.
 
@@ -42,11 +42,11 @@ This isn't just a technical system. It's a carefully orchestrated experience whe
 
 **Start with the User Experience, Work Backwards**
 
-- Nurse needs to document offline → Local-first architecture
-- Nurse wears gloves → Large touch targets, voice input
-- Nurse works in dim lighting → High contrast, clear hierarchy
-- Nurse gets interrupted → Auto-save, draft preservation
-- Nurse needs immediate help → One-tap voice alert to coordinator
+- caregiver needs to document offline → Local-first architecture
+- caregiver wears gloves → Large touch targets, voice input
+- caregiver works in dim lighting → High contrast, clear hierarchy
+- caregiver gets interrupted → Auto-save, draft preservation
+- caregiver needs immediate help → One-tap voice alert to coordinator
 
 **Obsess Over Every Detail**
 
@@ -76,7 +76,7 @@ The app must work flawlessly without connectivity. Online is the enhancement, no
 - User never waits for network
 
 **2. Zero Friction**
-If a nurse needs to think about how to use it, we've failed. Every interaction must be obvious.
+If a caregiver needs to think about how to use it, we've failed. Every interaction must be obvious.
 
 - Auto-save after 1 second of inactivity
 - Smart data reuse from previous visits
@@ -163,10 +163,10 @@ Privacy and security built into every layer, not bolted on.
 
 **Decision 2: Offline-First Architecture (Local-First)**
 
-- **Rationale:** Rural connectivity unreliable, nurses can't wait for network, data loss unacceptable
+- **Rationale:** Rural connectivity unreliable, caregivers can't wait for network, data loss unacceptable
 - **Trade-off:** Complex sync logic and conflict resolution vs simple client-server
 - **Mitigation:** Last-write-wins with comprehensive audit trail, multiple save triggers
-- **Philosophy:** "Start with user experience" - nurses work offline, architecture must support it
+- **Philosophy:** "Start with user experience" - caregivers work offline, architecture must support it
 
 **Decision 3: Voice Calls over Messaging Platform**
 
@@ -187,7 +187,7 @@ Privacy and security built into every layer, not bolted on.
 - **Rationale:** 80% of visit data unchanged from previous visit; pre-fill everything, edit what changed
 - **Trade-off:** More complex data model vs simple blank forms
 - **Mitigation:** Clear visual distinction (muted vs normal text), easy to clear/edit
-- **Philosophy:** "Eliminate unnecessary complexity" - don't make nurses re-enter same data
+- **Philosophy:** "Eliminate unnecessary complexity" - don't make caregivers re-enter same data
 
 **Decision 6: SMS-First Family Portal over Web Portal**
 
@@ -342,7 +342,7 @@ The system manages:
 
 ```
 User Experience:
-1. Nurse opens app → Instant load (<2s)
+1. caregiver opens app → Instant load (<2s)
 2. Taps client → Profile loads instantly (local data)
 3. Taps "Start Visit" → GPS auto-check-in, no waiting
 4. Documents visit → Every field auto-saves after 1s
@@ -374,11 +374,11 @@ Technical Reality:
 
 ```
 User Experience:
-1. Nurse discovers urgent issue
+1. caregiver discovers urgent issue
 2. Taps floating alert button (always visible)
 3. Speaks message: "Margaret seems confused about meds"
 4. Taps "Send Alert"
-5. Coordinator's phone rings within 15 seconds
+5. coordinator's phone rings within 15 seconds
 6. Human conversation resolves issue
 7. Outcome documented in care plan
 
@@ -392,7 +392,7 @@ Technical Reality:
 7. If no answer:
    - SMS sent to Mike with text version
    - Backup coordinator called after 5 minutes
-   - Nurse notified of escalation
+   - caregiver notified of escalation
 8. Call outcome logged for audit
 9. Care plan updated with resolution
 ```
@@ -484,7 +484,7 @@ Technical Reality:
 
 > "The best interface is no interface. Make technology invisible."
 
-Your job is to build the invisible infrastructure that makes the user experience magical. When a nurse saves data in 100ms, when sync happens seamlessly in the background, when alerts reach coordinators in 15 seconds—that's your work being invisible.
+Your job is to build the invisible infrastructure that makes the user experience magical. When a caregiver saves data in 100ms, when sync happens seamlessly in the background, when alerts reach coordinators in 15 seconds—that's your work being invisible.
 
 **Core Principles:**
 
@@ -611,7 +611,7 @@ Response (200):
     email: string;
     firstName: string;
     lastName: string;
-    role: 'nurse' | 'coordinator' | 'admin';
+    role: 'caregiver' | 'coordinator' | 'admin';
     zoneId: string;
   }
 }
@@ -947,7 +947,7 @@ Response (200):
 
 #### Users Table
 
-_Purpose:_ Store all system users (nurses, coordinators, admins, family members) with role-based access control.
+_Purpose:_ Store all system users (caregivers, coordinators, admins, family members) with role-based access control.
 
 ```sql
 CREATE TABLE users (
@@ -956,7 +956,7 @@ CREATE TABLE users (
   password_hash VARCHAR(255) NOT NULL,
   first_name VARCHAR(100) NOT NULL,
   last_name VARCHAR(100) NOT NULL,
-  role VARCHAR(50) NOT NULL CHECK (role IN ('nurse', 'coordinator', 'admin', 'family')),
+  role VARCHAR(50) NOT NULL CHECK (role IN ('caregiver', 'coordinator', 'admin', 'family')),
   zone_id UUID REFERENCES zones(id),
   phone VARCHAR(20),
   is_active BOOLEAN DEFAULT true,
@@ -981,7 +981,7 @@ CREATE TRIGGER update_users_updated_at
 **Why these indexes:**
 
 - `email`: Login queries (most frequent)
-- `zone_id`: Filter nurses by zone
+- `zone_id`: Filter caregivers by zone
 - `role`: Role-based queries
 - `is_active`: Partial index for active users only (smaller, faster)
 
@@ -1097,7 +1097,7 @@ async function getPreviousVisitData(clientId: string, staffId: string) {
 #### Voice Alert Logic (Twilio Integration)
 
 ```typescript
-// When nurse taps alert button and sends voice message
+// When caregiver taps alert button and sends voice message
 async function handleVoiceAlert(alertData: AlertData) {
   // Philosophy: "One button. One call. Problem solved."
 
@@ -1135,15 +1135,15 @@ async function handleVoiceAlert(alertData: AlertData) {
       await twilio.messages.create({
         to: coordinator.phone,
         from: TWILIO_PHONE_NUMBER,
-        body: `URGENT: ${alertData.nurse_name} needs help with ${alertData.client_name}. Message: "${alertData.message}". Call ${alertData.nurse_phone} immediately.`,
+        body: `URGENT: ${alertData.caregiver_name} needs help with ${alertData.client_name}. Message: "${alertData.message}". Call ${alertData.caregiver_phone} immediately.`,
       });
 
       // 4. Escalate to backup coordinator after 5 minutes
       setTimeout(
         async () => {
-          const backupCoordinator = await getBackupCoordinator(client.zone_id);
-          if (backupCoordinator) {
-            await initiateVoiceCall(backupCoordinator, alertData);
+          const backupcoordinator = await getBackupcoordinator(client.zone_id);
+          if (backupcoordinator) {
+            await initiateVoiceCall(backupcoordinator, alertData);
           }
         },
         5 * 60 * 1000
@@ -1155,7 +1155,7 @@ async function handleVoiceAlert(alertData: AlertData) {
   await db.alerts.insert({
     id: alertData.id,
     client_id: alertData.client_id,
-    created_by: alertData.nurse_id,
+    created_by: alertData.caregiver_id,
     coordinator_id: coordinator.id,
     message: alertData.message,
     voice_recording_url: alertData.voice_url,
@@ -1235,15 +1235,15 @@ function generateFamilyMessage(family: FamilyMember, visits: Visit[]): string {
   }
 
   const visit = visits[0]; // Most recent visit
-  const nurse = visit.staff_name.split(' ')[0]; // First name only
+  const caregiver = visit.staff_name.split(' ')[0]; // First name only
 
   if (visit.concerns) {
     // Minor concern identified
-    return `Hi ${family.family_name},\n\n${nurse} visited ${family.preferred_name} at ${formatTime(visit.check_in_time)} today. ${nurse} noted: ${visit.concerns}. We'll follow up and keep you posted.\n\nReply CALL for immediate callback\nReply DETAILS for nurse's notes`;
+    return `Hi ${family.family_name},\n\n${caregiver} visited ${family.preferred_name} at ${formatTime(visit.check_in_time)} today. ${caregiver} noted: ${visit.concerns}. We'll follow up and keep you posted.\n\nReply CALL for immediate callback\nReply DETAILS for caregiver's notes`;
   }
 
   // Routine positive visit
-  return `Hi ${family.family_name},\n\nYour ${family.relationship} had a great day today. ${nurse} visited at ${formatTime(visit.check_in_time)}, everything went well. Next visit tomorrow at 9am.\n\n- BerthCare\n\nReply CALL | DETAILS | PLAN`;
+  return `Hi ${family.family_name},\n\nYour ${family.relationship} had a great day today. ${caregiver} visited at ${formatTime(visit.check_in_time)}, everything went well. Next visit tomorrow at 9am.\n\n- BerthCare\n\nReply CALL | DETAILS | PLAN`;
 }
 ```
 
@@ -1426,7 +1426,7 @@ async function handleVoiceAlert(alertData: AlertData) {
     try {
       await twilio.messages.create({
         to: coordinator.phone,
-        body: `URGENT: ${alertData.message}. Call ${alertData.nurse_phone}.`
+        body: `URGENT: ${alertData.message}. Call ${alertData.caregiver_phone}.`
       });
       return { status: 'sms_sent', degraded: true };
 
@@ -2526,7 +2526,7 @@ Given: User is more than 100m from client address
 When: User attempts to check in
 Then: Error message displays: "You are too far from the client location"
 And: Visit status remains "scheduled"
-And: User can override with supervisor approval
+And: User can override with coordinator approval
 ```
 
 **Test Case: GPS Unavailable**
@@ -2536,7 +2536,7 @@ Given: GPS signal is unavailable (indoors/basement)
 When: User attempts to check in
 Then: App retries GPS for 30 seconds
 And: If still unavailable, offers manual check-in
-And: Manual check-in requires reason and supervisor notification
+And: Manual check-in requires reason and coordinator notification
 ```
 
 #### Data Sync Tests
@@ -2649,7 +2649,7 @@ And: All thread participants receive updates
 describe('Authentication', () => {
   test('successful login returns tokens', async () => {
     const response = await request(app).post('/v1/auth/login').send({
-      email: 'nurse@example.com',
+      email: 'caregiver@example.com',
       password: 'SecurePass123',
       deviceId: 'test-device-123',
     });
@@ -2657,12 +2657,12 @@ describe('Authentication', () => {
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty('accessToken');
     expect(response.body).toHaveProperty('refreshToken');
-    expect(response.body.user.role).toBe('nurse');
+    expect(response.body.user.role).toBe('caregiver');
   });
 
   test('invalid credentials return 401', async () => {
     const response = await request(app).post('/v1/auth/login').send({
-      email: 'nurse@example.com',
+      email: 'caregiver@example.com',
       password: 'WrongPassword',
       deviceId: 'test-device-123',
     });
@@ -2769,7 +2769,7 @@ describe('Performance Benchmarks', () => {
 describe('Complete Visit Flow', () => {
   beforeAll(async () => {
     await device.launchApp();
-    await login('nurse@example.com', 'password');
+    await login('caregiver@example.com', 'password');
   });
 
   it('should complete full visit documentation', async () => {
@@ -2879,9 +2879,9 @@ describe('Complete Visit Flow', () => {
 ```typescript
 const seedTestData = async () => {
   // Create test users
-  const nurse = await createUser({
-    email: 'nurse@test.com',
-    role: 'nurse',
+  const caregiver = await createUser({
+    email: 'caregiver@test.com',
+    role: 'caregiver',
     zoneId: 'zone-1',
   });
 
@@ -2906,7 +2906,7 @@ const seedTestData = async () => {
   // Create test visits
   await createVisit({
     clientId: clients[0].id,
-    staffId: nurse.id,
+    staffId: caregiver.id,
     scheduledStartTime: new Date(),
     status: 'scheduled',
   });
@@ -3009,7 +3009,7 @@ const seedTestData = async () => {
 {
   sub: string; // User ID
   email: string;
-  role: 'nurse' | 'coordinator' | 'admin' | 'family';
+  role: 'caregiver' | 'coordinator' | 'admin' | 'family';
   zoneId: string;
   deviceId: string;
   iat: number; // Issued at
@@ -3068,7 +3068,7 @@ const isValid = await bcrypt.compare(password, hashedPassword);
 
 **Role Definitions**
 
-**Nurse Role**
+**caregiver Role**
 
 ```typescript
 Permissions:
@@ -3085,13 +3085,13 @@ Restrictions:
 - Cannot view other staff schedules
 ```
 
-**Coordinator Role**
+**coordinator Role**
 
 ```typescript
 Permissions:
 - Read: All zone data, all staff schedules, all visits
 - Write: Care plans, client information, schedules
-- Create: Clients, users (nurse role only), alerts
+- Create: Clients, users (caregiver role only), alerts
 - Update: Care plans, schedules, client info
 - Delete: Draft visits, alerts
 
@@ -3172,7 +3172,7 @@ const authorize = (requiredRole: Role, requiredPermission: Permission) => {
 };
 
 // Usage
-app.post('/v1/visits', authenticate, authorize('nurse', 'create:visit'), createVisit);
+app.post('/v1/visits', authenticate, authorize('caregiver', 'create:visit'), createVisit);
 ```
 
 ### Data Encryption
@@ -4541,7 +4541,7 @@ Total Infrastructure: ~$1,230/month
 - **Impact:** Medium - Compliance issues
 - **Mitigation:**
   - Implement fallback check-in methods
-  - Allow manual override with supervisor approval
+  - Allow manual override with coordinator approval
   - Use Wi-Fi positioning as backup
   - Set reasonable accuracy thresholds (100m)
   - Log all location failures for analysis
@@ -4784,7 +4784,7 @@ This isn't just a technical architecture. It's a **design philosophy expressed i
 
 Every technical decision traces back to a design principle:
 
-- **Offline-first architecture** → "Start with user experience" (nurses work offline)
+- **Offline-first architecture** → "Start with user experience" (caregivers work offline)
 - **Auto-save with multiple triggers** → "The best interface is no interface" (no save buttons)
 - **Voice calls over messaging** → "Question everything" (messaging creates fatigue)
 - **SMS family portal** → "Create products people don't know they need" (peace of mind, not portals)
@@ -4875,10 +4875,10 @@ Every technical decision traces back to a design principle:
 
 **4. Start with the User Experience, Work Backwards**
 
-- Nurse needs offline → Local-first architecture
-- Nurse wears gloves → Voice input, large targets
-- Nurse gets interrupted → Auto-save, draft preservation
-- Nurse needs help → One-tap voice alert
+- caregiver needs offline → Local-first architecture
+- caregiver wears gloves → Voice input, large targets
+- caregiver gets interrupted → Auto-save, draft preservation
+- caregiver needs help → One-tap voice alert
 - Family wants peace of mind → Daily SMS, not portal
 
 **5. Obsess Over Every Detail**
@@ -5045,9 +5045,9 @@ National expansion. 100,000+ users. Still just an app that documents visits. Sti
 
 It's about:
 
-- Nurses who can focus on patients, not paperwork
+- caregivers who can focus on patients, not paperwork
 - Families who have peace of mind, not anxiety
-- Coordinators who can help immediately, not eventually
+- coordinators who can help immediately, not eventually
 - Care that's documented perfectly, not adequately
 - Technology that's invisible, not intrusive
 
@@ -5096,7 +5096,7 @@ User ← Mobile App ← API Gateway ← Auth Service
 **Visit Documentation Flow**
 
 ```
-Nurse → Mobile App (Offline) → Local SQLite
+caregiver → Mobile App (Offline) → Local SQLite
                                       ↓
                               Background Sync
                                       ↓
@@ -5110,7 +5110,7 @@ Nurse → Mobile App (Offline) → Local SQLite
 **Real-Time Alert Flow**
 
 ```
-Nurse → Mobile App → API → Alert Service → WebSocket Server
+caregiver → Mobile App → API → Alert Service → WebSocket Server
                                                   ↓
                                           Team Members
                                                   ↓
@@ -5190,7 +5190,7 @@ Not technology for technology's sake.
 Not features for features' sake.  
 Not complexity for complexity's sake.
 
-**Just simple, elegant, invisible technology that helps nurses care for patients.**
+**Just simple, elegant, invisible technology that helps caregivers care for patients.**
 
 That's the architecture.  
 That's the philosophy.  

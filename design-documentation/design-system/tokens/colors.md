@@ -6,12 +6,12 @@
 
 ## Design Philosophy
 
-Color in BerthCare isn't decoration—it's communication. Every hue serves the nurse documenting a visit in a dimly lit hallway, the family member checking on their loved one at midnight, and the coordinator triaging urgent issues in bright sunlight.
+Color in BerthCare isn't decoration—it's communication. Every hue serves the caregiver documenting a visit in a dimly lit hallway, the family member checking on their loved one at midnight, and the coordinator triaging urgent issues in bright sunlight.
 
 ### Core Principles
 
 **1. Clarity Over Beauty**  
-If a nurse has to think about what a color means, we've failed. Color should be instant, obvious, universal.
+If a caregiver has to think about what a color means, we've failed. Color should be instant, obvious, universal.
 
 **2. Reduce to Amplify**  
 We use fewer colors so each one speaks louder. When everything is highlighted, nothing is.
@@ -31,7 +31,7 @@ Colors are validated in car dashboards, hospital hallways, and family living roo
 
 ### Trust Blue
 
-**Why it exists:** The color of confidence. When a nurse taps "Complete Visit," this blue says "done right."
+**Why it exists:** The color of confidence. When a caregiver taps "Complete Visit," this blue says "done right."
 
 ```
 trust-50:  #EBF5FF  (rgb 235, 245, 255)  // Whisper - subtle backgrounds
@@ -100,7 +100,7 @@ care-900: #004D42  (rgb 0, 77, 66)      // Deepest - maximum
 
 ## Semantic Colors
 
-These colors have one job: communicate status instantly. A nurse glancing at their phone while walking to the next visit should know everything in 0.3 seconds.
+These colors have one job: communicate status instantly. A caregiver glancing at their phone while walking to the next visit should know everything in 0.3 seconds.
 
 ### Complete Green
 
@@ -236,7 +236,7 @@ inform-900: #370F56  (rgb 55, 15, 86)     // Deepest
 
 ## Neutral Palette
 
-These are the invisible heroes. 90% of the interface lives here—quiet, clear, getting out of the way so nurses can focus on care, not chrome.
+These are the invisible heroes. 90% of the interface lives here—quiet, clear, getting out of the way so caregivers can focus on care, not chrome.
 
 ### Neutral Gray
 
@@ -351,7 +351,7 @@ status-error:     urgent-500    #D32F2F  // Sync failed
 
 ## Dark Mode (Phase 2)
 
-Dark mode isn't just inverted colors—it's a complete rethinking for low-light environments. Nurses documenting visits at 2am, families checking updates before bed.
+Dark mode isn't just inverted colors—it's a complete rethinking for low-light environments. caregivers documenting visits at 2am, families checking updates before bed.
 
 **Current Status:** Not in MVP. Light mode must be perfect first.
 
@@ -641,7 +641,7 @@ Colors aren't done until they work in the real world.
 
 Before shipping any color change:
 
-1. Test on actual nurse's phone in their car
+1. Test on actual caregiver's phone in their car
 2. Show to family member over 60
 3. Verify in hospital fluorescent lighting
 4. Check in dim home lighting at night
@@ -660,7 +660,7 @@ Tested 47 blues. This one felt confident without being corporate, professional w
 Not the typical "success green." Slightly teal-shifted to distinguish from medical greens (scrubs, hospital walls). Distinct for colorblind users.
 
 **Urgent Red (#D32F2F)**  
-Serious but not alarming. Tested with nurses—bright reds caused anxiety. This red says "important" not "panic."
+Serious but not alarming. Tested with caregivers—bright reds caused anxiety. This red says "important" not "panic."
 
 **Neutral Gray Scale**  
 True neutral (no color cast). Tested against warm and cool grays—neutral won for medical context. Doesn't compete with semantic colors.

@@ -1,6 +1,6 @@
 /**
  * Structured Logging Configuration
- * 
+ *
  * Features:
  * - JSON formatted logs for CloudWatch parsing
  * - Multiple log levels (error, warn, info, debug)
@@ -10,6 +10,7 @@
  */
 
 import winston from 'winston';
+
 import { captureException } from './sentry';
 
 // Define log levels
@@ -41,13 +42,15 @@ const structuredFormat = winston.format.combine(
 const consoleFormat = winston.format.combine(
   winston.format.timestamp({ format: 'HH:mm:ss' }),
   winston.format.colorize(),
-  winston.format.printf(({ timestamp, level, message, ...meta }: winston.Logform.TransformableInfo) => {
-    let msg = `${timestamp} [${level}] ${message}`;
-    if (Object.keys(meta).length > 0) {
-      msg += ` ${JSON.stringify(meta)}`;
+  winston.format.printf(
+    ({ timestamp, level, message, ...meta }: winston.Logform.TransformableInfo) => {
+      let msg = `${timestamp} [${level}] ${message}`;
+      if (Object.keys(meta).length > 0) {
+        msg += ` ${JSON.stringify(meta)}`;
+      }
+      return msg;
     }
-    return msg;
-  })
+  )
 );
 
 // Create logger instance
@@ -79,20 +82,18 @@ if (process.env.NODE_ENV === 'production' && process.env.CLOUDWATCH_LOG_GROUP) {
 /**
  * Log error and send to Sentry
  */
-export function logError(
-  message: string,
-  error?: Error,
-  context?: Record<string, unknown>
-): void {
+export function logError(message: string, error?: Error, context?: Record<string, unknown>): void {
   logger.error(message, {
-    error: error ? {
-      name: error.name,
-      message: error.message,
-      stack: error.stack,
-    } : undefined,
+    error: error
+      ? {
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        }
+      : undefined,
     ...context,
   });
-  
+
   // Send to Sentry
   if (error) {
     captureException(error, context);
@@ -131,7 +132,7 @@ export function logRequest(
   context?: Record<string, unknown>
 ): void {
   const level = statusCode >= 500 ? 'error' : statusCode >= 400 ? 'warn' : 'info';
-  
+
   logger.log(level, 'API Request', {
     method,
     path,
@@ -144,17 +145,13 @@ export function logRequest(
 /**
  * Log database query
  */
-export function logQuery(
-  query: string,
-  duration: number,
-  context?: Record<string, unknown>
-): void {
+export function logQuery(query: string, duration: number, context?: Record<string, unknown>): void {
   logger.debug('Database Query', {
     query: query.substring(0, 200), // Truncate long queries
     duration,
     ...context,
   });
-  
+
   // Warn on slow queries
   if (duration > 1000) {
     logger.warn('Slow Database Query', {
@@ -183,10 +180,7 @@ export function logAuth(
 /**
  * Log business event
  */
-export function logBusinessEvent(
-  event: string,
-  context?: Record<string, unknown>
-): void {
+export function logBusinessEvent(event: string, context?: Record<string, unknown>): void {
   logger.info('Business Event', {
     event,
     ...context,

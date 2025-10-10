@@ -24,7 +24,7 @@
 
 ## Overview
 
-BerthCare is a mobile-first home care management platform designed with an offline-first architecture. The system enables nurses to document visits, coordinate care, and communicate with families—all while working seamlessly offline.
+BerthCare is a mobile-first home care management platform designed with an offline-first architecture. The system enables caregivers to document visits, coordinate care, and communicate with families—all while working seamlessly offline.
 
 ### Design Philosophy
 
@@ -70,7 +70,7 @@ The mobile app must work flawlessly without connectivity. Online is the enhancem
 
 ### 2. Zero Friction
 
-If a nurse needs to think about how to use it, we've failed. Every interaction must be obvious.
+If a caregiver needs to think about how to use it, we've failed. Every interaction must be obvious.
 
 **Implementation:**
 - Auto-save after 1 second of inactivity
@@ -379,7 +379,7 @@ The staging environment is deployed in AWS region `ca-central-1` (Canada Central
 ### Overview
 
 BerthCare uses Twilio for two critical communication features:
-1. **Voice Alerts:** Nurses send urgent voice alerts to care coordinators
+1. **Voice Alerts:** caregivers send urgent voice alerts to care coordinators
 2. **Family SMS Portal:** Automated daily updates to family members
 
 **Design Philosophy:** "Voice calls over messaging platform" - urgent issues need human voices, not text messages.
@@ -612,7 +612,7 @@ Sentry.init({
 
 **Application-Level:**
 - JWT-based authentication
-- Role-based authorization (nurse, coordinator, admin)
+- Role-based authorization (caregiver, coordinator, admin)
 - Session management via Redis
 - Password hashing with bcrypt
 

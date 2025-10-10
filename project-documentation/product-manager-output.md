@@ -4,7 +4,7 @@
 
 ### Elevator Pitch
 
-BerthCare is a mobile app that lets home care nurses document patient visits in real-time on their phones, cutting paperwork time in half and giving families instant updates on their loved one's care.
+BerthCare is a mobile app that lets home care caregivers document patient visits in real-time on their phones, cutting paperwork time in half and giving families instant updates on their loved one's care.
 
 ### Problem Statement
 
@@ -12,7 +12,7 @@ Home care staff waste 50% of their shift time on duplicate data entry and after-
 
 ### Target Audience
 
-**Primary:** Home care nurses and personal support workers in Alberta's health system
+**Primary:** Home care caregivers and personal support workers in Alberta's health system
 
 - Demographics: 25-55 years old, varying tech comfort levels
 - Pain points: Administrative burden, paper-based workflows, after-hours documentation
@@ -39,7 +39,7 @@ Unlike existing solutions, BerthCare combines offline-first mobile documentation
 
 ### Feature 1: Mobile Point-of-Care Documentation
 
-**User Story:** As a home care nurse, I want to document patient assessments directly on my mobile device during visits, so that I can eliminate after-hours paperwork and reduce documentation time.
+**User Story:** As a home care caregiver, I want to document patient assessments directly on my mobile device during visits, so that I can eliminate after-hours paperwork and reduce documentation time.
 
 **Acceptance Criteria:**
 
@@ -107,7 +107,7 @@ Unlike existing solutions, BerthCare combines offline-first mobile documentation
 
 ### Feature 5: Electronic Visit Verification
 
-**User Story:** As a supervisor, I want automated verification of visit times and locations, so that I can ensure compliance and accurate billing.
+**User Story:** As a coordinator, I want automated verification of visit times and locations, so that I can ensure compliance and accurate billing.
 
 **Acceptance Criteria:**
 
@@ -130,7 +130,7 @@ Unlike existing solutions, BerthCare combines offline-first mobile documentation
 
 - Given completed visits exist, when I export data, then I receive formatted PDF reports
 - Given a client roster update, when I import CSV data, then client profiles are updated without duplication
-- Given daily activities occur, when the day ends, then supervisors receive automated summary emails
+- Given daily activities occur, when the day ends, then coordinators receive automated summary emails
 - Edge case: Handle malformed import data with clear error messages
 - Edge case: Large export files that exceed email limits
 
@@ -273,7 +273,7 @@ The MVP aligns with a larger vision of systematic healthcare improvement but mai
 - **Technology Comfort:** Moderate, uses smartphone daily but prefers simple interfaces
 - **Success Metrics:** Reduced documentation time, fewer administrative errors
 
-### Secondary Persona: Care Coordinator (Mike, 42, RN Management)
+### Secondary Persona: Care coordinator (Mike, 42, RN Management)
 
 - **Context:** Oversees 15-20 frontline staff, handles escalations
 - **Goals:** Ensure compliance, coordinate care, manage staff efficiency
@@ -320,7 +320,7 @@ The document correctly prioritizes features based on:
 
 **Priority Adjustments:**
 
-1. **Accelerate:** Basic analytics dashboard for supervisors
+1. **Accelerate:** Basic analytics dashboard for coordinators
 2. **Maintain:** AI ambient documentation as planned
 3. **Defer:** Full FHIR integration until user adoption proven
 
@@ -730,7 +730,7 @@ The document correctly prioritizes features based on:
 
 **Value Justification:**
 
-- Average nurse saves 3 hours/week = $90-120 value (at $30-40/hour)
+- Average caregiver saves 3 hours/week = $90-120 value (at $30-40/hour)
 - Platform cost of $40/month = 25-30% of time savings value
 - Additional benefits (family satisfaction, compliance) provide margin for cost
 

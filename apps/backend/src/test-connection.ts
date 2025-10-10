@@ -1,6 +1,6 @@
+import dotenv from 'dotenv';
 import { Pool } from 'pg';
 import { createClient } from 'redis';
-import dotenv from 'dotenv';
 
 // Load environment variables
 dotenv.config({ path: '../../.env' });
@@ -19,21 +19,28 @@ async function testConnections() {
   });
 
   try {
-    const result = await pgPool.query('SELECT NOW() as time, version() as version, current_database() as database');
+    const result = await pgPool.query(
+      'SELECT NOW() as time, version() as version, current_database() as database'
+    );
     console.log('✅ PostgreSQL connection successful');
     console.log(`   Database: ${result.rows[0].database}`);
     console.log(`   Time: ${result.rows[0].time}`);
     console.log(`   Version: ${result.rows[0].version.split(',')[0]}`);
-    
+
     // Check if test database exists
     const dbCheck = await pgPool.query(`
       SELECT datname FROM pg_database 
       WHERE datname IN ('berthcare_dev', 'berthcare_test')
       ORDER BY datname
     `);
-    console.log(`   Databases found: ${dbCheck.rows.map((r: { datname: string }) => r.datname).join(', ')}`);
+    console.log(
+      `   Databases found: ${dbCheck.rows.map((r: { datname: string }) => r.datname).join(', ')}`
+    );
   } catch (error) {
-    console.error('❌ PostgreSQL connection failed:', error instanceof Error ? error.message : error);
+    console.error(
+      '❌ PostgreSQL connection failed:',
+      error instanceof Error ? error.message : error
+    );
     exitCode = 1;
   } finally {
     await pgPool.end();
@@ -52,11 +59,11 @@ async function testConnections() {
     const pong = await redisClient.ping();
     console.log('✅ Redis connection successful');
     console.log(`   Ping response: ${pong}`);
-    
+
     const info = await redisClient.info('server');
     const version = info.match(/redis_version:([^\r\n]+)/)?.[1];
     console.log(`   Redis version: ${version}`);
-    
+
     // Test set/get
     await redisClient.set('test:connection', 'success', { EX: 10 });
     const value = await redisClient.get('test:connection');

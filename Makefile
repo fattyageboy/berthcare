@@ -24,6 +24,10 @@ help:
 	@echo ""
 	@echo "Database:"
 	@echo "  make db-shell   - Open PostgreSQL shell"
+	@echo "  make db-migrate - Run database migrations"
+	@echo "  make db-verify  - Verify database schema"
+	@echo "  make db-seed    - Seed database with sample data (⚠️  deletes existing data)"
+	@echo "  make db-reset   - Reset database (rollback and re-run migrations)"
 	@echo "  make db-backup  - Backup database to backup.sql"
 	@echo "  make db-restore - Restore database from backup.sql"
 	@echo "  make redis-cli  - Open Redis CLI"
@@ -101,6 +105,28 @@ mobile:
 # Database shell
 db-shell:
 	@docker-compose exec postgres psql -U berthcare -d berthcare_dev
+
+# Run migrations
+db-migrate:
+	@echo "Running database migrations..."
+	@cd apps/backend && npm run migrate:up
+	@echo "✅ Migrations complete"
+
+# Verify schema
+db-verify:
+	@echo "Verifying database schema..."
+	@cd apps/backend && npm run db:verify
+
+# Reset database
+db-reset:
+	@echo "Resetting database..."
+	@cd apps/backend && npm run db:reset
+	@echo "✅ Database reset complete"
+
+# Seed database
+db-seed:
+	@echo "Seeding database with sample data..."
+	@cd apps/backend && npm run db:seed
 
 # Backup database
 db-backup:

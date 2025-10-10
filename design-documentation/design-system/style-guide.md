@@ -9,7 +9,7 @@
 
 > "Simplicity is the ultimate sophistication. If users need a manual, the design has failed."
 
-BerthCare exists to eliminate friction between caregivers and the people they serve. Every design decision starts with a simple question: **Does this help a nurse provide better care?**
+BerthCare exists to eliminate friction between caregivers and the people they serve. Every design decision starts with a simple question: **Does this help a caregiver provide better care?**
 
 ### Core Principles
 
@@ -109,7 +109,7 @@ The canvas. Clean, bright, unobtrusive.
 ### Color Usage Rules
 
 **Never use color alone to convey information.**  
-Pair color with icons, labels, or position. A colorblind nurse should never be confused.
+Pair color with icons, labels, or position. A colorblind caregiver should never be confused.
 
 **Test in context.**  
 Colors look different on phones vs tablets, in sunlight vs fluorescent lighting. Test everywhere.
@@ -159,7 +159,7 @@ Labels. Tiny details. Use sparingly.
 **Semibold (600)** — Emphasis, buttons, headings  
 **Bold (700)** — Rare. Only for critical alerts.
 
-**Never use light weights.** Nurses work in all lighting conditions. Thin fonts disappear.
+**Never use light weights.** caregivers work in all lighting conditions. Thin fonts disappear.
 
 ### Line Length
 
@@ -237,7 +237,7 @@ Every screen has one main thing to do. Make it obvious. Make it easy.
 **Ideal:** 56pt × 56pt for primary actions
 
 **Why so big?**  
-Nurses wear gloves. They're moving. They're tired. Make targets impossible to miss.
+caregivers wear gloves. They're moving. They're tired. Make targets impossible to miss.
 
 **Spacing between targets:** Minimum 8px  
 Prevent accidental taps. Frustration kills adoption.
@@ -450,7 +450,7 @@ Easing: Ease Out
 - Ideal: 56pt × 56pt
 - Spacing: 8pt minimum between targets
 
-**Nurses wear gloves. Make targets big.**
+**caregivers wear gloves. Make targets big.**
 
 **Focus Indicators**
 
@@ -619,7 +619,7 @@ Chrome, Safari, Firefox, Edge (latest 2 versions)
 
 **Before adding a feature, ask:**
 
-- Does this help a nurse provide better care?
+- Does this help a caregiver provide better care?
 - Can we solve this without adding UI?
 - What can we remove instead?
 

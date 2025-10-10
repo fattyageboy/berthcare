@@ -1,7 +1,7 @@
 # Feature: Electronic Visit Verification
 
 **Priority:** P1 - Required for Compliance  
-**User Story:** As a supervisor, I want automated verification of visit times and locations, so that I can ensure compliance and accurate billing.
+**User Story:** As a coordinator, I want automated verification of visit times and locations, so that I can ensure compliance and accurate billing.
 
 ---
 
@@ -33,10 +33,10 @@
 
 **How it works:**
 
-1. Nurse taps "Start Visit" on client card
+1. caregiver taps "Start Visit" on client card
 2. App automatically records location and time
-3. Nurse does the visit (app is invisible)
-4. Nurse taps "Complete Visit"
+3. caregiver does the visit (app is invisible)
+4. caregiver taps "Complete Visit"
 5. App automatically records end location and time
 6. Done. No check-in screens, no GPS verification prompts.
 
@@ -44,7 +44,7 @@
 
 ## The Invisible Interface
 
-### What the Nurse Sees
+### What the caregiver Sees
 
 ```
 [Start Visit] button
@@ -71,7 +71,7 @@ Visit in progress (timer in status bar)
 
 ### Assumption: "We need to show GPS accuracy to users"
 
-**Challenge:** Why? Does showing "GPS accuracy: 12 meters" help a nurse do their job?  
+**Challenge:** Why? Does showing "GPS accuracy: 12 meters" help a caregiver do their job?  
 **Decision:** No. Hide it. Only show if there's a problem.
 
 ### Assumption: "Users must manually check in/out"
@@ -84,7 +84,7 @@ Visit in progress (timer in status bar)
 **Challenge:** Are we building for the 1% who might cheat, or the 99% who are honest?  
 **Decision:** Trust by default. Flag anomalies for review, don't block honest workers.
 
-### Assumption: "Supervisors need real-time location tracking"
+### Assumption: "coordinators need real-time location tracking"
 
 **Challenge:** Do they? Or do they just need to know visits happened?  
 **Decision:** Visits happened. Location verified. That's enough. No Big Brother tracking.
@@ -93,7 +93,7 @@ Visit in progress (timer in status bar)
 
 ## The Magical Experience
 
-### For the Nurse
+### For the caregiver
 
 **Before (typical EVV):**
 
@@ -137,13 +137,13 @@ Small banner: "Location unavailable - will verify later"
 ↓
 Visit continues
 ↓
-Supervisor reviews later (if needed)
+coordinator reviews later (if needed)
 ```
 
 ### Location Doesn't Match
 
 **Old approach:** "You are not at the client location. Cannot check in."  
-**New approach:** Trust the nurse. Flag for review if pattern emerges.
+**New approach:** Trust the caregiver. Flag for review if pattern emerges.
 
 ```
 Visit starts normally
@@ -152,16 +152,16 @@ Location mismatch detected
 ↓
 No user interruption
 ↓
-Flagged for supervisor review
+Flagged for coordinator review
 ↓
-Supervisor sees: "3 visits this week had location variances"
+coordinator sees: "3 visits this week had location variances"
 ↓
-Supervisor contacts nurse: "Hey, noticed some location issues..."
+coordinator contacts caregiver: "Hey, noticed some location issues..."
 ```
 
 ---
 
-## The Supervisor Experience
+## The coordinator Experience
 
 ### Dashboard (Not a Surveillance Tool)
 
@@ -186,12 +186,12 @@ Supervisor contacts nurse: "Hey, noticed some location issues..."
 │ Sarah J. - Margaret T.              │
 │ Location variance: 150m             │
 │ Likely reason: Apartment building   │
-│ [Approve] [Contact Nurse]           │
+│ [Approve] [Contact caregiver]           │
 │                                     │
 │ Mike C. - John S.                   │
 │ No GPS data                         │
 │ Likely reason: Rural area           │
-│ [Approve] [Contact Nurse]           │
+│ [Approve] [Contact caregiver]           │
 └─────────────────────────────────────┘
 ```
 
@@ -203,11 +203,11 @@ Supervisor contacts nurse: "Hey, noticed some location issues..."
 
 ### ❌ Real-time tracking
 
-**Why:** Creepy. Unnecessary. Treats nurses like suspects.
+**Why:** Creepy. Unnecessary. Treats caregivers like suspects.
 
 ### ❌ Photo verification
 
-**Why:** Degrading. Clients aren't criminals. Nurses aren't either.
+**Why:** Degrading. Clients aren't criminals. caregivers aren't either.
 
 ### ❌ Biometric check-in
 
@@ -266,13 +266,13 @@ Supervisor contacts nurse: "Hey, noticed some location issues..."
 
 ## Success Metrics
 
-### For Nurses
+### For caregivers
 
 - **Zero additional steps** beyond Start/Complete
 - **Zero GPS wait time** (happens in background)
 - **Zero location errors** blocking work
 
-### For Supervisors
+### For coordinators
 
 - **95%+ auto-approved** visits (no review needed)
 - **<5% flagged** for review
@@ -291,7 +291,7 @@ Supervisor contacts nurse: "Hey, noticed some location issues..."
 ### What Regulators Want
 
 - Proof visit happened
-- Proof nurse was there
+- Proof caregiver was there
 - Proof of duration
 - Audit trail
 
@@ -316,7 +316,7 @@ Supervisor contacts nurse: "Hey, noticed some location issues..."
 ### User Flow
 
 ```
-Nurse workflow:
+caregiver workflow:
 1. Tap "Start Visit" on client card
    → GPS captured silently
    → Timer starts
@@ -347,12 +347,12 @@ IF GPS unavailable:
   Don't block workflow
 
 IF location variance >500m:
-  Don't show anything to nurse
-  Flag for supervisor review
+  Don't show anything to caregiver
+  Flag for coordinator review
 
 IF duration <10min or >2hr:
-  Don't show anything to nurse
-  Flag for supervisor review
+  Don't show anything to caregiver
+  Flag for coordinator review
 ```
 
 ---
@@ -369,7 +369,7 @@ EVV happens automatically. No EVV screens exist.
 
 ### "Make technology invisible"
 
-Nurses don't think about GPS, geofencing, or verification. They just work.
+caregivers don't think about GPS, geofencing, or verification. They just work.
 
 ### "Say no to 1,000 things"
 

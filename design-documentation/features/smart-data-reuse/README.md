@@ -347,7 +347,7 @@ Total time: 3 minutes
 
 - Metadata stored with each field
 - Visible in review mode
-- Accessible to supervisors
+- Accessible to coordinators
 
 **Review Mode:**
 

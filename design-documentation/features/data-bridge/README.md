@@ -72,7 +72,7 @@ No field mapping. No data transformation. Standard fields only.
 **The flow:**
 
 1. System generates PDF at 6 PM
-2. System emails PDF to supervisor
+2. System emails PDF to coordinator
 3. Done
 
 **User action required:** None
@@ -237,7 +237,7 @@ Detailed report attached (PDF)
 
 - Happens automatically at 6 PM
 - No user interaction
-- Email sent to supervisor list
+- Email sent to coordinator list
 - Failure notification if email fails
 
 ### Error States
@@ -538,12 +538,12 @@ Detailed report attached (PDF)
 
 - Daily email delivery: 100% on time
 - Manual export time: <5 seconds
-- Supervisor satisfaction: 80%+ find reports useful
+- coordinator satisfaction: 80%+ find reports useful
 
 **Adoption:**
 
 - 90% of organizations import clients in first week
-- 80% of supervisors use daily reports
+- 80% of coordinators use daily reports
 - <5 support tickets per month after first month
 
 ---

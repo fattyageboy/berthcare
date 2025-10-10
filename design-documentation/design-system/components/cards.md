@@ -6,11 +6,11 @@
 
 ## The Truth About Cards
 
-Cards aren't decoration. They're decision-making tools for nurses documenting 6-8 visits per shift, often while standing in hallways, wearing gloves, with one hand holding supplies.
+Cards aren't decoration. They're decision-making tools for caregivers documenting 6-8 visits per shift, often while standing in hallways, wearing gloves, with one hand holding supplies.
 
 **One card design. Multiple contexts. Zero confusion.**
 
-Every pixel serves the nurse's goal: get to the right patient, at the right time, with the right information.
+Every pixel serves the caregiver's goal: get to the right patient, at the right time, with the right information.
 
 ---
 
@@ -176,7 +176,7 @@ transition: all 100ms ease-out;
 
 ### Information Hierarchy (Designed for Scanning)
 
-Nurses glance at their schedule while walking between visits. Information must be scannable in under 2 seconds.
+caregivers glance at their schedule while walking between visits. Information must be scannable in under 2 seconds.
 
 **Priority 1: Time Window**
 
@@ -187,7 +187,7 @@ Nurses glance at their schedule while walking between visits. Information must b
 - 18px, Semibold (600), text-primary
 - **Why first:** Determines urgency - "Am I late?"
 - **Format:** 12-hour time (familiar, no mental conversion)
-- **Duration shown:** Helps nurses plan their day
+- **Duration shown:** Helps caregivers plan their day
 
 **Priority 2: Patient Identity**
 
@@ -386,7 +386,7 @@ Tap card → Navigate to visit documentation screen
 **What we eliminated:**
 
 **Swipe actions** (delete, reschedule, etc.)  
-**Why:** Hidden interactions fail the "no manual" test. Nurses shouldn't discover features by accident. Actions belong in the detail screen.
+**Why:** Hidden interactions fail the "no manual" test. caregivers shouldn't discover features by accident. Actions belong in the detail screen.
 
 **Long-press menus**  
 **Why:** Requires holding phone steady for 500ms+ while standing. Fails in real-world conditions. Also hidden.
@@ -431,7 +431,7 @@ Schedule Screen (Card now green/completed)
 
 ### ❌ Swipe Actions (Delete, Reschedule, Mark Complete)
 
-**Why eliminated:** Hidden interactions violate "if users need a manual, the design has failed." Tested with 5 nurses - none discovered swipe without prompting.
+**Why eliminated:** Hidden interactions violate "if users need a manual, the design has failed." Tested with 5 caregivers - none discovered swipe without prompting.
 
 **User impact:** Obvious interactions only. All actions in detail screen where they're visible.
 
@@ -827,8 +827,8 @@ Card(
 
 **Physical Testing:**
 
-- [ ] Works with latex gloves (tested with 3 nurses)
-- [ ] Works with nitrile gloves (tested with 3 nurses)
+- [ ] Works with latex gloves (tested with 3 caregivers)
+- [ ] Works with nitrile gloves (tested with 3 caregivers)
 - [ ] Readable in direct sunlight (tested outdoors, noon)
 - [ ] Readable in dim hallway lighting (tested in hospital)
 - [ ] Readable in car dashboard mount (tested in 3 vehicles)
@@ -863,7 +863,7 @@ Card(
 
 **Performance:**
 
-- [ ] Content scannable in <2 seconds (tested with 10 nurses)
+- [ ] Content scannable in <2 seconds (tested with 10 caregivers)
 - [ ] Skeleton loads instantly (<100ms)
 - [ ] Real data loads in <1.5s (tested on 3G)
 - [ ] Smooth scrolling at 60fps (tested on 3-year-old devices)
@@ -882,10 +882,10 @@ Card(
 
 **Before shipping:**
 
-1. Shadow 3 nurses for full shift - observe card usage
+1. Shadow 3 caregivers for full shift - observe card usage
 2. Test in actual patient homes (lighting, distractions)
 3. Verify in moving vehicle (dashboard mount scenario)
-4. Test with nurses age 25-65 (varying tech comfort)
+4. Test with caregivers age 25-65 (varying tech comfort)
 5. Validate with colorblind team member
 
 **Success Metrics:**
@@ -998,4 +998,4 @@ Every decision traced back to Sarah, 34, RN, documenting visits with gloves in d
 
 **Not a card system. Not card variants. Not card options.**
 
-**One card. For visits. Designed for nurses. Tested in reality. Executed perfectly.**
+**One card. For visits. Designed for caregivers. Tested in reality. Executed perfectly.**

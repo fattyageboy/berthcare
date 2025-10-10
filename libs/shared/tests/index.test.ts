@@ -1,4 +1,4 @@
-import { greet, version } from './index';
+import { greet, version } from '../src/index';
 
 describe('Shared Library', () => {
   describe('version', () => {

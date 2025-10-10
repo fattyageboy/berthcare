@@ -4,7 +4,7 @@
 
 ## Overview
 
-BerthCare's authentication and onboarding experience is designed to get home care nurses documenting visits within 60 seconds of first launch. We've eliminated traditional multi-step registration flows in favor of a streamlined, role-aware system that recognizes users are often starting their shift and need immediate access.
+BerthCare's authentication and onboarding experience is designed to get home care caregivers documenting visits within 60 seconds of first launch. We've eliminated traditional multi-step registration flows in favor of a streamlined, role-aware system that recognizes users are often starting their shift and need immediate access.
 
 **Core Principle**: The best interface is no interface. Authentication should be invisible, onboarding should be instant, and users should feel productive from moment one.
 
@@ -69,7 +69,7 @@ Role Confirmation (5 seconds)
 - Quick-access documentation shortcuts
 - Offline mode indicator prominent
 
-**Care Coordinator**
+**Care coordinator**
 
 - Team overview dashboard
 - Urgent alerts front and center
@@ -276,7 +276,7 @@ Role Confirmation (5 seconds)
 │   You're all set, Sarah!    │
 │                             │
 │   Your role:                │
-│   Home Care Nurse           │
+│   Home Care caregiver           │
 │                             │
 │   You can:                  │
 │   • Document patient visits │
@@ -322,7 +322,7 @@ Role Confirmation (5 seconds)
 
 **Accessibility**
 
-- VoiceOver: "Setup complete. You're all set, Sarah. Your role is Home Care Nurse. You can document patient visits, update care plans, and communicate with your team."
+- VoiceOver: "Setup complete. You're all set, Sarah. Your role is Home Care caregiver. You can document patient visits, update care plans, and communicate with your team."
 - Skip button for users who want immediate access
 
 **Edge Cases**
@@ -452,7 +452,7 @@ Success → Patient List (500ms transition)
 
 **First Action Prompt**: "Ready to document your first visit?"
 
-### Care Coordinator
+### Care coordinator
 
 **Focus**: Team oversight and communication
 
@@ -830,7 +830,7 @@ Duration: 400ms
 2. **Biometric Unavailable**: User completes setup with passcode only
 3. **Offline Activation**: User activates without network, syncs later
 4. **Session Expiry**: User returns after 30 minutes, re-authenticates seamlessly
-5. **Multiple Roles**: User with coordinator + nurse roles sees appropriate experience
+5. **Multiple Roles**: User with coordinator + caregiver roles sees appropriate experience
 6. **Accessibility**: Complete flow with VoiceOver, large text, high contrast
 
 ### Performance Monitoring

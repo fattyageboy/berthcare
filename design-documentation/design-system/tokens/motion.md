@@ -38,7 +38,7 @@ Motion timing is calibrated for mobile devices held in one hand, often with glov
 --duration-deliberate: 400ms;
 ```
 
-**Hard Rule:** No animation exceeds 400ms. Nurses document 6-8 visits per shift - every millisecond compounds.
+**Hard Rule:** No animation exceeds 400ms. caregivers document 6-8 visits per shift - every millisecond compounds.
 
 **Context-Aware Timing:**
 
@@ -520,7 +520,7 @@ Before shipping any animated component:
 
 ### User Testing Focus
 
-When testing motion with nurses:
+When testing motion with caregivers:
 
 1. **Responsiveness perception** - Does the app feel instant?
 2. **Clarity of feedback** - Do users understand what happened?
@@ -558,7 +558,7 @@ All new animations must be reviewed for:
 2. **Performance** - Measured frame rate on target devices
 3. **Accessibility** - Reduced motion handling
 4. **Battery impact** - Power consumption measurement
-5. **User validation** - Tested with actual nurses in field conditions
+5. **User validation** - Tested with actual caregivers in field conditions
 
 ---
 

@@ -1,6 +1,6 @@
 /**
  * BerthCare Backend Server with Monitoring & Observability
- * 
+ *
  * Features:
  * - Sentry error tracking and performance monitoring
  * - Structured logging with Winston
@@ -9,15 +9,20 @@
  * - Health checks with service status
  */
 
+import compression from 'compression';
+import cors from 'cors';
+import dotenv from 'dotenv';
 import express from 'express';
+import helmet from 'helmet';
 import { Pool } from 'pg';
 import { createClient } from 'redis';
-import dotenv from 'dotenv';
-import cors from 'cors';
-import helmet from 'helmet';
-import compression from 'compression';
-import { initSentry, configureSentryMiddleware, configureSentryErrorHandler } from './config/sentry';
+
 import { logInfo, logError, logRequest } from './config/logger';
+import {
+  initSentry,
+  configureSentryMiddleware,
+  configureSentryErrorHandler,
+} from './config/sentry';
 
 // Load environment variables
 dotenv.config();
@@ -47,7 +52,7 @@ app.use(express.json());
 // Request logging middleware
 app.use((req, res, next) => {
   const startTime = Date.now();
-  
+
   res.on('finish', () => {
     const duration = Date.now() - startTime;
     logRequest(req.method, req.path, res.statusCode, duration, {
@@ -56,7 +61,7 @@ app.use((req, res, next) => {
       ip: req.ip,
     });
   });
-  
+
   next();
 });
 
@@ -198,14 +203,14 @@ async function startServer() {
 // Graceful shutdown
 async function shutdown(signal: string) {
   logInfo(`${signal} received, shutting down gracefully...`);
-  
+
   try {
     await pgPool.end();
     logInfo('PostgreSQL connection closed');
-    
+
     await redisClient.quit();
     logInfo('Redis connection closed');
-    
+
     logInfo('Shutdown complete');
     process.exit(0);
   } catch (error) {

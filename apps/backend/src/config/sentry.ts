@@ -1,6 +1,6 @@
 /**
  * Sentry Configuration for Error Tracking and Performance Monitoring
- * 
+ *
  * Features:
  * - Automatic error capture with stack traces
  * - Performance monitoring (10% sample rate)
@@ -34,17 +34,14 @@ export function initSentry(config: SentryConfig): void {
     dsn: config.dsn,
     environment: config.environment,
     release: config.release,
-    
+
     // Performance Monitoring
     tracesSampleRate: config.tracesSampleRate || 0.1, // 10% of transactions
     profilesSampleRate: config.profilesSampleRate || 0.1, // 10% of transactions
-    
+
     // Integrations
-    integrations: [
-      new Sentry.Integrations.Http({ tracing: true }),
-      new ProfilingIntegration(),
-    ],
-    
+    integrations: [new Sentry.Integrations.Http({ tracing: true }), new ProfilingIntegration()],
+
     // Filter sensitive data
     beforeSend(event: Sentry.Event) {
       // Remove sensitive headers
@@ -52,14 +49,14 @@ export function initSentry(config: SentryConfig): void {
         delete event.request.headers['authorization'];
         delete event.request.headers['cookie'];
       }
-      
+
       // Remove sensitive query parameters
       if (event.request?.query_string && typeof event.request.query_string === 'string') {
         event.request.query_string = event.request.query_string
           .replace(/password=[^&]*/gi, 'password=[REDACTED]')
           .replace(/token=[^&]*/gi, 'token=[REDACTED]');
       }
-      
+
       return event;
     },
   });
@@ -76,7 +73,7 @@ export function initSentry(config: SentryConfig): void {
 export function configureSentryMiddleware(app: Express): void {
   // Request handler must be the first middleware
   app.use(Sentry.Handlers.requestHandler());
-  
+
   // TracingHandler creates a trace for every incoming request
   app.use(Sentry.Handlers.tracingHandler());
 }
@@ -86,12 +83,14 @@ export function configureSentryMiddleware(app: Express): void {
  * Must be added after all routes but before other error handlers
  */
 export function configureSentryErrorHandler(app: Express): void {
-  app.use(Sentry.Handlers.errorHandler({
-    shouldHandleError(_error: Error) {
-      // Capture all errors
-      return true;
-    },
-  }));
+  app.use(
+    Sentry.Handlers.errorHandler({
+      shouldHandleError(_error: Error) {
+        // Capture all errors
+        return true;
+      },
+    })
+  );
 }
 
 /**

@@ -15,7 +15,7 @@ This document provides step-by-step instructions for setting up Twilio accounts,
 
 BerthCare uses Twilio for two critical communication features:
 
-1. **Voice Alerts:** Nurses can send urgent voice alerts to care coordinators with one tap
+1. **Voice Alerts:** caregivers can send urgent voice alerts to care coordinators with one tap
 2. **Family SMS Portal:** Automated daily updates sent to family members at 6 PM
 
 **Design Philosophy:** "Voice calls over messaging platform" - urgent issues need human voices, not text messages.
@@ -680,8 +680,8 @@ After Twilio configuration is complete:
    - Add webhook handlers
 
 2. **Test Voice Alert Flow (Task T3):**
-   - Nurse sends voice alert
-   - Coordinator receives call
+   - caregiver sends voice alert
+   - coordinator receives call
    - Voice message plays
    - Outcome logged
 

@@ -171,7 +171,7 @@ After completing this checklist:
 
 2. **Voice Alert Feature (Task T3):**
    - [ ] Implement POST /v1/alerts/voice endpoint
-   - [ ] Test nurse → coordinator voice alert flow
+   - [ ] Test caregiver → coordinator voice alert flow
    - [ ] Verify voice message playback
 
 3. **Family SMS Portal (Task T6):**

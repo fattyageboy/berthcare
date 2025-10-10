@@ -24,7 +24,7 @@ This design system transforms BerthCare's product vision into an intuitive, beau
 
 ### User Experience First
 
-- **Start with the nurse's reality:** Gloves, poor lighting, time pressure, emotional labor
+- **Start with the caregiver's reality:** Gloves, poor lighting, time pressure, emotional labor
 - **Work backwards to technology:** Offline-first isn't a feature, it's a requirement
 - **Make documentation feel effortless:** The best interface disappears
 
@@ -90,7 +90,7 @@ This design system transforms BerthCare's product vision into an intuitive, beau
 ### 2. One-Handed Operation
 
 **Decision:** All primary actions accessible with thumb on 6.1" screen  
-**Rationale:** Nurses carry supplies, open doors, steady patients  
+**Rationale:** caregivers carry supplies, open doors, steady patients  
 **Impact:** Bottom navigation, large touch targets, no top-corner actions
 
 ### 3. Glanceable Information

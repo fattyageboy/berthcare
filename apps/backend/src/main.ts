@@ -1,10 +1,13 @@
-import express from 'express';
+import compression from 'compression';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import express, { Router } from 'express';
+import helmet from 'helmet';
 import { Pool } from 'pg';
 import { createClient } from 'redis';
-import dotenv from 'dotenv';
-import cors from 'cors';
-import helmet from 'helmet';
-import compression from 'compression';
+
+import { logError, logInfo } from './config/logger';
+import { createAuthRoutes } from './routes/auth.routes';
 
 // Load environment variables
 dotenv.config({ path: '../../.env' });
@@ -74,57 +77,62 @@ app.get('/api/v1', (_req, res) => {
     endpoints: {
       health: '/health',
       api: '/api/v1',
+      auth: '/api/v1/auth',
     },
   });
 });
+
+// Mount authentication routes (will be initialized after Redis connection)
+let authRoutes: Router | null = null;
 
 // Initialize connections and start server
 async function startServer() {
   try {
     // Test PostgreSQL connection
-    console.warn('🔌 Connecting to PostgreSQL...');
+    logInfo('Connecting to PostgreSQL...');
     const pgResult = await pgPool.query('SELECT NOW() as time, version() as version');
-    console.warn('✅ Connected to PostgreSQL');
-    console.warn(`   Database time: ${pgResult.rows[0].time}`);
-    console.warn(`   PostgreSQL version: ${pgResult.rows[0].version.split(',')[0]}`);
+    logInfo('Connected to PostgreSQL', {
+      databaseTime: pgResult.rows[0].time,
+      version: pgResult.rows[0].version.split(',')[0],
+    });
 
     // Connect to Redis
-    console.warn('🔌 Connecting to Redis...');
+    logInfo('Connecting to Redis...');
     await redisClient.connect();
     const redisInfo = await redisClient.info('server');
     const redisVersion = redisInfo.match(/redis_version:([^\r\n]+)/)?.[1] || 'unknown';
-    console.warn('✅ Connected to Redis');
-    console.warn(`   Redis version: ${redisVersion}`);
+    logInfo('Connected to Redis', { version: redisVersion });
+
+    // Initialize authentication routes after Redis connection
+    authRoutes = createAuthRoutes(pgPool, redisClient);
+    app.use('/api/v1/auth', authRoutes);
 
     // Start Express server
     app.listen(PORT, () => {
-      console.warn('');
-      console.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.warn('🚀 BerthCare Backend Server');
-      console.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.warn(`   Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.warn(`   Server: http://localhost:${PORT}`);
-      console.warn(`   Health: http://localhost:${PORT}/health`);
-      console.warn(`   API: http://localhost:${PORT}/api/v1`);
-      console.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.warn('');
+      logInfo('BerthCare Backend Server started', {
+        environment: process.env.NODE_ENV || 'development',
+        port: PORT,
+        serverUrl: `http://localhost:${PORT}`,
+        healthUrl: `http://localhost:${PORT}/health`,
+        apiUrl: `http://localhost:${PORT}/api/v1`,
+      });
     });
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
+    logError('Failed to start server', error instanceof Error ? error : new Error(String(error)));
     process.exit(1);
   }
 }
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
-  console.warn('SIGTERM received, shutting down gracefully...');
+  logInfo('SIGTERM received, shutting down gracefully...');
   await pgPool.end();
   await redisClient.quit();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
-  console.warn('\nSIGINT received, shutting down gracefully...');
+  logInfo('SIGINT received, shutting down gracefully...');
   await pgPool.end();
   await redisClient.quit();
   process.exit(0);

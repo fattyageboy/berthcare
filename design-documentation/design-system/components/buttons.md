@@ -6,7 +6,7 @@
 
 ## The Truth About Buttons
 
-After studying how home care nurses actually work—documenting visits in dim hallways, with gloved hands, while standing, often distracted by patient needs—we learned something critical:
+After studying how home care caregivers actually work—documenting visits in dim hallways, with gloved hands, while standing, often distracted by patient needs—we learned something critical:
 
 **Buttons aren't the problem. Button complexity is.**
 
@@ -28,7 +28,7 @@ That's it. Three patterns. Each unmistakable in purpose.
 
 ### "If users need a manual, the design has failed"
 
-A nurse documenting a visit at 2am shouldn't think about button hierarchy. The right action should be obvious:
+A caregiver documenting a visit at 2am shouldn't think about button hierarchy. The right action should be obvious:
 
 - **Big and blue?** That's what I do next.
 - **Outlined and quiet?** That's the alternative.
@@ -38,7 +38,7 @@ No cognitive load. No decisions. Just action.
 
 ### "Start with the user experience, then work backwards"
 
-We watched nurses work. Here's what we learned:
+We watched caregivers work. Here's what we learned:
 
 **They wear gloves.** Buttons must be 56px minimum, not 44px.  
 **They work one-handed.** Buttons must be thumb-reachable.  
@@ -76,7 +76,7 @@ Every specification traces back to these observations.
 
 - **56px height:** Tested with latex and nitrile gloves—48px was too small
 - **Full width:** Eliminates aiming—just tap the bottom of the screen
-- **Trust Blue:** Tested 47 blues with nurses—this one felt confident, not corporate
+- **Trust Blue:** Tested 47 blues with caregivers—this one felt confident, not corporate
 - **7.3:1 contrast:** Works in direct sunlight and dim hallways
 - **8px radius:** Soft enough to feel modern, sharp enough to feel precise
 
@@ -441,7 +441,7 @@ color: #9e9e9e; /* neutral-500 */
 
 **Why it exists:**
 
-- Nurses need to alert the team immediately when they discover urgent issues
+- caregivers need to alert the team immediately when they discover urgent issues
 - Can't wait to navigate through menus
 - Must be accessible from any screen
 - Red signals urgency without explanation
@@ -713,7 +713,7 @@ transition: all 100ms ease-out;
 
 **Why larger:**
 
-- Nurses wear latex and nitrile gloves
+- caregivers wear latex and nitrile gloves
 - Users may have tremors or limited dexterity
 - Larger targets reduce mis-taps and frustration
 
@@ -1042,7 +1042,7 @@ One button. Executed perfectly. No compromises.
 
 ### What We Learned
 
-The original "one button" philosophy was born from frustration with overcomplicated design systems. It was right to challenge assumptions. But after testing with real nurses in real homes, we learned:
+The original "one button" philosophy was born from frustration with overcomplicated design systems. It was right to challenge assumptions. But after testing with real caregivers in real homes, we learned:
 
 **Simplicity isn't about having fewer components. It's about having zero confusion.**
 
@@ -1066,4 +1066,4 @@ Three button patterns—primary, secondary, destructive—handle every use case 
 
 **Three patterns. Perfect execution. Zero confusion.**
 
-**Built for nurses. Tested in reality. Refined until invisible.**
+**Built for caregivers. Tested in reality. Refined until invisible.**

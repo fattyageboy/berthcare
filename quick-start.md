@@ -31,6 +31,7 @@ make verify
 ```
 
 You should see:
+
 ```
 ✅ Docker is running
 ✅ PostgreSQL is healthy
@@ -40,7 +41,28 @@ You should see:
    ✅ S3 buckets created (photos, documents, signatures)
 ```
 
-## Step 3: Start Backend (1 minute)
+## Step 3: Setup Database (1 minute)
+
+```bash
+# Run database migrations
+make db-migrate
+
+# Seed with sample data (optional, for development)
+make db-seed
+
+# Verify schema
+make db-verify
+```
+
+You should see:
+
+```
+✅ Migration completed successfully
+✅ Created 7 sample users
+✅ Schema verification successful (12/12 checks passed)
+```
+
+## Step 4: Start Backend (1 minute)
 
 ```bash
 # In a new terminal
@@ -49,13 +71,14 @@ npm run dev
 ```
 
 You should see:
+
 ```
 🚀 Backend server running on http://localhost:3000
 ✅ Connected to PostgreSQL
 ✅ Connected to Redis
 ```
 
-## Step 4: Start Mobile App (1 minute)
+## Step 5: Start Mobile App (1 minute)
 
 ```bash
 # In another new terminal
@@ -64,6 +87,7 @@ npm start
 ```
 
 Choose your platform:
+
 - Press `i` for iOS simulator
 - Press `a` for Android emulator
 - Scan QR code with Expo Go app on your phone
@@ -87,6 +111,7 @@ make start-tools
 ```
 
 Then access:
+
 - **PgAdmin**: http://localhost:5050 (PostgreSQL web UI)
 - **Redis Commander**: http://localhost:8081 (Redis web UI)
 
@@ -98,9 +123,35 @@ make verify        # Check service health
 make logs-f        # View real-time logs
 make stop          # Stop all services
 make restart       # Restart all services
+
+# Database commands
+make db-migrate    # Run database migrations
+make db-verify     # Verify database schema
+make db-seed       # Seed with sample data
 make db-shell      # Open PostgreSQL shell
 make redis-cli     # Open Redis CLI
 ```
+
+## Sample Login Credentials (Development Only)
+
+After running `make db-seed`, you can use these credentials:
+
+**Admin:**
+
+- Email: `admin@berthcare.ca`
+- Password: `admin123`
+
+**coordinator (North Zone):**
+
+- Email: `coordinator.north@berthcare.ca`
+- Password: `coord123`
+
+**Caregiver (North Zone):**
+
+- Email: `caregiver.north1@berthcare.ca`
+- Password: `caregiver123`
+
+⚠️ **Never use these passwords in production!**
 
 ## Troubleshooting
 

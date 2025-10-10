@@ -208,7 +208,7 @@ import { User, formatPhoneNumber, ROLES } from '@berthcare/shared';
 const user: User = {
   id: '1',
   email: 'test@example.com',
-  role: ROLES.NURSE,
+  role: ROLES.caregiver,
   firstName: 'Test',
   lastName: 'User',
   createdAt: new Date(),

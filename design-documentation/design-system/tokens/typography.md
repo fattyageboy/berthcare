@@ -1,6 +1,6 @@
 # Typography System
 
-**Philosophy:** If a nurse can't read it while walking between rooms, it's too small. If they need to squint in bright sunlight or dim hallways, we've failed.
+**Philosophy:** If a caregiver can't read it while walking between rooms, it's too small. If they need to squint in bright sunlight or dim hallways, we've failed.
 
 Typography is invisible when it works. It should never make you think—just read, understand, act.
 
@@ -84,7 +84,7 @@ bold:     700  // Critical information only
 - iOS default is 17px (not 16px)
 - More readable at arm's length
 - Better for aging eyes
-- Nurses work in motion—every pixel counts
+- caregivers work in motion—every pixel counts
 
 **Why so few sizes:**
 
@@ -143,7 +143,7 @@ bold:     700  // Critical information only
 
 **Why generous line height:**
 
-- Nurses read while walking
+- caregivers read while walking
 - Poor lighting conditions (hallways, patient homes)
 - Reduces eye strain during 8-hour shifts
 - Better for aging eyes
@@ -282,7 +282,7 @@ overflow: hidden;
 - Note previews in lists
 - Message previews
 
-**Better solution:** Expand the container. Don't hide information from nurses.
+**Better solution:** Expand the container. Don't hide information from caregivers.
 
 ---
 
@@ -408,7 +408,7 @@ Text("Visit Complete")
 **Why:**
 
 - Mobile is the primary device
-- Nurses don't use desktops in the field
+- caregivers don't use desktops in the field
 - One scale = simpler code
 - Consistency across devices
 
@@ -522,7 +522,7 @@ font-size: 1.0625rem; /* 17px */
 }
 ```
 
-**We don't follow platform guidelines blindly.** We use what works for nurses in the field.
+**We don't follow platform guidelines blindly.** We use what works for caregivers in the field.
 
 ---
 

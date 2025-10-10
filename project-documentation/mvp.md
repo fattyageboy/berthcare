@@ -12,7 +12,7 @@
 
 **What It Does:**
 
-- Smartphone/tablet app for home care nurses and aides
+- Smartphone/tablet app for home care caregivers and aides
 - Document during the visit, not back at office
 - Works offline, syncs when connected
 - Pre-populated templates for common visit types (wound care, medication management, ADL assessment, safety check)
@@ -43,7 +43,7 @@
 ```
 Opening wound care visit:
 - App shows: "Last visit: wound 3cm x 2cm, moderate drainage"
-- Nurse taps "Copy & Edit"
+- caregiver taps "Copy & Edit"
 - Changes only: "now 2.5cm x 1.8cm, minimal drainage"
 - Takes new photo
 - Done in 2 minutes vs. 10
@@ -112,7 +112,7 @@ Opening wound care visit:
 
 - Export visit notes as PDF
 - Import client roster from CSV
-- Daily summary report email to supervisors
+- Daily summary report email to coordinators
 - Basic API hooks for future integration
 
 **What It Doesn't Do:**
@@ -172,7 +172,7 @@ Opening wound care visit:
 ### Primary Flow: Home Visit Documentation
 
 ```
-1. Nurse opens app on tablet
+1. caregiver opens app on tablet
 2. Sees today's schedule (5 clients)
 3. Taps first client → sees quick profile
 4. Taps "Start Visit" → GPS check-in automatic
@@ -226,7 +226,7 @@ Opening wound care visit:
 ### Pilot Site Selection (Month 1-2)
 
 - Choose 1-2 home care zones in Alberta
-- 20-30 staff members (nurses, care aides)
+- 20-30 staff members (caregivers, care aides)
 - 100-150 clients
 - Mix of urban and rural if possible
 

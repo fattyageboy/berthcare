@@ -5,7 +5,7 @@
 
 ## Overview
 
-BerthCare is a mobile-first home care management platform designed to make technology invisible for nurses and caregivers. Built on the principle that "if users need a manual, the design has failed," BerthCare enables seamless offline-first visit documentation, care coordination, and family communication.
+BerthCare is a mobile-first home care management platform designed to make technology invisible for caregivers and caregivers. Built on the principle that "if users need a manual, the design has failed," BerthCare enables seamless offline-first visit documentation, care coordination, and family communication.
 
 ### Core Features
 
@@ -168,4 +168,4 @@ See [LICENSE](LICENSE) for details.
 
 ---
 
-**Built with ❤️ for nurses and caregivers**
+**Built with ❤️ for caregivers and caregivers**

@@ -1,7 +1,7 @@
 # Feature: Mobile Point-of-Care Documentation
 
 **Priority:** P0 - Core Value Proposition  
-**User Story:** As a home care nurse, I want to document patient assessments directly on my mobile device during visits, so that I can eliminate after-hours paperwork and reduce documentation time.
+**User Story:** As a home care caregiver, I want to document patient assessments directly on my mobile device during visits, so that I can eliminate after-hours paperwork and reduce documentation time.
 
 ---
 

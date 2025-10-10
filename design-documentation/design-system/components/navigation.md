@@ -50,7 +50,7 @@ No tutorial. No onboarding. No explanation. It just works.
 
 ### "Start with the user experience, then work backwards"
 
-Nurses don't think about navigation. They think about patients.
+caregivers don't think about navigation. They think about patients.
 
 So we built for patients, not navigation patterns.
 
@@ -148,7 +148,7 @@ Swipe from left → Today
 - Calendar (tomorrow doesn't matter today)
 - Search (you see your assigned visits)
 - Filters (filter what?)
-- Reports (emailed to supervisors)
+- Reports (emailed to coordinators)
 
 ---
 
@@ -187,14 +187,14 @@ Nothing. Screen space for content.
 
 ### ❌ Calendar View
 
-**Requested by:** Nurses who want to see tomorrow  
+**Requested by:** caregivers who want to see tomorrow  
 **Why we said no:** Tomorrow doesn't help you today. Seeing next week's schedule doesn't change today's work. It adds cognitive load. Focus on today. Tomorrow will be today tomorrow.
 
 **Alternative:** Today only. Perfect execution of today.
 
 ### ❌ Client List / Search
 
-**Requested by:** Nurses who want to look up clients  
+**Requested by:** caregivers who want to look up clients  
 **Why we said no:** You don't choose clients. The system assigns visits. Searching implies choice. There is no choice. You see your assigned visits. That's the list.
 
 **Alternative:** Today's visits are the list. Chronological order.
@@ -215,10 +215,10 @@ Nothing. Screen space for content.
 
 ### ❌ Reports / Analytics Screen
 
-**Requested by:** Supervisors  
-**Why we said no:** Nurses don't need reports. Nurses need to document visits. Supervisors need reports. Supervisors get email reports. Different users, different interfaces.
+**Requested by:** coordinators  
+**Why we said no:** caregivers don't need reports. caregivers need to document visits. coordinators need reports. coordinators get email reports. Different users, different interfaces.
 
-**Alternative:** Email reports to supervisors. Nurses see visits.
+**Alternative:** Email reports to coordinators. caregivers see visits.
 
 ### ❌ Help / Tutorial Screen
 
@@ -236,7 +236,7 @@ Nothing. Screen space for content.
 
 ### ❌ History / Past Visits
 
-**Requested by:** Nurses who want to reference past visits  
+**Requested by:** caregivers who want to reference past visits  
 **Why we said no:** Smart data reuse copies previous visit data automatically. You don't need to look up history. The system brings history to you.
 
 **Alternative:** "Copy from last visit" button. History comes to you.
@@ -512,7 +512,7 @@ Every question below was asked. Every answer below is final.
 
 ### "What about reports?"
 
-**No.** Nurses document visits. Supervisors get reports. Different users, different interfaces. Supervisors get email reports. Nurses see visits.
+**No.** caregivers document visits. coordinators get reports. Different users, different interfaces. coordinators get email reports. caregivers see visits.
 
 ### "What about calendar?"
 
@@ -907,7 +907,7 @@ Users don't think about navigation. They don't think about the app. They think a
 
 ### "Start with the user experience, then work backwards"
 
-Nurses need to document visits. Everything else is distraction. So we removed everything else.
+caregivers need to document visits. Everything else is distraction. So we removed everything else.
 
 ### "Create products people don't know they need yet"
 

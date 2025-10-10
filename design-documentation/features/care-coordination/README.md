@@ -8,7 +8,7 @@
 
 Care coordination isn't about building communication tools. It's about **removing friction from human connection** when it matters most.
 
-When a nurse discovers something concerning during a home visit, they don't need features. They need **immediate human contact** with someone who can help.
+When a caregiver discovers something concerning during a home visit, they don't need features. They need **immediate human contact** with someone who can help.
 
 **The question isn't:** "What features should we build?"  
 **The question is:** "How do we make urgent communication feel effortless?"
@@ -27,11 +27,11 @@ Traditional care coordination tools overwhelm users with features: messaging thr
 
 No training required. No user guide. The interface communicates its purpose through **visual clarity** and **obvious affordances**.
 
-A nurse in the field should instantly understand: _"This is how I get help."_
+A caregiver in the field should instantly understand: _"This is how I get help."_
 
 ### The Best Interface is No Interface
 
-Technology should disappear. When something's wrong, the nurse shouldn't think about _using an app_—they should think about _reaching their team_.
+Technology should disappear. When something's wrong, the caregiver shouldn't think about _using an app_—they should think about _reaching their team_.
 
 The interface becomes invisible. The human connection becomes immediate.
 
@@ -41,7 +41,7 @@ The interface becomes invisible. The human connection becomes immediate.
 
 ### The Moment of Need
 
-**Context:** Sarah, a home care nurse, is with Margaret Thompson. Something feels off—Margaret seems confused about her medications.
+**Context:** Sarah, a home care caregiver, is with Margaret Thompson. Something feels off—Margaret seems confused about her medications.
 
 **What Sarah needs:** Immediate connection to someone who can help.
 
@@ -58,7 +58,7 @@ Speaks naturally: "Margaret seems confused about her meds"
     ↓
 System intelligently routes to the right person
     ↓
-Coordinator's phone rings within seconds
+coordinator's phone rings within seconds
     ↓
 Human conversation resolves the issue
 ```
@@ -77,7 +77,7 @@ Behind the scenes, the system:
 - Escalates if no response
 - Documents the alert for compliance
 
-**The nurse experiences none of this complexity.** It just works.
+**The caregiver experiences none of this complexity.** It just works.
 
 ---
 
@@ -118,7 +118,7 @@ Behind the scenes, the system:
 │  ←  Alert Team                      │
 │                                     │
 │  About: Margaret Thompson           │
-│  Coordinator: Mike Chen             │
+│  coordinator: Mike Chen             │
 │                                     │
 │  ┌─────────────────────────────────┐│
 │  │                                 ││
@@ -140,7 +140,7 @@ Behind the scenes, the system:
 
 **Design Details:**
 
-- **Coordinator name visible:** Humanizes the interaction
+- **coordinator name visible:** Humanizes the interaction
 - **Voice-first:** Large, obvious microphone button
 - **Text as fallback:** Available but not primary
 - **Single action button:** No ambiguity about next step
@@ -475,7 +475,7 @@ automatically when you're back online.
 
 **Philosophy:** Not everything needs real-time alerts. Batch non-urgent updates to reduce interruptions.
 
-**Coordinator Daily Summary (6 PM):**
+**coordinator Daily Summary (6 PM):**
 
 ```
 From: BerthCare Team
@@ -514,7 +514,7 @@ Questions? Reply to this email or call your team.
 ### Alert Flow
 
 ```
-1. Nurse taps "Alert Team"
+1. caregiver taps "Alert Team"
 2. Records voice message (or types)
 3. Taps "Send Alert"
 4. System:
@@ -523,7 +523,7 @@ Questions? Reply to this email or call your team.
    - Plays voice message
    - Sends SMS backup with text
    - Logs alert in system
-5. Coordinator calls nurse back
+5. coordinator calls caregiver back
 6. Issue resolved
 ```
 
@@ -534,7 +534,7 @@ IF offline:
   - Queue alert locally
   - Show: "Alert will send when connected"
   - Send immediately when online
-  - Notify nurse when sent
+  - Notify caregiver when sent
 ```
 
 ### Escalation (If No Response)
@@ -543,7 +543,7 @@ IF offline:
 IF coordinator doesn't respond in 5 minutes:
   - Call backup coordinator
   - Send SMS to both
-  - Notify nurse of escalation
+  - Notify caregiver of escalation
 ```
 
 ---
@@ -592,18 +592,18 @@ Can't get simpler than that.
 
 ## The Metrics That Matter
 
-### For Nurses
+### For caregivers
 
 - **10 seconds** to send alert
 - **<2 minutes** to get callback
 - **100%** delivery rate
 - **0 apps** to learn
 
-### For Coordinators
+### For coordinators
 
 - **Immediate** notification (phone rings)
 - **Voice context** (hear the concern)
-- **Direct contact** (call nurse back)
+- **Direct contact** (call caregiver back)
 - **90%+ resolution** on first call
 
 ### For Organization
@@ -620,7 +620,7 @@ Can't get simpler than that.
 ### Multiple Alerts Simultaneously
 
 ```
-Coordinator receives:
+coordinator receives:
 - Alert 1: Sarah about Margaret
 - Alert 2: Tom about John
 
@@ -631,20 +631,20 @@ System:
 - Sends SMS summary of both
 ```
 
-### Coordinator Unavailable
+### coordinator Unavailable
 
 ```
 IF coordinator doesn't answer:
   - Leave voicemail with alert
   - Send SMS with details
   - Call backup coordinator
-  - Notify nurse of escalation
+  - Notify caregiver of escalation
 ```
 
 ### Non-Critical Updates
 
 ```
-Nurse wants to share non-urgent info:
+caregiver wants to share non-urgent info:
   - Document in visit notes
   - Appears in daily summary email
   - No alert needed

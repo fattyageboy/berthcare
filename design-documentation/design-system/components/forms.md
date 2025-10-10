@@ -8,7 +8,7 @@
 
 Forms aren't about fields and buttons. They're about capturing care moments without interrupting them.
 
-A nurse with gloved hands, standing in a patient's home, documenting vital signs while maintaining eye contact. That's our design constraint. That's our opportunity.
+A caregiver with gloved hands, standing in a patient's home, documenting vital signs while maintaining eye contact. That's our design constraint. That's our opportunity.
 
 **If the form demands attention, it's stealing attention from the patient.**
 
@@ -536,7 +536,7 @@ The field adapts based on context, label, and previous data. Users never think a
 **No character limit:**
 
 - If you need a limit, your design is wrong
-- Nurses need to document what matters
+- caregivers need to document what matters
 - Artificial limits create workarounds
 - Storage is cheap, time is expensive
 
@@ -686,7 +686,7 @@ Label is enough. No placeholder needed.
 ### The User Experience
 
 ```
-Nurse types "120" in Blood Pressure field
+caregiver types "120" in Blood Pressure field
     ↓
 Continues to next field
     ↓
@@ -769,7 +769,7 @@ Return to normal state
 
 - Rural areas have poor connectivity
 - Basements and apartments block signals
-- Nurses can't wait for network
+- caregivers can't wait for network
 - Data never lost, even if phone dies
 
 ### Visual Feedback (Subtle, Not Intrusive)
@@ -869,11 +869,11 @@ Return to normal state
 ### The User Experience
 
 ```
-Nurse opens visit documentation
+caregiver opens visit documentation
     ↓
 All stable data pre-filled from last visit
     ↓
-Nurse reviews and edits only what changed
+caregiver reviews and edits only what changed
     ↓
 Taps through unchanged fields
     ↓

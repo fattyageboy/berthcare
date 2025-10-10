@@ -1,12 +1,12 @@
 # Feedback
 
-**Philosophy:** Nurses need to know what happened, then get back to caring for patients.
+**Philosophy:** caregivers need to know what happened, then get back to caring for patients.
 
 ---
 
 ## The Truth About Feedback in Healthcare
 
-Home care nurses document 6-8 visits per day while wearing gloves, standing in dim hallways, and thinking about their next patient. They don't have time for complex feedback systems.
+Home care caregivers document 6-8 visits per day while wearing gloves, standing in dim hallways, and thinking about their next patient. They don't have time for complex feedback systems.
 
 **One feedback pattern. Instant clarity. Zero friction.**
 
@@ -48,7 +48,7 @@ If feedback requires thought, the design has failed the caregiver.
 
 ### "If users need a manual, the design has failed"
 
-A nurse shouldn't wonder if their visit saved. They should know instantly, without thinking.
+A caregiver shouldn't wonder if their visit saved. They should know instantly, without thinking.
 
 **Our approach:** Feedback happens. User understands. User continues caring for patients.
 
@@ -93,7 +93,7 @@ A nurse shouldn't wonder if their visit saved. They should know instantly, witho
 **Animation:**
 
 - Enter: Slide up from bottom (150ms, ease-out)
-- Stay: 2.5 seconds (tested with real nurses)
+- Stay: 2.5 seconds (tested with real caregivers)
 - Exit: Fade out (150ms)
 - Haptic: Medium impact on appear (works through gloves)
 
@@ -133,7 +133,7 @@ A nurse shouldn't wonder if their visit saved. They should know instantly, witho
 - 2-3 words maximum
 - Haptic: Medium impact
 
-**Why:** Nurses need immediate confirmation their work won't be lost. "Saved" is clearer than "Success."
+**Why:** caregivers need immediate confirmation their work won't be lost. "Saved" is clearer than "Success."
 
 ### 2. Failed (Red)
 
@@ -158,7 +158,7 @@ A nurse shouldn't wonder if their visit saved. They should know instantly, witho
 - 2-3 words maximum
 - Haptic: Error notification (3 quick taps)
 
-**Why:** "Failed" is honest and clear. Technical errors are for logs, not nurses.
+**Why:** "Failed" is honest and clear. Technical errors are for logs, not caregivers.
 
 ### 3. Syncing (Blue)
 
@@ -182,7 +182,7 @@ A nurse shouldn't wonder if their visit saved. They should know instantly, witho
 - 2-4 words maximum
 - No haptic (background operation)
 
-**Why:** Nurses need to know sync is happening, but it shouldn't interrupt workflow.
+**Why:** caregivers need to know sync is happening, but it shouldn't interrupt workflow.
 
 ### 4. Offline (Amber)
 
@@ -206,7 +206,7 @@ A nurse shouldn't wonder if their visit saved. They should know instantly, witho
 - 2-3 words maximum
 - Haptic: Warning notification (2 taps)
 
-**Why:** Rural nurses work offline frequently. This should feel normal, not alarming.
+**Why:** Rural caregivers work offline frequently. This should feel normal, not alarming.
 
 ---
 
@@ -214,7 +214,7 @@ A nurse shouldn't wonder if their visit saved. They should know instantly, witho
 
 ### ❌ Action Buttons in Status Messages
 
-**Why:** Nurses wear gloves. Every extra tap is friction.
+**Why:** caregivers wear gloves. Every extra tap is friction.
 
 **Old way:**
 
@@ -262,7 +262,7 @@ One message: "Visit saved"
 
 ### ❌ Progress Bars for Sync
 
-**Why:** Creates anxiety. Nurses don't need to watch progress—they need to know when it's done.
+**Why:** Creates anxiety. caregivers don't need to watch progress—they need to know when it's done.
 
 **Old way:**
 
@@ -833,11 +833,11 @@ One feedback pattern. Four semantic states. 2.5 seconds. Done.
 
 ### "Start with the user experience, then work backwards"
 
-Designed for nurses wearing gloves in dim hallways. Everything else follows from that reality.
+Designed for caregivers wearing gloves in dim hallways. Everything else follows from that reality.
 
 ### "If users need a manual, the design has failed"
 
-Status appears. Nurse understands. Nurse continues caring for patients. No explanation needed.
+Status appears. caregiver understands. caregiver continues caring for patients. No explanation needed.
 
 ### "Say no to 1,000 things"
 
@@ -848,14 +848,14 @@ Kept: Status feedback that works with gloves, in any lighting, without interrupt
 ### "Perfection in details matters"
 
 - 56px height (tested with gloved fingers)
-- 2.5 seconds duration (tested with real nurses)
+- 2.5 seconds duration (tested with real caregivers)
 - Haptic feedback (works through gloves)
 - Left-aligned text (faster to scan)
 - Thumb-safe zone (won't accidentally tap)
 
 ### "Make technology invisible"
 
-Feedback happens automatically. Nurses don't think about the system. They think about their patients.
+Feedback happens automatically. caregivers don't think about the system. They think about their patients.
 
 ---
 
@@ -868,7 +868,7 @@ Feedback happens automatically. Nurses don't think about the system. They think 
 - Auto-dismiss
 - High contrast for field use
 
-**Success metric:** 95% of nurses report confidence their work is saved
+**Success metric:** 95% of caregivers report confidence their work is saved
 
 ### Phase 2 (Months 7-12)
 
@@ -885,7 +885,7 @@ Feedback happens automatically. Nurses don't think about the system. They think 
 - Contextual feedback (adapt to user patterns)
 - Accessibility enhancements based on user feedback
 
-**Success metric:** Feedback system becomes invisible—nurses don't mention it
+**Success metric:** Feedback system becomes invisible—caregivers don't mention it
 
 ---
 
@@ -899,7 +899,7 @@ Confidence that work is saved.
 Confidence that sync will happen.  
 Confidence that the system is working.
 
-So nurses can focus on what matters: caring for patients.
+So caregivers can focus on what matters: caring for patients.
 
 ---
 

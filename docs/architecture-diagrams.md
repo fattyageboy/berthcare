@@ -135,9 +135,9 @@ Visual representations of the BerthCare system architecture.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                         Nurse's Mobile Device                           │
+│                         caregiver's Mobile Device                           │
 │                                                                         │
-│  1. Nurse opens app                                                     │
+│  1. caregiver opens app                                                     │
 │     └─→ Instant load from local SQLite (<2s)                            │
 │                                                                         │
 │  2. Taps client                                                         │
@@ -193,9 +193,9 @@ Visual representations of the BerthCare system architecture.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                         Nurse's Mobile Device                           │
+│                         caregiver's Mobile Device                           │
 │                                                                         │
-│  1. Nurse discovers urgent issue                                        │
+│  1. caregiver discovers urgent issue                                        │
 │  2. Taps floating alert button                                          │
 │  3. Records voice message: "Margaret seems confused about meds"         │
 │  4. Taps "Send Alert"                                                   │
@@ -226,7 +226,7 @@ Visual representations of the BerthCare system architecture.
 │  If no answer:                                                          │
 │  5. Send SMS to Mike with text version                                  │
 │  6. After 5 minutes: Call backup coordinator                            │
-│  7. Notify nurse of escalation                                          │
+│  7. Notify caregiver of escalation                                          │
 └─────────────────────────────────────────────────────────────────────────┘
                                     ↓
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -235,7 +235,7 @@ Visual representations of the BerthCare system architecture.
 │  1. Mike resolves issue                                                 │
 │  2. Outcome documented in care plan                                     │
 │  3. Alert marked as resolved                                            │
-│  4. Nurse notified                                                      │
+│  4. caregiver notified                                                      │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
