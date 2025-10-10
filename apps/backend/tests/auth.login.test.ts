@@ -126,6 +126,13 @@ describe('POST /v1/auth/login', () => {
       deviceId: 'test-device-setup',
     });
 
+    // Check if registration succeeded
+    if (response.status !== 201) {
+      throw new Error(
+        `Failed to create test user: ${response.status} - ${JSON.stringify(response.body)}`
+      );
+    }
+
     // If account should be inactive, update it
     if (!isActive) {
       await pgPool.query('UPDATE users SET is_active = false WHERE email = $1', [

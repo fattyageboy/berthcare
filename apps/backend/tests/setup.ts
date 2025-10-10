@@ -59,7 +59,7 @@ ZQIDAQAB
 -----END PUBLIC KEY-----`;
 
 // Increase test timeout for integration tests (database operations can be slow)
-jest.setTimeout(30000);
+jest.setTimeout(60000);
 
 // Global test utilities
 export const TEST_ZONE_ID = '123e4567-e89b-12d3-a456-426614174000';

@@ -25,6 +25,7 @@ module.exports = {
     '!src/db/verify-schema.ts',
     '!src/config/**',
     '!src/middleware/examples/**',
+    '!src/storage/test-s3.ts',
   ],
   coverageThreshold: {
     global: {

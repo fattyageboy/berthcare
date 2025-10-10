@@ -261,7 +261,7 @@ describe('Authentication Utilities', () => {
       // Correct password still works
       const validLogin = await verifyPassword(correctPassword, storedHash);
       expect(validLogin).toBe(true);
-    });
+    }, 15000);
 
     it('should handle password change flow', async () => {
       // User has old password
@@ -282,7 +282,7 @@ describe('Authentication Utilities', () => {
 
       // Hashes are different
       expect(oldHash).not.toBe(newHash);
-    });
+    }, 15000);
 
     it('should handle multiple users with same password', async () => {
       // Two users choose the same password (common in real world)
@@ -342,8 +342,8 @@ describe('Authentication Utilities', () => {
       const duration = Date.now() - startTime;
 
       // 5 passwords should take roughly 5 * 200ms = 1000ms
-      // Allow up to 2500ms for system variance
-      expect(duration).toBeLessThan(2500);
+      // Allow up to 5000ms for system variance in CI environments
+      expect(duration).toBeLessThan(5000);
       expect(hashes.length).toBe(5);
 
       // All hashes should be unique

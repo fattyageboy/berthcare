@@ -39,8 +39,15 @@ export function createRateLimiter(
 ) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Get client IP address
-      const ip = req.ip || req.socket.remoteAddress || 'unknown';
+      // Get client IP address - handle test environment
+      // In tests, req.ip might be undefined, so we use a combination of sources
+      let ip = req.ip || req.socket.remoteAddress || 'unknown';
+      
+      // Normalize IPv6 localhost to IPv4 for consistency
+      if (ip === '::1' || ip === '::ffff:127.0.0.1') {
+        ip = '127.0.0.1';
+      }
+      
       const key = `${config.keyPrefix}:${ip}`;
 
       // Get current count
