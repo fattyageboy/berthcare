@@ -1,11 +1,35 @@
-node_modules
-dist
-build
-coverage
-*.min.js
-*.min.css
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
-.git
-.github
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+coverage/
+.nx/
+
+# Environment files
+.env
+.env.*
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# React Native
+.expo/
+ios/Pods/
+android/build/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# Documentation builds
+docs/.vitepress/dist/

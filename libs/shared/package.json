@@ -1,0 +1,17 @@
+{
+  "name": "@berthcare/shared",
+  "version": "2.0.0",
+  "description": "Shared utilities and types for BerthCare",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.11",
+    "@types/node": "^20.11.5",
+    "ts-jest": "^29.1.1"
+  }
+}

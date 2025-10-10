@@ -1,167 +1,181 @@
-# GitHub Branch Protection Setup Guide
+# GitHub Branch Protection Setup
 
-## Overview
+## Quick Setup Checklist
 
-This guide walks through setting up branch protection rules for the `main` branch to enforce CI checks before merging, as required by task E2.
+Follow these steps to enable branch protection for the `main` branch:
 
-## Step-by-Step Instructions
+### Step 1: Navigate to Branch Protection Settings
+1. Go to: https://github.com/fattyageboy/BerthCare/settings/branches
+2. Click "Add branch protection rule" (or edit existing rule)
+3. Enter branch name pattern: `main`
 
-### 1. Navigate to Branch Protection Settings
+### Step 2: Configure Protection Rules
 
-1. Go to your GitHub repository
-2. Click on **Settings** tab
-3. Click on **Branches** in the left sidebar
-4. Under "Branch protection rules", click **Add rule**
-
-### 2. Configure Branch Name Pattern
-
-- **Branch name pattern**: `main`
-
-### 3. Enable Required Settings
-
-Check the following boxes:
-
-#### Require a pull request before merging
+#### Pull Request Requirements
 - ✅ **Require a pull request before merging**
-  - ✅ **Require approvals**: Set to `1` (minimum)
-  - ✅ **Dismiss stale pull request approvals when new commits are pushed**
-  - ✅ **Require review from Code Owners** (if using CODEOWNERS file)
+  - Required number of approvals before merging: `1`
+  - ✅ Dismiss stale pull request approvals when new commits are pushed
+  - ✅ Require review from Code Owners
+  - ✅ Require approval of the most recent reviewable push
 
-#### Require status checks to pass before merging
+#### Status Checks
 - ✅ **Require status checks to pass before merging**
-  - ✅ **Require branches to be up to date before merging**
-  - **Status checks that are required**: Add the following checks:
-    - `Lint & Format Check`
+  - ✅ Require branches to be up to date before merging
+  - **Add required status checks** (search and select):
+    - `Code Quality (Lint & Format)`
     - `TypeScript Type Check`
-    - `Unit Tests (Jest)`
-    - `Security Scan (SAST)`
+    - `Unit Tests`
     - `Dependency Audit`
-    - `All CI Checks Passed`
+    - `Build Verification`
+    - `CI Summary`
 
-#### Additional Protection Rules (Recommended)
+#### Conversation Resolution
 - ✅ **Require conversation resolution before merging**
-- ✅ **Require signed commits** (for enhanced security)
-- ✅ **Require linear history** (prevents merge commits)
-- ✅ **Include administrators** (applies rules to admins too)
 
-#### Rules Applied to Everyone (Optional)
-- ✅ **Restrict who can push to matching branches**
-  - Add specific teams/users who can push directly (typically none for main)
+#### Signed Commits
+- ✅ **Require signed commits**
 
-### 4. Save Changes
+#### Additional Settings
+- ✅ **Require linear history** (optional, prevents merge commits)
+- ✅ **Include administrators** (enforce rules for admins too)
+- ✅ **Restrict who can push to matching branches** (optional)
+- ✅ **Allow force pushes**: ❌ Disabled
+- ✅ **Allow deletions**: ❌ Disabled
 
-Click **Create** or **Save changes** at the bottom of the page.
+### Step 3: Save Changes
+- Click "Create" (or "Save changes" if editing)
+- Verify the rule appears in the branch protection list
 
 ## Verification
 
-After setting up branch protection:
+After setup, verify the protection is working:
 
-1. Create a test branch: `git checkout -b test/branch-protection`
-2. Make a small change and commit
-3. Push the branch: `git push origin test/branch-protection`
-4. Create a pull request to `main`
-5. Verify that:
-   - CI checks run automatically
-   - You cannot merge until all checks pass
-   - You cannot merge without required approvals
+1. **Create a test branch**:
+   ```bash
+   git checkout -b test/branch-protection
+   git push origin test/branch-protection
+   ```
+
+2. **Create a pull request** to `main`
+
+3. **Verify checks run automatically**:
+   - All CI jobs should trigger
+   - PR should show "Required" status checks
+   - Merge button should be disabled until checks pass
+
+4. **Verify review requirement**:
+   - PR should require 1 approval
+   - Code owners should be automatically requested
+
+5. **Clean up**:
+   ```bash
+   git checkout main
+   git branch -D test/branch-protection
+   git push origin --delete test/branch-protection
+   ```
 
 ## Status Check Names
 
-The CI pipeline creates the following status checks:
+If status checks don't appear in the dropdown, you need to trigger them first:
 
-| Job Name | Status Check Name |
-|----------|------------------|
-| Lint & Format Check | `lint-and-format` |
-| TypeScript Type Check | `type-check` |
-| Unit Tests (Jest) | `unit-tests` |
-| Security Scan (SAST) | `security-sast` |
-| Dependency Audit | `dependency-audit` |
-| All CI Checks Passed | `all-checks-complete` |
-
-**Note**: Status check names appear in GitHub after the first CI run. You may need to:
-1. Create a test PR first
+1. Create a PR to `main` (can be a draft)
 2. Wait for CI to run
-3. Then add the status checks to branch protection
+3. Go back to branch protection settings
+4. The status check names will now appear in the search
 
 ## Troubleshooting
 
 ### Status Checks Not Appearing
+- **Cause**: CI hasn't run yet on a PR to `main`
+- **Solution**: Create a test PR, wait for CI, then add checks
 
-If status checks don't appear in the branch protection settings:
+### Can't Merge Despite Passing Checks
+- **Cause**: Branch not up to date with `main`
+- **Solution**: Merge `main` into your branch or rebase
 
-1. Ensure the CI workflow has run at least once
-2. Check that the workflow file is in `.github/workflows/ci.yml`
-3. Verify the workflow is enabled in Actions settings
-4. Create a test PR to trigger the workflow
+### Administrators Can Bypass Rules
+- **Cause**: "Include administrators" not enabled
+- **Solution**: Enable "Include administrators" in branch protection
 
-### Cannot Merge Despite Passing Checks
+### Force Push Blocked
+- **Cause**: "Allow force pushes" is disabled (correct)
+- **Solution**: This is intentional for protection
 
-1. Verify all required status checks are passing (green checkmarks)
-2. Ensure you have the required number of approvals
-3. Check that the branch is up to date with `main`
-4. Verify you have permission to merge
+## Signed Commits Setup
 
-### Administrators Bypassing Rules
+To enable signed commits for your account:
 
-If you want rules to apply to administrators:
-1. Edit the branch protection rule
-2. Check **Include administrators**
-3. Save changes
+### Using GPG (Recommended)
+```bash
+# Generate GPG key
+gpg --full-generate-key
+
+# List keys
+gpg --list-secret-keys --keyid-format=long
+
+# Export public key
+gpg --armor --export YOUR_KEY_ID
+
+# Add to GitHub: Settings → SSH and GPG keys → New GPG key
+```
+
+### Using SSH (Simpler)
+```bash
+# Configure git to use SSH signing
+git config --global gpg.format ssh
+git config --global user.signingkey ~/.ssh/id_ed25519.pub
+
+# Enable signing by default
+git config --global commit.gpgsign true
+```
+
+### Verify Signing
+```bash
+# Make a signed commit
+git commit -S -m "test signed commit"
+
+# Verify signature
+git log --show-signature -1
+```
+
+## Team Access Configuration
+
+Configure team permissions for code review:
+
+1. Go to: https://github.com/fattyageboy/BerthCare/settings/access
+2. Add teams with appropriate permissions:
+   - **@berthcare/tech-leads**: Admin
+   - **@berthcare/mobile-team**: Write
+   - **@berthcare/backend-team**: Write
+   - **@berthcare/devops-team**: Write
+   - **@berthcare/design-team**: Write
+   - **@berthcare/security-team**: Write
 
 ## CODEOWNERS Integration
 
-The repository includes a `CODEOWNERS` file. To enforce code owner reviews:
+The repository has a `CODEOWNERS` file that automatically requests reviews:
 
-1. Ensure `CODEOWNERS` file exists in repository root
-2. In branch protection settings, enable:
-   - **Require review from Code Owners**
-3. Code owners will be automatically requested for review on PRs
+- Changes to `/apps/mobile/` → @berthcare/mobile-team
+- Changes to `/apps/backend/` → @berthcare/backend-team
+- Changes to `/terraform/` → @berthcare/devops-team
+- Changes to security files → @berthcare/security-team
 
-## Signed Commits (Optional but Recommended)
+This works automatically once branch protection is enabled with "Require review from Code Owners".
 
-To require signed commits:
+## Maintenance
 
-1. Enable **Require signed commits** in branch protection
-2. Team members must configure GPG signing:
-   ```bash
-   # Generate GPG key
-   gpg --full-generate-key
-   
-   # List keys
-   gpg --list-secret-keys --keyid-format=long
-   
-   # Configure Git
-   git config --global user.signingkey YOUR_KEY_ID
-   git config --global commit.gpgsign true
-   
-   # Add GPG key to GitHub
-   # Copy public key: gpg --armor --export YOUR_KEY_ID
-   # Add to GitHub Settings > SSH and GPG keys
-   ```
+### Regular Reviews
+- Review branch protection rules quarterly
+- Update required status checks as CI evolves
+- Adjust approval requirements based on team size
 
-## Updating Branch Protection Rules
+### Updates
+- Keep this document updated when rules change
+- Notify team of any protection rule changes
+- Document exceptions or temporary bypasses
 
-To modify rules later:
+---
 
-1. Go to Settings > Branches
-2. Click **Edit** next to the `main` branch rule
-3. Make changes
-4. Click **Save changes**
-
-## Emergency Bypass (Use Sparingly)
-
-In emergencies, administrators can temporarily disable branch protection:
-
-1. Go to Settings > Branches
-2. Click **Edit** next to the rule
-3. Uncheck **Include administrators**
-4. Merge the urgent change
-5. **Immediately re-enable** the protection
-
-**Warning**: Document all bypasses and review the changes afterward.
-
-## References
-
-- GitHub Branch Protection Docs: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches
-- CODEOWNERS Syntax: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
-- Signed Commits: https://docs.github.com/en/authentication/managing-commit-signature-verification
+**Setup Date**: October 10, 2025  
+**Last Reviewed**: October 10, 2025  
+**Next Review**: January 10, 2026

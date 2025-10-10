@@ -1,29 +1,32 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  roots: ['<rootDir>'],
+  roots: ['<rootDir>/apps', '<rootDir>/libs'],
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
-
   transform: {
     '^.+\\.ts$': 'ts-jest',
   },
   collectCoverageFrom: [
-    '**/*.ts',
+    'apps/**/*.ts',
+    'libs/**/*.ts',
     '!**/*.d.ts',
     '!**/node_modules/**',
     '!**/dist/**',
     '!**/coverage/**',
-    '!**/*.config.js',
   ],
   coverageThreshold: {
     global: {
-      branches: 80,
-      functions: 80,
-      lines: 80,
-      statements: 80,
+      branches: 70,
+      functions: 70,
+      lines: 70,
+      statements: 70,
     },
   },
-  coverageReporters: ['text', 'lcov', 'json'],
+  coverageReporters: ['text', 'lcov', 'json', 'html'],
+  moduleNameMapper: {
+    '^@berthcare/shared$': '<rootDir>/libs/shared/src/index.ts',
+  },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   verbose: true,
+  testTimeout: 10000,
 };

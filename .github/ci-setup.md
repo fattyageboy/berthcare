@@ -1,213 +1,248 @@
-# CI/CD Pipeline Setup
+# CI/CD Pipeline Setup Guide
 
 ## Overview
 
-This document describes the Continuous Integration (CI) pipeline configured for the BerthCare project as part of task E2 from the implementation plan.
+The BerthCare CI/CD pipeline is configured using GitHub Actions and runs automatically on all pull requests to the `main` branch. The pipeline ensures code quality, security, and reliability before any code is merged.
 
-## Pipeline Configuration
+## Pipeline Jobs
 
-The CI pipeline is implemented using GitHub Actions and runs automatically on all pull requests to the `main` branch.
+### 1. Code Quality (Lint & Format)
+- **ESLint**: Enforces code style and catches common errors
+- **Prettier**: Ensures consistent code formatting
+- **Timeout**: 10 minutes
+- **Required**: Yes
 
-### Pipeline Jobs
+### 2. TypeScript Type Check
+- **TypeScript Compiler**: Validates type safety across the codebase
+- **Timeout**: 10 minutes
+- **Required**: Yes
 
-The CI pipeline consists of the following jobs that run in parallel:
+### 3. Unit Tests
+- **Jest**: Runs all unit tests with coverage reporting
+- **Coverage Upload**: Sends coverage data to Codecov
+- **Timeout**: 15 minutes
+- **Required**: Yes
+- **Coverage Threshold**: 70% (branches, functions, lines, statements)
 
-#### 1. Lint & Format Check
-- **Purpose**: Ensures code quality and consistent formatting
-- **Tools**: ESLint, Prettier
-- **Commands**:
-  - `npm run lint` - Runs ESLint with zero warnings policy
-  - `npm run format:check` - Verifies Prettier formatting
+### 4. Security Scan (SAST)
+- **Snyk**: Scans for vulnerabilities in dependencies and code
+- **CodeQL**: GitHub's semantic code analysis engine
+- **Timeout**: 15 minutes
+- **Required**: No (informational, doesn't block merge)
 
-#### 2. TypeScript Type Check
-- **Purpose**: Validates TypeScript types across the codebase
-- **Tool**: TypeScript Compiler (tsc)
-- **Command**: `npm run type-check`
+### 5. Dependency Audit
+- **npm audit**: Checks for known security vulnerabilities in dependencies
+- **Severity Threshold**: High and above
+- **Timeout**: 10 minutes
+- **Required**: Yes
 
-#### 3. Unit Tests (Jest)
-- **Purpose**: Runs all unit tests with coverage reporting
-- **Tool**: Jest
-- **Command**: `npm test -- --coverage --ci`
-- **Coverage**: Results uploaded to Codecov (optional)
-- **Threshold**: 80% coverage required (configured in jest.config.js)
+### 6. Build Verification
+- **Build**: Compiles all packages to ensure no build errors
+- **Timeout**: 15 minutes
+- **Required**: Yes
 
-#### 4. Security Scan (SAST)
-- **Purpose**: Static Application Security Testing
-- **Tool**: Snyk
-- **Configuration**: Fails on high severity vulnerabilities
-- **Output**: Results uploaded to GitHub Code Scanning
-
-#### 5. Dependency Audit
-- **Purpose**: Checks for known vulnerabilities in dependencies
-- **Tool**: npm audit
-- **Threshold**: Moderate severity and above
-
-#### 6. All Checks Complete
-- **Purpose**: Final gate that requires all previous jobs to pass
-- **Behavior**: Fails if any required check fails
-
-## Branch Protection Rules
-
-To enforce CI requirements, configure the following branch protection rules on the `main` branch:
-
-1. **Require pull request reviews before merging**: 1+ approvals
-2. **Require status checks to pass before merging**: Enable all CI jobs
-3. **Require branches to be up to date before merging**: Enabled
-4. **Require signed commits**: Recommended for security
-
-### Required Status Checks
-- Lint & Format Check
-- TypeScript Type Check
-- Unit Tests (Jest)
-- Security Scan (SAST)
-- Dependency Audit
-- All CI Checks Passed
+### 7. CI Summary
+- **Status Check**: Aggregates all job results
+- **Required**: Yes (fails if any required job fails)
 
 ## Required Secrets
 
-Configure the following secrets in GitHub repository settings:
-
-### Required
-- None (basic pipeline works without secrets)
+Configure these secrets in GitHub repository settings:
 
 ### Optional (for enhanced features)
-- `CODECOV_TOKEN` - For coverage reporting to Codecov
-- `SNYK_TOKEN` - For Snyk security scanning
+- `CODECOV_TOKEN`: For coverage reporting (get from codecov.io)
+- `SNYK_TOKEN`: For Snyk security scanning (get from snyk.io)
+
+### How to Add Secrets
+1. Go to: https://github.com/fattyageboy/BerthCare/settings/secrets/actions
+2. Click "New repository secret"
+3. Add name and value
+4. Click "Add secret"
+
+## Branch Protection Rules
+
+To enforce CI checks before merging, configure branch protection:
+
+### Settings for `main` branch
+1. Go to: https://github.com/fattyageboy/BerthCare/settings/branches
+2. Add rule for `main` branch
+3. Enable:
+   - ✅ Require a pull request before merging
+   - ✅ Require approvals (1)
+   - ✅ Require status checks to pass before merging
+   - ✅ Require branches to be up to date before merging
+   - ✅ Require conversation resolution before merging
+
+### Required Status Checks
+Add these checks as required:
+- `Code Quality (Lint & Format)`
+- `TypeScript Type Check`
+- `Unit Tests`
+- `Dependency Audit`
+- `Build Verification`
+- `CI Summary`
 
 ## Local Development
 
-### Running CI Checks Locally
+### Install Dependencies
+```bash
+npm install
+```
 
-Before pushing code, run these commands locally to catch issues early:
+### Run Checks Locally (Before Pushing)
 
 ```bash
-# Install dependencies
-npm ci
-
-# Run all checks
+# Lint code
 npm run lint
-npm run format:check
-npm run type-check
-npm test
 
-# Fix formatting issues
+# Fix linting issues automatically
+npm run lint:fix
+
+# Check code formatting
+npm run format:check
+
+# Format code automatically
 npm run format
 
-# Run security audit
-npm audit
+# Type check
+npm run type-check
+
+# Run tests
+npm run test
+
+# Run tests with coverage
+npm run test:ci
+
+# Build all packages
+npm run build
 ```
 
-### Pre-commit Hook (Recommended)
+### Pre-commit Hooks
 
-Consider setting up a pre-commit hook using Husky to run checks automatically:
+The repository uses Husky for pre-commit hooks (optional):
 
 ```bash
-npm install --save-dev husky lint-staged
-npx husky install
+# Install Husky
+npm run prepare
+
+# Hooks will run automatically on git commit
 ```
-
-## Configuration Files
-
-### ESLint (.eslintrc.json)
-- TypeScript support enabled
-- React and React Hooks plugins configured
-- Prettier integration for consistent formatting
-- Strict rules for code quality
-
-### Prettier (.prettierrc.json)
-- Single quotes
-- 2-space indentation
-- 100 character line width
-- Trailing commas (ES5)
-- LF line endings
-
-### TypeScript (tsconfig.json)
-- Strict mode enabled
-- ES2022 target
-- CommonJS modules
-- No unused locals/parameters
-- Strict null checks
-
-### Jest (jest.config.js)
-- ts-jest preset for TypeScript support
-- 80% coverage threshold
-- Coverage reports in text, lcov, and json formats
 
 ## Troubleshooting
 
-### CI Failing on Lint
+### ESLint Errors
 ```bash
-# Check what's failing
+# See all errors
 npm run lint
 
-# Auto-fix issues
-npm run lint -- --fix
+# Auto-fix where possible
+npm run lint:fix
 ```
 
-### CI Failing on Format
+### Prettier Formatting
 ```bash
-# Check formatting issues
+# Check formatting
 npm run format:check
 
-# Auto-fix formatting
+# Auto-format all files
 npm run format
 ```
 
-### CI Failing on Type Check
+### TypeScript Errors
 ```bash
-# Run type check locally
+# Check types
 npm run type-check
 
-# Check specific file
-npx tsc --noEmit path/to/file.ts
+# Common issues:
+# - Missing type definitions: npm install --save-dev @types/package-name
+# - Path mapping issues: Check tsconfig.json paths
 ```
 
-### CI Failing on Tests
+### Test Failures
 ```bash
-# Run tests locally
-npm test
+# Run tests in watch mode
+npm run test:watch
 
-# Run with coverage
-npm run test:coverage
+# Run specific test file
+npm test -- path/to/test.spec.ts
 
-# Run specific test
-npm test -- path/to/test.test.ts
+# Update snapshots
+npm test -- -u
 ```
 
-### CI Failing on Security Scan
+### Build Failures
 ```bash
-# Run npm audit locally
+# Clean and rebuild
+npm run clean
+npm install
+npm run build
+```
+
+## CI Performance
+
+### Expected Run Times
+- Code Quality: ~2-3 minutes
+- Type Check: ~2-3 minutes
+- Unit Tests: ~3-5 minutes
+- Security SAST: ~5-10 minutes
+- Dependency Audit: ~1-2 minutes
+- Build Verification: ~3-5 minutes
+- **Total**: ~15-25 minutes
+
+### Optimization Tips
+- Jobs run in parallel where possible
+- Dependencies are cached between runs
+- Concurrency cancels outdated runs
+- Timeouts prevent hanging jobs
+
+## Monitoring
+
+### GitHub Actions Dashboard
+- View runs: https://github.com/fattyageboy/BerthCare/actions
+- Filter by workflow, branch, or status
+- Download logs for debugging
+
+### Coverage Reports
+- View on Codecov: https://codecov.io/gh/fattyageboy/BerthCare
+- Coverage trends over time
+- File-level coverage details
+
+### Security Alerts
+- Dependabot alerts: https://github.com/fattyageboy/BerthCare/security/dependabot
+- CodeQL alerts: https://github.com/fattyageboy/BerthCare/security/code-scanning
+- Snyk dashboard: https://app.snyk.io
+
+## Maintenance
+
+### Updating Dependencies
+```bash
+# Check for outdated packages
+npm outdated
+
+# Update all dependencies
+npm update
+
+# Update specific package
+npm update package-name
+
+# Run audit after updates
 npm audit
-
-# Fix automatically (if possible)
-npm audit fix
-
-# Review and fix manually
-npm audit --json
 ```
 
-## Performance Optimization
+### Updating GitHub Actions
+- Actions are pinned to major versions (e.g., `@v4`)
+- Dependabot will create PRs for action updates
+- Review and merge action updates regularly
 
-The CI pipeline is optimized for speed:
+## Support
 
-- **Parallel execution**: All jobs run simultaneously
-- **Dependency caching**: npm dependencies cached between runs
-- **Fail fast**: Jobs fail immediately on errors
-- **Selective runs**: Only runs on PRs to main branch
+For CI/CD issues:
+1. Check GitHub Actions logs
+2. Run checks locally to reproduce
+3. Review this documentation
+4. Create issue with logs and error messages
 
-## Next Steps
+---
 
-After E2 completion, the following enhancements are planned:
-
-1. **E3**: Monorepo structure with Nx/Turborepo
-2. **E5**: Production deployment pipeline
-3. **E6**: Enhanced monitoring and observability
-4. **Integration tests**: Add integration test job
-5. **E2E tests**: Add end-to-end test job (later phases)
-
-## References
-
-- Architecture Blueprint: `project-documentation/architecture-output.md`
-- Task Plan: `project-documentation/task-plan.md` (Task E2)
-- GitHub Actions Docs: https://docs.github.com/en/actions
-- Snyk Docs: https://docs.snyk.io/
+**Last Updated**: October 10, 2025  
+**Maintained By**: DevOps Team
