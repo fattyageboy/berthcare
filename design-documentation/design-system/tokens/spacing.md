@@ -9,6 +9,7 @@
 ## Design Philosophy
 
 BerthCare's spacing system is built for real-world home care environments:
+
 - **Glove-friendly touch targets** - Minimum 48px for primary actions
 - **Cognitive breathing room** - Strategic whitespace reduces mental fatigue during 8-hour shifts
 - **Content hierarchy** - Space defines importance without decoration
@@ -23,6 +24,7 @@ The best spacing is invisible. Users shouldn't think about layout - they should 
 Mathematical foundation for visual harmony. All spacing derives from this single unit, creating predictable rhythm across every screen.
 
 **Why 8px?**
+
 - Divisible by 2 and 4 for flexible scaling
 - Aligns with iOS and Android native grid systems
 - Creates natural touch target sizes (48px = 6 units)
@@ -60,6 +62,7 @@ touch-primary: 64px (8 × base)  // Primary CTAs, critical actions
 ## Context-Aware Usage
 
 ### Visit Documentation Screens
+
 **Goal:** Minimize scrolling, maximize speed
 
 - **Screen margins:** 16px (mobile), 24px (tablet)
@@ -70,6 +73,7 @@ touch-primary: 64px (8 × base)  // Primary CTAs, critical actions
 **Rationale:** Tighter spacing reduces scrolling during documentation. Staff complete 6-8 visits per shift - every scroll adds friction.
 
 ### Patient Selection & Lists
+
 **Goal:** Scannable, tap-friendly
 
 - **List item height:** 72px minimum (name + metadata + touch target)
@@ -80,6 +84,7 @@ touch-primary: 64px (8 × base)  // Primary CTAs, critical actions
 **Rationale:** Larger touch targets prevent mis-taps when selecting patients. Compact vertical spacing shows more clients per screen.
 
 ### Care Coordination & Messaging
+
 **Goal:** Readable, conversational
 
 - **Message bubbles:** 12px padding, 8px between messages
@@ -90,6 +95,7 @@ touch-primary: 64px (8 × base)  // Primary CTAs, critical actions
 **Rationale:** Conversational interfaces need tighter spacing to feel natural. Generous input padding makes typing easier.
 
 ### Family Portal (Web)
+
 **Goal:** Calm, trustworthy, accessible
 
 - **Content max-width:** 720px (optimal reading length)
@@ -181,12 +187,14 @@ desktop:  > 1024px   // Family portal only
 ### Scaling Strategy
 
 **Mobile → Tablet:**
+
 - Increase card padding: 16px → 24px
 - Increase screen margins: 16px → 24px
 - Maintain touch targets (don't shrink)
 - Add horizontal spacing in forms (single → two-column)
 
 **Tablet → Desktop (Family Portal Only):**
+
 - Increase section spacing: 32px → 48px
 - Increase card padding: 24px → 32px
 - Max content width: 720px (centered)
@@ -211,24 +219,24 @@ desktop:  > 1024px   // Family portal only
   --space-xl: 32px;
   --space-2xl: 48px;
   --space-3xl: 64px;
-  
+
   /* Touch Targets */
   --touch-min: 48px;
   --touch-comfortable: 56px;
   --touch-primary: 64px;
-  
+
   /* Semantic Spacing */
   --space-screen-margin: 16px;
   --space-card-padding: 16px;
   --space-form-field-gap: 20px;
   --space-section-gap: 32px;
-  
+
   /* Responsive Overrides */
   @media (min-width: 768px) {
     --space-screen-margin: 24px;
     --space-card-padding: 24px;
   }
-  
+
   @media (min-width: 1024px) {
     --space-screen-margin: 48px;
     --space-card-padding: 32px;
@@ -243,19 +251,19 @@ desktop:  > 1024px   // Family portal only
 // tokens/spacing.js
 export const spacing = {
   '2xs': 4,
-  'xs': 8,
-  'sm': 12,
-  'md': 16,
-  'lg': 24,
-  'xl': 32,
+  xs: 8,
+  sm: 12,
+  md: 16,
+  lg: 24,
+  xl: 32,
   '2xl': 48,
   '3xl': 64,
-  
+
   // Touch targets
   touchMin: 48,
   touchComfortable: 56,
   touchPrimary: 64,
-  
+
   // Semantic
   screenMargin: 16,
   cardPadding: 16,
@@ -294,18 +302,23 @@ export const spacing = {
 ## Design Principles in Practice
 
 ### "Simplicity is the ultimate sophistication"
+
 Every spacing decision removes complexity. We don't add space for decoration - we add it to create clarity.
 
 ### "If users need a manual, the design has failed"
+
 Spacing creates intuitive hierarchy. Primary actions are obviously primary. Sections are obviously separate. No explanation needed.
 
 ### "Eliminate unnecessary buttons, features, and complexity"
+
 Generous spacing makes fewer elements feel complete. We'd rather have 5 well-spaced actions than 10 cramped ones.
 
 ### "The best interface is no interface"
+
 Space makes technology invisible. Users focus on their patients, not our layout.
 
 ### "Perfection in details matters"
+
 Every 4px matters. The difference between 16px and 20px field spacing affects documentation speed across thousands of visits.
 
 ---
@@ -313,6 +326,7 @@ Every 4px matters. The difference between 16px and 20px field spacing affects do
 ## Testing & Validation
 
 ### Before Launch
+
 - [ ] Test all touch targets with gloves (latex and nitrile)
 - [ ] Validate one-handed thumb reach on iPhone SE and Pixel 5
 - [ ] Verify spacing consistency across iOS and Android
@@ -320,6 +334,7 @@ Every 4px matters. The difference between 16px and 20px field spacing affects do
 - [ ] Validate in bright sunlight (spacing affects scannability)
 
 ### Ongoing Metrics
+
 - **Mis-tap rate:** Track accidental button presses
 - **Scroll depth:** Measure if spacing causes excessive scrolling
 - **Task completion time:** Spacing should reduce, not increase, time
@@ -332,12 +347,14 @@ Every 4px matters. The difference between 16px and 20px field spacing affects do
 Rules exist to serve users, not constrain design.
 
 **Break the 8px grid when:**
+
 - Optical alignment requires 1-2px adjustments
 - Platform conventions demand different spacing (iOS 15pt vs Android 16dp)
 - Accessibility requires larger touch targets
 - User testing shows a specific spacing improves task completion
 
 **Never break:**
+
 - Minimum 48px touch targets
 - Consistent spacing within a component type
 - Responsive scaling principles

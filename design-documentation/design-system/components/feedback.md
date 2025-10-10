@@ -21,12 +21,14 @@ If feedback requires thought, the design has failed the caregiver.
 **The user:** Sarah, 34, RN, documenting her 6th visit of the day in a patient's dimly lit kitchen, wearing gloves, phone at 23% battery.
 
 **What she needs:**
+
 - Instant confirmation her work saved
 - Zero cognitive load
 - No blocking her workflow
 - Works with gloves on
 
 **What we eliminated:**
+
 - Snackbars, toasts, notifications (confusing terminology)
 - Dismiss buttons (extra tap with gloves)
 - Action buttons in alerts (workflow interruption)
@@ -38,6 +40,7 @@ If feedback requires thought, the design has failed the caregiver.
 - Badges (visual clutter)
 
 **What we kept:**
+
 - Status feedback (saved/failed/syncing)
 - Haptic confirmation (feel it through gloves)
 - Auto-dismiss (no extra taps)
@@ -67,30 +70,35 @@ A nurse shouldn't wonder if their visit saved. They should know instantly, witho
 ```
 
 **Dimensions:**
+
 - Width: Full width minus 32px margins (16px each side)
 - Height: 56px (optimized for gloved fingers)
 - Position: Bottom, 88px from bottom (above nav bar, thumb-safe zone)
 - Border radius: 12px (softer, more approachable)
 
 **Colors (semantic, not decorative):**
+
 - Saved: Green `#00C853` background, White text
-- Failed: Red `#D32F2F` background, White text  
+- Failed: Red `#D32F2F` background, White text
 - Syncing: Blue `#0066CC` background, White text
 - Offline: Amber `#FF8F00` background, White text
 
 **Typography:**
+
 - Font: 18px, Semibold (600) - larger for readability in field
 - Color: White `#FFFFFF`
 - Alignment: Left (easier to scan)
 - Icon: 24px, left-aligned with 16px padding
 
 **Animation:**
+
 - Enter: Slide up from bottom (150ms, ease-out)
 - Stay: 2.5 seconds (tested with real nurses)
 - Exit: Fade out (150ms)
 - Haptic: Medium impact on appear (works through gloves)
 
 **Why these specs:**
+
 - 56px height: Easier to see while standing/moving
 - Left alignment: Faster to read (Western reading pattern)
 - Semibold font: More legible in poor lighting
@@ -103,6 +111,7 @@ A nurse shouldn't wonder if their visit saved. They should know instantly, witho
 ## Four Status Types
 
 ### 1. Saved (Green)
+
 ```
 ┌─────────────────────────────────────┐
 │ ✓ Visit saved                       │
@@ -110,12 +119,14 @@ A nurse shouldn't wonder if their visit saved. They should know instantly, witho
 ```
 
 **When to use:**
+
 - Visit documentation saved
 - Photo uploaded
 - Signature captured
 - Care plan updated
 
 **Message format:**
+
 - Checkmark icon ✓
 - Past tense ("saved" not "saving")
 - Specific action ("Visit saved" not "Success")
@@ -125,6 +136,7 @@ A nurse shouldn't wonder if their visit saved. They should know instantly, witho
 **Why:** Nurses need immediate confirmation their work won't be lost. "Saved" is clearer than "Success."
 
 ### 2. Failed (Red)
+
 ```
 ┌─────────────────────────────────────┐
 │ ✕ Save failed                       │
@@ -132,12 +144,14 @@ A nurse shouldn't wonder if their visit saved. They should know instantly, witho
 ```
 
 **When to use:**
+
 - Save operation failed
 - Photo upload failed
 - Validation error
 - Critical error
 
 **Message format:**
+
 - X icon ✕
 - What failed ("Save failed" not "Error")
 - No technical jargon
@@ -147,6 +161,7 @@ A nurse shouldn't wonder if their visit saved. They should know instantly, witho
 **Why:** "Failed" is honest and clear. Technical errors are for logs, not nurses.
 
 ### 3. Syncing (Blue)
+
 ```
 ┌─────────────────────────────────────┐
 │ ↻ Syncing 3 visits                  │
@@ -154,11 +169,13 @@ A nurse shouldn't wonder if their visit saved. They should know instantly, witho
 ```
 
 **When to use:**
+
 - Background sync in progress
 - Uploading offline visits
 - Downloading updates
 
 **Message format:**
+
 - Sync icon ↻
 - Present continuous ("Syncing" not "Sync")
 - Specific count ("3 visits" not "data")
@@ -168,6 +185,7 @@ A nurse shouldn't wonder if their visit saved. They should know instantly, witho
 **Why:** Nurses need to know sync is happening, but it shouldn't interrupt workflow.
 
 ### 4. Offline (Amber)
+
 ```
 ┌─────────────────────────────────────┐
 │ ⚠ Working offline                   │
@@ -175,11 +193,13 @@ A nurse shouldn't wonder if their visit saved. They should know instantly, witho
 ```
 
 **When to use:**
+
 - No network connection
 - Offline mode active
 - Will sync later
 
 **Message format:**
+
 - Warning icon ⚠
 - Present tense ("Working offline")
 - Reassuring tone
@@ -193,9 +213,11 @@ A nurse shouldn't wonder if their visit saved. They should know instantly, witho
 ## What We Eliminated (And Why)
 
 ### ❌ Action Buttons in Status Messages
+
 **Why:** Nurses wear gloves. Every extra tap is friction.
 
 **Old way:**
+
 ```
 ┌─────────────────────────────────────┐
 │ Visit saved                 [View]  │
@@ -203,39 +225,47 @@ A nurse shouldn't wonder if their visit saved. They should know instantly, witho
 ```
 
 **New way:**
+
 ```
-Status confirms action. 
+Status confirms action.
 Navigation happens through main UI.
 No extra taps needed.
 ```
 
 ### ❌ Dismiss Buttons
+
 **Why:** Auto-dismiss after 2.5 seconds. Gloved fingers shouldn't need to tap tiny X buttons.
 
 ### ❌ Persistent Status Messages
+
 **Why:** If it needs to persist, it's not status feedback—it's a system state indicator.
 
 ### ❌ Status Message Queues
+
 **Why:** Multiple messages = cognitive overload during patient care.
 
 **Old way:**
+
 ```
 Message 1: "Visit saved"
-Message 2: "Photo uploaded"  
+Message 2: "Photo uploaded"
 Message 3: "Signature captured"
 Message 4: "Sync complete"
 ```
 
 **New way:**
+
 ```
 One message: "Visit saved"
 (Everything else happens automatically)
 ```
 
 ### ❌ Progress Bars for Sync
+
 **Why:** Creates anxiety. Nurses don't need to watch progress—they need to know when it's done.
 
 **Old way:**
+
 ```
 ┌─────────────────────────────────────┐
 │ Syncing... [████████░░] 80%        │
@@ -243,6 +273,7 @@ One message: "Visit saved"
 ```
 
 **New way:**
+
 ```
 ┌─────────────────────────────────────┐
 │ ↻ Syncing 3 visits                  │
@@ -251,38 +282,47 @@ One message: "Visit saved"
 ```
 
 ### ❌ Loading Spinners for Quick Actions
+
 **Why:** Makes the app feel slow. Show instant feedback, work in background.
 
 **Old way:**
+
 ```
 [Spinner] Saving...
 (User waits, watching spinner)
 ```
 
 **New way:**
+
 ```
 ✓ Visit saved
 (Instant feedback, background processing)
 ```
 
 ### ❌ Skeleton Screens
+
 **Why:** Over-engineered for a mobile app used in the field. Show content when ready.
 
 ### ❌ Tooltips
+
 **Why:** Hover doesn't exist on mobile. If UI needs explanation, redesign the UI.
 
 ### ❌ Notification Badges
+
 **Why:** Visual clutter. Important information belongs in the main UI, not hidden in badges.
 
 ### ❌ Modal Dialogs for Status
+
 **Why:** Blocking. Interrupting. Status feedback should never block workflow.
 
 **Use modals only for decisions:**
+
 - "Delete this visit?" (destructive action)
 - "Work offline?" (mode change)
 - "Required field missing" (blocking error)
 
 **Never for status:**
+
 - "Visit saved" (use status message)
 - "Sync complete" (use status message)
 - "Photo uploaded" (use status message)
@@ -317,6 +357,7 @@ Dialog: "Delete this visit?" (requires decision)
 ```
 
 **Specs:**
+
 - Width: 90% screen width, max 340px
 - Background: White
 - Border radius: 16px
@@ -329,12 +370,14 @@ Dialog: "Delete this visit?" (requires decision)
 - Spacing: 24px between elements
 
 **When to use:**
+
 - Destructive actions (delete visit, discard changes)
 - Mode changes (work offline, end shift)
 - Blocking errors (required field missing, invalid data)
 - Critical decisions (confirm medication change)
 
 **When NOT to use:**
+
 - Status feedback (use status messages)
 - Success confirmations (use status messages)
 - Background processes (use status messages)
@@ -360,6 +403,7 @@ Dialog: "Delete this visit?" (requires decision)
 ```
 
 **When to use:**
+
 - User cannot proceed without action
 - Data validation failures
 - Required information missing
@@ -386,6 +430,7 @@ Dialog: "Delete this visit?" (requires decision)
 ```
 
 **Specs:**
+
 - Spinner: 56px, Primary Blue
 - Text: 18px, Semibold, Gray 700
 - Centered in screen
@@ -393,11 +438,13 @@ Dialog: "Delete this visit?" (requires decision)
 - No overlay (replaces content)
 
 **When to use:**
+
 - Initial app launch
 - Login authentication
 - First-time data sync
 
 **Performance target:**
+
 - Show immediately
 - Remove when content ready
 - Target: <2 seconds on 3-year-old device
@@ -415,17 +462,20 @@ Dialog: "Delete this visit?" (requires decision)
 ```
 
 **Specs:**
+
 - Spinner: 32px, Primary Blue
 - Text: 17px, Regular, Gray 700
 - Centered in content area
 - Replaces content (no overlay)
 
 **When to use:**
+
 - Pull-to-refresh
 - Loading next day's schedule
 - Fetching patient details
 
 **Performance target:**
+
 - Show after 300ms delay (avoid flash for fast loads)
 - Remove when content ready
 - Target: <1 second
@@ -435,6 +485,7 @@ Dialog: "Delete this visit?" (requires decision)
 **Don't show loading for background operations.**
 
 **Examples:**
+
 - Auto-save: Show "✓ Visit saved" when complete
 - Photo upload: Show "✓ Photo uploaded" when complete
 - Sync: Show "↻ Syncing 3 visits" status message
@@ -456,10 +507,11 @@ Dialog: "Delete this visit?" (requires decision)
 ## Real-World Scenarios
 
 ### Scenario 1: Completing a Visit
+
 ```
 Context: Sarah finishes documenting vital signs for Mrs. Johnson
 Action: Taps "Complete Visit"
-Feedback: 
+Feedback:
   - Haptic: Medium impact (feels confirmation)
   - Visual: "✓ Visit saved" (green, 2.5 seconds)
   - Auto-save: Happens in background
@@ -467,6 +519,7 @@ Result: Returns to schedule, confident work is saved
 ```
 
 ### Scenario 2: Working Offline (Rural Visit)
+
 ```
 Context: Sarah arrives at remote farmhouse, no cell signal
 Action: Opens app
@@ -481,6 +534,7 @@ Result: Sarah continues working, knows sync will happen later
 ```
 
 ### Scenario 3: Returning Online (Automatic Sync)
+
 ```
 Context: Sarah drives back to town, phone reconnects
 Action: Automatic (no user action)
@@ -493,6 +547,7 @@ Result: Sarah knows all visits are now in the system
 ```
 
 ### Scenario 4: Photo Upload Failure
+
 ```
 Context: Sarah takes photo of wound care, upload fails
 Action: Automatic retry (3 attempts)
@@ -504,6 +559,7 @@ Result: Sarah knows photo is saved, will upload later
 ```
 
 ### Scenario 5: Deleting a Visit (Destructive Action)
+
 ```
 Context: Sarah accidentally started wrong patient's visit
 Action: Taps "Delete Visit"
@@ -518,6 +574,7 @@ Result: Returns to schedule, visit removed
 ```
 
 ### Scenario 6: Required Field Missing
+
 ```
 Context: Sarah tries to complete visit without blood pressure
 Action: Taps "Complete Visit"
@@ -530,6 +587,7 @@ Result: Returns to form, blood pressure field highlighted
 ```
 
 ### Scenario 7: Team Alert (Care Coordination)
+
 ```
 Context: Sarah notices patient fall risk, alerts team
 Action: Taps "Alert Team" with message
@@ -539,6 +597,7 @@ Result: Returns to visit, confident team received alert
 ```
 
 ### Scenario 8: Family Portal Update
+
 ```
 Context: Family member views care updates
 Action: Opens family portal
@@ -553,6 +612,7 @@ Result: Family sees information, no feedback needed
 ## Message Writing Rules
 
 ### Be Specific
+
 ```
 ❌ "Success"
 ✅ "Visit completed successfully"
@@ -565,6 +625,7 @@ Result: Family sees information, no feedback needed
 ```
 
 ### Be Concise
+
 ```
 ❌ "Your visit has been successfully completed and saved to the database"
 ✅ "Visit completed successfully"
@@ -574,6 +635,7 @@ Result: Family sees information, no feedback needed
 ```
 
 ### Be Human
+
 ```
 ❌ "Operation completed successfully"
 ✅ "Visit completed successfully"
@@ -590,6 +652,7 @@ Result: Family sees information, no feedback needed
 ## Message Writing Rules
 
 ### Be Specific to Healthcare Context
+
 ```
 ❌ "Success"
 ✅ "Visit saved"
@@ -602,6 +665,7 @@ Result: Family sees information, no feedback needed
 ```
 
 ### Be Concise (Glanceable)
+
 ```
 ❌ "Your visit documentation has been successfully saved to the database"
 ✅ "Visit saved"
@@ -614,6 +678,7 @@ Result: Family sees information, no feedback needed
 ```
 
 ### Be Human (Not Technical)
+
 ```
 ❌ "Operation completed successfully"
 ✅ "Visit saved"
@@ -626,6 +691,7 @@ Result: Family sees information, no feedback needed
 ```
 
 ### Use Action-Oriented Language
+
 ```
 ❌ "The visit is now complete"
 ✅ "Visit saved"
@@ -638,6 +704,7 @@ Result: Family sees information, no feedback needed
 ```
 
 ### Count When Relevant
+
 ```
 ❌ "Syncing visits"
 ✅ "Syncing 3 visits"
@@ -652,19 +719,15 @@ Result: Family sees information, no feedback needed
 ## Accessibility
 
 ### Screen Reader
+
 ```html
-<div 
-  role="alert"
-  aria-live="polite"
-  aria-atomic="true"
->
-  Visit completed successfully
-</div>
+<div role="alert" aria-live="polite" aria-atomic="true">Visit completed successfully</div>
 ```
 
 **Announces:** Message automatically when it appears.
 
 ### Reduced Motion
+
 ```css
 @media (prefers-reduced-motion: reduce) {
   .alert {
@@ -677,6 +740,7 @@ Result: Family sees information, no feedback needed
 **Respects:** User's motion preferences.
 
 ### Color Blind
+
 - Green/Red distinction: Also uses icons (✓ vs ✕)
 - Not relying on color alone
 - High contrast text (white on colored background)
@@ -686,6 +750,7 @@ Result: Family sees information, no feedback needed
 ## Platform Specifics
 
 ### iOS
+
 ```swift
 // Alert
 struct AlertView: View {
@@ -711,6 +776,7 @@ DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
 ```
 
 ### Android
+
 ```kotlin
 // Alert (using Snackbar)
 Snackbar.make(
@@ -723,6 +789,7 @@ Snackbar.make(
 ```
 
 ### Web
+
 ```javascript
 // Alert
 function showAlert(message, type) {
@@ -730,7 +797,7 @@ function showAlert(message, type) {
   alert.className = `alert alert-${type}`;
   alert.textContent = message;
   document.body.appendChild(alert);
-  
+
   setTimeout(() => {
     alert.classList.add('fade-out');
     setTimeout(() => alert.remove(), 200);
@@ -761,20 +828,25 @@ showAlert('✓ Visit completed successfully', 'success');
 ## Design Philosophy in Practice
 
 ### "Simplicity is the ultimate sophistication"
+
 One feedback pattern. Four semantic states. 2.5 seconds. Done.
 
 ### "Start with the user experience, then work backwards"
+
 Designed for nurses wearing gloves in dim hallways. Everything else follows from that reality.
 
 ### "If users need a manual, the design has failed"
+
 Status appears. Nurse understands. Nurse continues caring for patients. No explanation needed.
 
 ### "Say no to 1,000 things"
+
 Eliminated: snackbars, toasts, notifications, banners, popovers, tooltips, badges, progress bars, spinners, skeletons, action buttons, dismiss buttons, queues.
 
 Kept: Status feedback that works with gloves, in any lighting, without interrupting care.
 
 ### "Perfection in details matters"
+
 - 56px height (tested with gloved fingers)
 - 2.5 seconds duration (tested with real nurses)
 - Haptic feedback (works through gloves)
@@ -782,6 +854,7 @@ Kept: Status feedback that works with gloves, in any lighting, without interrupt
 - Thumb-safe zone (won't accidentally tap)
 
 ### "Make technology invisible"
+
 Feedback happens automatically. Nurses don't think about the system. They think about their patients.
 
 ---
@@ -789,6 +862,7 @@ Feedback happens automatically. Nurses don't think about the system. They think 
 ## Evolution Roadmap
 
 ### Phase 1 (MVP - Months 1-6)
+
 - Four status types (saved/failed/syncing/offline)
 - Haptic feedback
 - Auto-dismiss
@@ -797,6 +871,7 @@ Feedback happens automatically. Nurses don't think about the system. They think 
 **Success metric:** 95% of nurses report confidence their work is saved
 
 ### Phase 2 (Months 7-12)
+
 - Refined timing based on real usage data
 - Optimized haptic patterns
 - Enhanced offline state communication
@@ -805,6 +880,7 @@ Feedback happens automatically. Nurses don't think about the system. They think 
 **Success metric:** <1 support ticket per 1,000 visits about feedback clarity
 
 ### Phase 3 (Year 2+)
+
 - Predictive feedback (anticipate user needs)
 - Contextual feedback (adapt to user patterns)
 - Accessibility enhancements based on user feedback

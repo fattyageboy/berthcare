@@ -10,6 +10,7 @@
 ### The Core Problem
 
 Home care workers document the same information repeatedly:
+
 - Client demographics (never change)
 - Medication lists (change rarely)
 - Baseline vitals (change slightly)
@@ -24,15 +25,19 @@ Home care workers document the same information repeatedly:
 ## Design Principles
 
 ### 1. Copy is the Default
+
 **Don't ask "Do you want to copy?"** - Just copy everything and let users edit what changed.
 
 ### 2. Visual Distinction
+
 **Copied data looks different** - Muted styling until edited, then normal styling.
 
 ### 3. Change Highlighting
+
 **Show what's different** - Side-by-side comparison with previous visit.
 
 ### 4. Smart Suggestions
+
 **Predict likely changes** - Based on patterns and time elapsed.
 
 ---
@@ -42,6 +47,7 @@ Home care workers document the same information repeatedly:
 ### Scenario: Routine Medication Management Visit
 
 **Without Smart Reuse (Current State):**
+
 ```
 1. Open blank form
 2. Type client name
@@ -55,6 +61,7 @@ Total time: 15 minutes
 ```
 
 **With Smart Reuse (Designed State):**
+
 ```
 1. Open form → All previous data pre-filled (muted)
 2. Tap "All medications taken" → Compliance documented
@@ -74,6 +81,7 @@ Total time: 3 minutes
 **Visual States:**
 
 #### State 1: Copied Data (Unedited)
+
 ```
 ┌─────────────────────────────────────┐
 │ Blood Pressure                      │
@@ -83,6 +91,7 @@ Total time: 3 minutes
 ```
 
 #### State 2: Edited Data
+
 ```
 ┌─────────────────────────────────────┐
 │ Blood Pressure                      │
@@ -92,6 +101,7 @@ Total time: 3 minutes
 ```
 
 #### State 3: New Data
+
 ```
 ┌─────────────────────────────────────┐
 │ Blood Pressure                      │
@@ -105,6 +115,7 @@ Total time: 3 minutes
 ## Copy Strategies by Data Type
 
 ### Static Data (Always Copy)
+
 - Client demographics
 - Address
 - Emergency contacts
@@ -114,6 +125,7 @@ Total time: 3 minutes
 **UI Treatment:** Pre-filled, locked, "View only" indicator
 
 ### Semi-Static Data (Copy with Review)
+
 - Medication list
 - Care plan goals
 - Equipment needs
@@ -122,6 +134,7 @@ Total time: 3 minutes
 **UI Treatment:** Pre-filled, muted, "Review and update" prompt
 
 ### Dynamic Data (Copy with Highlight)
+
 - Vital signs
 - Pain levels
 - Mood assessment
@@ -130,6 +143,7 @@ Total time: 3 minutes
 **UI Treatment:** Pre-filled, muted, side-by-side comparison with last visit
 
 ### Time-Sensitive Data (Never Copy)
+
 - Visit date/time
 - Signature
 - Photos
@@ -164,6 +178,7 @@ Total time: 3 minutes
 ```
 
 **Visual Specifications:**
+
 - Split layout: 50/50 width
 - Today: Normal styling (Gray 900)
 - Last: Muted styling (Gray 500)
@@ -173,6 +188,7 @@ Total time: 3 minutes
   - → Stable: Success Green
 
 **Interaction:**
+
 - Tap value → Edit mode
 - Swipe left → Hide comparison
 - Tap "Show trend" → Historical chart
@@ -198,6 +214,7 @@ Total time: 3 minutes
 ```
 
 **Interaction:**
+
 - Appears on form entry
 - Dismissible
 - Selection remembered per visit type
@@ -219,6 +236,7 @@ Total time: 3 minutes
 ```
 
 **Visual Specifications:**
+
 - Card: Info Purple background (light)
 - Icon: Lightning bolt
 - Text: Body Small (14px)
@@ -233,6 +251,7 @@ Total time: 3 minutes
 **Purpose:** Common visit types with smart defaults
 
 **Template Types:**
+
 1. **Medication Management**
    - Pre-filled medication list
    - Compliance checkboxes
@@ -258,6 +277,7 @@ Total time: 3 minutes
    - Contact verification
 
 **Template Selection:**
+
 ```
 ┌─────────────────────────────────────┐
 │ Select Visit Type                   │
@@ -271,6 +291,7 @@ Total time: 3 minutes
 ```
 
 **Interaction:**
+
 - Appears after "Start Visit"
 - Selection remembered per client
 - Can change mid-visit
@@ -284,12 +305,14 @@ Total time: 3 minutes
 **Purpose:** One-tap insertion of frequently used phrases
 
 **Categories:**
+
 - **Compliance:** "All medications taken as prescribed"
 - **Progress:** "Wound showing signs of improvement"
 - **Concerns:** "Client reports increased pain"
 - **Follow-up:** "RN follow-up recommended"
 
 **UI Implementation:**
+
 ```
 ┌─────────────────────────────────────┐
 │ Notes                               │
@@ -306,6 +329,7 @@ Total time: 3 minutes
 ```
 
 **Interaction:**
+
 - Tap phrase → Insert at cursor
 - Long press → Edit phrase
 - Swipe left → Delete phrase
@@ -320,11 +344,13 @@ Total time: 3 minutes
 **Purpose:** Show what was copied vs. what was edited
 
 **Implementation:**
+
 - Metadata stored with each field
 - Visible in review mode
 - Accessible to supervisors
 
 **Review Mode:**
+
 ```
 ┌─────────────────────────────────────┐
 │ Documentation Review                │
@@ -338,6 +364,7 @@ Total time: 3 minutes
 ```
 
 **Detail View:**
+
 - Field name
 - Previous value
 - New value
@@ -353,13 +380,16 @@ Total time: 3 minutes
 **Scenario:** Copied data might be outdated
 
 **Prevention:**
+
 1. **Time-based warnings**
+
    ```
    ⚠️ Last visit was 7 days ago
    Please review all copied data carefully
    ```
 
 2. **Value range checks**
+
    ```
    ⚠️ Blood pressure significantly different from last visit
    Previous: 120/80 → Current: 160/95
@@ -374,6 +404,7 @@ Total time: 3 minutes
    ```
 
 **Visual Treatment:**
+
 - Warning Amber background
 - Icon prefix
 - Checkbox to confirm review
@@ -384,16 +415,19 @@ Total time: 3 minutes
 ## Accessibility Considerations
 
 ### Screen Reader Support
+
 - Announce copied vs. edited state
 - Read previous values on focus
 - Describe change indicators
 
 ### Keyboard Navigation
+
 - Tab through copied fields
 - Space to edit
 - Escape to revert to copied value
 
 ### Visual Accessibility
+
 - Clear visual distinction between states
 - Not relying on color alone
 - High contrast mode support
@@ -403,11 +437,13 @@ Total time: 3 minutes
 ## Performance Optimization
 
 ### Data Loading
+
 - Pre-fetch last visit data on client selection
 - Cache common templates locally
 - Lazy load historical comparisons
 
 ### Storage
+
 - Store only deltas, not full copies
 - Compress historical data
 - Purge old drafts automatically
@@ -417,12 +453,14 @@ Total time: 3 minutes
 ## Success Metrics
 
 ### Quantitative
+
 - **Time savings:** 50% reduction in documentation time
 - **Copy usage:** 80%+ of visits use copy feature
 - **Edit rate:** Average 3-5 fields edited per visit
 - **Error rate:** <1% incorrect copied data
 
 ### Qualitative
+
 - "I never type the same thing twice"
 - "It knows what I need"
 - "Editing is faster than starting fresh"
@@ -433,18 +471,21 @@ Total time: 3 minutes
 ## Implementation Priority
 
 ### Phase 1 (MVP)
+
 - Basic copy from last visit
 - Visual distinction (muted vs. normal)
 - Edit tracking
 - Quick copy buttons
 
 ### Phase 2 (Post-MVP)
+
 - Template library
 - Quick notes library
 - Side-by-side comparison
 - Smart suggestions
 
 ### Phase 3 (Advanced)
+
 - Predictive pre-filling
 - Pattern recognition
 - Automated change detection

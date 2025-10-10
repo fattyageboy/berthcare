@@ -1,6 +1,6 @@
 /**
  * BerthCare Shared Library
- * 
+ *
  * Shared utilities, types, and functions used across the monorepo.
  * This is a placeholder for the actual implementation.
  */

@@ -15,9 +15,11 @@ docs/
 ## Documentation Types
 
 ### Completion Summaries
+
 Task completion summaries follow the naming pattern: `[TaskID]-[descriptive-name].md`
 
 Each summary includes:
+
 - Task overview and objectives
 - Deliverables completed
 - Verification checklist
@@ -25,19 +27,25 @@ Each summary includes:
 - Reference documentation
 
 ### Technical Guides
+
 Located in `.github/` directory:
+
 - `ci-setup.md` - CI/CD pipeline setup and troubleshooting
 - `github-branch-protection-setup.md` - Branch protection configuration
 
 ### Architecture Documentation
+
 Located in `project-documentation/` directory:
+
 - `architecture-output.md` - Complete technical architecture
 - `mvp.md` - MVP scope and features
 - `task-plan.md` - Development task breakdown
 - `product-manager-output.md` - Product requirements
 
 ### Design Documentation
+
 Located in `design-documentation/` directory:
+
 - Design system components
 - Platform-specific guidelines
 - Feature designs
@@ -46,17 +54,20 @@ Located in `design-documentation/` directory:
 ## Quick Links
 
 ### Setup Guides
+
 - [Git Repository Setup](./E1-git-repository-initialization.md)
 - [CI/CD Pipeline Setup](./E2-ci-pipeline-setup.md)
 - [CI Configuration Guide](../.github/ci-setup.md)
 - [Branch Protection Guide](../.github/github-branch-protection-setup.md)
 
 ### Architecture
+
 - [Technical Architecture](../project-documentation/architecture-output.md)
 - [MVP Scope](../project-documentation/mvp.md)
 - [Task Plan](../project-documentation/task-plan.md)
 
 ### Design
+
 - [Design System](../design-documentation/README.md)
 - [Style Guide](../design-documentation/design-system/style-guide.md)
 

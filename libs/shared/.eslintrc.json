@@ -1,0 +1,30 @@
+{
+  "extends": ["../../.eslintrc.json"],
+  "ignorePatterns": ["!**/*", "jest.config.ts"],
+  "settings": {
+    "import/resolver": {
+      "typescript": {
+        "alwaysTryTypes": true,
+        "project": ["libs/shared/tsconfig.json", "libs/shared/tsconfig.spec.json"]
+      },
+      "node": {
+        "extensions": [".js", ".jsx", ".ts", ".tsx"]
+      }
+    }
+  },
+  "overrides": [
+    {
+      "files": ["src/**/*.ts"],
+      "excludedFiles": ["**/*.test.ts", "**/*.spec.ts"],
+      "parserOptions": {
+        "project": ["libs/shared/tsconfig.json"]
+      }
+    },
+    {
+      "files": ["**/*.test.ts", "**/*.spec.ts"],
+      "parserOptions": {
+        "project": ["libs/shared/tsconfig.spec.json"]
+      }
+    }
+  ]
+}

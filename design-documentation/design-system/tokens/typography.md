@@ -9,11 +9,13 @@ Typography is invisible when it works. It should never make you think—just rea
 ## Font Stack
 
 ### Primary Font Family
+
 ```css
 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 ```
 
 **Why system fonts:**
+
 - Instant load (0ms)
 - Familiar to every user
 - Optimized for their device
@@ -21,6 +23,7 @@ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif
 - Battle-tested readability
 
 ### Platform-Specific
+
 - **iOS:** SF Pro (automatic)
 - **Android:** Roboto (automatic)
 - **Windows:** Segoe UI (automatic)
@@ -41,17 +44,20 @@ bold:     700  // Critical information only
 ```
 
 **Why only three:**
+
 - Fewer choices = faster decisions
 - Clear hierarchy without thinking
 - Better performance
 - Easier to maintain
 
 **Usage:**
+
 - **Regular (400):** Body text, descriptions, labels, captions—everything by default
 - **Semibold (600):** Buttons, subheadings, important but not critical
 - **Bold (700):** Page titles, alerts, critical patient information
 
 **Never use:**
+
 - Thin, light, or extralight (unreadable on mobile)
 - Extrabold or black (aggressive, hard to read)
 
@@ -62,23 +68,26 @@ bold:     700  // Critical information only
 **Base:** 17px—not 16px. One pixel makes a difference.
 
 ### Universal Scale (All Devices)
-| Token | Size | Line Height | Weight | Use Case |
-|-------|------|-------------|--------|----------|
-| `title` | 28px | 36px (1.29) | Bold (700) | Page titles only |
-| `heading` | 20px | 28px (1.4) | Semibold (600) | Section headers, card titles |
-| `body` | 17px | 26px (1.53) | Regular (400) | Everything—default text |
-| `small` | 15px | 22px (1.47) | Regular (400) | Metadata, timestamps, secondary info |
-| `button` | 17px | 24px (1.41) | Semibold (600) | All interactive elements |
+
+| Token     | Size | Line Height | Weight         | Use Case                             |
+| --------- | ---- | ----------- | -------------- | ------------------------------------ |
+| `title`   | 28px | 36px (1.29) | Bold (700)     | Page titles only                     |
+| `heading` | 20px | 28px (1.4)  | Semibold (600) | Section headers, card titles         |
+| `body`    | 17px | 26px (1.53) | Regular (400)  | Everything—default text              |
+| `small`   | 15px | 22px (1.47) | Regular (400)  | Metadata, timestamps, secondary info |
+| `button`  | 17px | 24px (1.41) | Semibold (600) | All interactive elements             |
 
 **No mobile/desktop split.** One scale. Works everywhere.
 
 **Why 17px base:**
+
 - iOS default is 17px (not 16px)
 - More readable at arm's length
 - Better for aging eyes
 - Nurses work in motion—every pixel counts
 
 **Why so few sizes:**
+
 - Five sizes is enough
 - Fewer decisions = faster design
 - Easier to maintain consistency
@@ -125,6 +134,7 @@ bold:     700  // Critical information only
 **Rule:** 1.5x minimum for body text. Always.
 
 ### Guidelines
+
 - **Title:** 1.29 (tight for impact)
 - **Heading:** 1.4 (balanced)
 - **Body:** 1.53 (generous—this is where people read)
@@ -132,6 +142,7 @@ bold:     700  // Critical information only
 - **Button:** 1.41 (centered, balanced)
 
 **Why generous line height:**
+
 - Nurses read while walking
 - Poor lighting conditions (hallways, patient homes)
 - Reduces eye strain during 8-hour shifts
@@ -139,6 +150,7 @@ bold:     700  // Critical information only
 - Easier to scan quickly
 
 **Never:**
+
 - Line height below 1.2 for anything
 - Line height below 1.5 for body text
 - Tight line height for long-form content
@@ -150,17 +162,20 @@ bold:     700  // Critical information only
 **Default:** 0 (system default is perfect)
 
 **Only one exception:**
+
 - **Title:** -0.5px (slightly tighter for large text)
 
 **Everything else:** 0
 
 **Why:**
+
 - System defaults are optimized
 - Adjusting letter spacing rarely improves readability
 - Adds complexity for minimal gain
 - Can break on different devices
 
 **Never:**
+
 - Negative letter spacing on body text
 - Positive letter spacing on buttons (makes them harder to read)
 - All caps with tight spacing (unreadable)
@@ -170,22 +185,24 @@ bold:     700  // Critical information only
 ## Text Styles
 
 ### Emphasis
+
 ```css
 /* Normal emphasis */
-font-weight: 600;  /* Semibold */
+font-weight: 600; /* Semibold */
 
 /* Critical emphasis (alerts, warnings) */
-font-weight: 700;  /* Bold */
+font-weight: 700; /* Bold */
 color: error-600;
 ```
 
 **Never use italic.** It's harder to read on screens, especially in motion.
 
 ### De-emphasis
+
 ```css
 /* Secondary text */
 color: gray-600;
-font-size: 15px;  /* Small size */
+font-size: 15px; /* Small size */
 
 /* Disabled text */
 color: gray-400;
@@ -193,10 +210,11 @@ opacity: 0.5;
 ```
 
 ### Links
+
 ```css
 color: primary-600;
 text-decoration: underline;
-font-weight: 400;  /* Regular */
+font-weight: 400; /* Regular */
 
 /* Pressed */
 color: primary-700;
@@ -211,16 +229,19 @@ color: primary-700;
 **Default:** Left-align everything.
 
 **Exceptions:**
+
 - Modal titles: Center
 - Empty states: Center
 - Button text: Center
 
 **Never:**
+
 - Right-align (confusing for most users)
 - Justify (creates rivers of whitespace, hard to read)
 - Center-align body text (hard to scan)
 
 **Why left-align:**
+
 - Fastest to read
 - Easiest to scan
 - Most familiar
@@ -235,6 +256,7 @@ color: primary-700;
 ### When you must truncate:
 
 **Single line:**
+
 ```css
 overflow: hidden;
 text-overflow: ellipsis;
@@ -242,10 +264,12 @@ white-space: nowrap;
 ```
 
 **Use only for:**
+
 - Patient names in tight lists
 - Addresses in compact views
 
 **Multi-line (2 lines max):**
+
 ```css
 display: -webkit-box;
 -webkit-line-clamp: 2;
@@ -254,6 +278,7 @@ overflow: hidden;
 ```
 
 **Use only for:**
+
 - Note previews in lists
 - Message previews
 
@@ -264,19 +289,20 @@ overflow: hidden;
 ## Implementation
 
 ### CSS (Web/Family Portal)
+
 ```css
 :root {
   --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  
+
   --font-size-title: 28px;
   --font-size-heading: 20px;
   --font-size-body: 17px;
   --font-size-small: 15px;
-  
+
   --font-weight-regular: 400;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
-  
+
   --line-height-title: 36px;
   --line-height-heading: 28px;
   --line-height-body: 26px;
@@ -304,6 +330,7 @@ overflow: hidden;
 ```
 
 ### React Native (Mobile App)
+
 ```javascript
 export const typography = {
   title: {
@@ -335,10 +362,11 @@ export const typography = {
 };
 
 // Usage
-<Text style={typography.body}>Patient notes go here</Text>
+<Text style={typography.body}>Patient notes go here</Text>;
 ```
 
 ### Swift (iOS)
+
 ```swift
 extension Font {
   static let title = Font.system(size: 28, weight: .bold)
@@ -354,6 +382,7 @@ Text("Visit Complete")
 ```
 
 ### Kotlin (Android)
+
 ```xml
 <!-- res/values/styles.xml -->
 <style name="TextAppearance.Title">
@@ -377,15 +406,17 @@ Text("Visit Complete")
 **No breakpoints.** Same sizes everywhere.
 
 **Why:**
+
 - Mobile is the primary device
 - Nurses don't use desktops in the field
 - One scale = simpler code
 - Consistency across devices
 
 ### User Preferences
+
 ```css
 /* Respect system text size */
-font-size: 1rem;  /* Scales with user settings */
+font-size: 1rem; /* Scales with user settings */
 
 /* Support Dynamic Type (iOS) */
 font: -apple-system-body;
@@ -401,28 +432,33 @@ font: -apple-system-body;
 ## Accessibility
 
 ### Minimum Sizes
+
 - **Body text:** 17px (our base)
 - **Small text:** 15px (never smaller)
 - **No text below 15px** (period)
 
 ### Contrast Requirements
+
 - **All text:** 4.5:1 minimum (WCAG AA)
 - **Critical text:** 7:1 (WCAG AAA)
 - **Test in sunlight** (not just on your desk)
 
 ### Scalability
+
 - Use relative units (rem, em, sp)
 - Support up to 200% text zoom
 - Layout must not break at 200%
 - No horizontal scrolling ever
 
 ### Screen Readers
+
 - Semantic HTML always (h1, h2, p, button, etc.)
 - Proper heading hierarchy (never skip levels)
 - Descriptive labels (not "Click here")
 - Test with VoiceOver (iOS) and TalkBack (Android)
 
 ### Real-World Testing
+
 - Test with gloves on
 - Test in bright sunlight
 - Test in dim hallways
@@ -434,6 +470,7 @@ font: -apple-system-body;
 ## Platform Adaptations
 
 ### iOS
+
 ```swift
 // Use Dynamic Type
 Text("Patient Name")
@@ -445,6 +482,7 @@ Text("Visit Complete")
 ```
 
 **Dynamic Type Support:**
+
 - Map our styles to iOS text styles
 - Title → Large Title
 - Heading → Headline
@@ -453,6 +491,7 @@ Text("Visit Complete")
 - Button → Headline
 
 ### Android
+
 ```kotlin
 // Use sp units (scales with user settings)
 android:textSize="17sp"
@@ -465,15 +504,17 @@ android:textSize="17sp"
 ```
 
 **Material Design Adaptation:**
+
 - Use our scale, not Material's
 - But respect Material's spacing and layout
 - Use sp units for all text sizes
 - Support system font scaling
 
 ### Web (Family Portal)
+
 ```css
 /* Use rem units */
-font-size: 1.0625rem;  /* 17px */
+font-size: 1.0625rem; /* 17px */
 
 /* Respect user preferences */
 @media (prefers-reduced-motion) {
@@ -488,6 +529,7 @@ font-size: 1.0625rem;  /* 17px */
 ## Usage Examples
 
 ### Page Title
+
 ```css
 font-size: 28px;
 font-weight: 700;
@@ -499,6 +541,7 @@ color: gray-900;
 **Use for:** Screen titles only (Visit Documentation, Patient Profile)
 
 ### Section Heading
+
 ```css
 font-size: 20px;
 font-weight: 600;
@@ -510,6 +553,7 @@ margin-bottom: 12px;
 **Use for:** Section headers, card titles (Vital Signs, Care Notes)
 
 ### Body Text
+
 ```css
 font-size: 17px;
 font-weight: 400;
@@ -520,6 +564,7 @@ color: gray-900;
 **Use for:** Everything—notes, descriptions, form fields, lists
 
 ### Small Text
+
 ```css
 font-size: 15px;
 font-weight: 400;
@@ -530,6 +575,7 @@ color: gray-600;
 **Use for:** Timestamps, metadata, helper text
 
 ### Button
+
 ```css
 font-size: 17px;
 font-weight: 600;
@@ -570,11 +616,12 @@ color: white;
 ## Implementation
 
 ### CSS
+
 ```css
 :root {
   /* Font family */
   --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  
+
   /* Sizes */
   --font-size-h1: 32px;
   --font-size-h2: 24px;
@@ -583,13 +630,13 @@ color: white;
   --font-size-body: 16px;
   --font-size-body-small: 14px;
   --font-size-caption: 12px;
-  
+
   /* Weights */
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
-  
+
   /* Line heights */
   --line-height-tight: 1.25;
   --line-height-normal: 1.5;
@@ -604,6 +651,7 @@ color: white;
 ```
 
 ### React Native
+
 ```javascript
 export const typography = {
   h1: {

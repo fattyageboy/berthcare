@@ -28,22 +28,26 @@ BerthCare is a mobile-first home care management platform designed to make techn
 ## Technology Stack
 
 ### Mobile Application
+
 - **Framework**: React Native 0.73+ with Expo SDK 50+
 - **Local Database**: WatermelonDB (SQLite) for offline-first architecture
 - **State Management**: Zustand + React Query
 
 ### Backend Services
+
 - **Runtime**: Node.js 20 LTS with Express.js 4.x
 - **Database**: PostgreSQL 15+ (ACID compliance)
 - **Cache**: Redis 7+ (sessions, API caching)
 - **Storage**: AWS S3 (photos, documents)
 
 ### Communication
+
 - **Voice Calls**: Twilio Voice API
 - **SMS**: Twilio SMS API
 - **Push Notifications**: Expo Push Notifications
 
 ### Infrastructure
+
 - **Cloud Provider**: AWS (Canadian data residency - ca-central-1)
 - **Compute**: ECS Fargate (serverless containers)
 - **CDN**: CloudFront

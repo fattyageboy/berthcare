@@ -8,6 +8,7 @@
 ## The Radical Simplification
 
 ### What We're NOT Building
+
 ❌ Complex check-in/check-out flows  
 ❌ Manual GPS verification screens  
 ❌ Time tracking interfaces  
@@ -15,6 +16,7 @@
 ❌ Approval workflows
 
 ### What We ARE Building
+
 ✓ **Invisible verification** - It just happens  
 ✓ **Zero user action** - No buttons to press  
 ✓ **Automatic everything** - Location, time, duration  
@@ -30,6 +32,7 @@
 **New thinking:** The app knows when you arrive and leave. No action needed.
 
 **How it works:**
+
 1. Nurse taps "Start Visit" on client card
 2. App automatically records location and time
 3. Nurse does the visit (app is invisible)
@@ -42,6 +45,7 @@
 ## The Invisible Interface
 
 ### What the Nurse Sees
+
 ```
 [Start Visit] button
     ↓
@@ -53,6 +57,7 @@ Visit in progress (timer in status bar)
 **That's it.** No GPS screens. No "verify location" prompts. No "check in" ceremony.
 
 ### What Happens Behind the Scenes
+
 - GPS location captured silently
 - Time stamped automatically
 - Duration calculated
@@ -65,18 +70,22 @@ Visit in progress (timer in status bar)
 ## Challenging Assumptions
 
 ### Assumption: "We need to show GPS accuracy to users"
+
 **Challenge:** Why? Does showing "GPS accuracy: 12 meters" help a nurse do their job?  
 **Decision:** No. Hide it. Only show if there's a problem.
 
 ### Assumption: "Users must manually check in/out"
+
 **Challenge:** Why can't the app figure this out?  
 **Decision:** It can. "Start Visit" = check in. "Complete Visit" = check out.
 
 ### Assumption: "We need geofencing to prevent fraud"
+
 **Challenge:** Are we building for the 1% who might cheat, or the 99% who are honest?  
 **Decision:** Trust by default. Flag anomalies for review, don't block honest workers.
 
 ### Assumption: "Supervisors need real-time location tracking"
+
 **Challenge:** Do they? Or do they just need to know visits happened?  
 **Decision:** Visits happened. Location verified. That's enough. No Big Brother tracking.
 
@@ -85,7 +94,9 @@ Visit in progress (timer in status bar)
 ## The Magical Experience
 
 ### For the Nurse
+
 **Before (typical EVV):**
+
 1. Open app
 2. Find client
 3. Tap "Check In"
@@ -100,6 +111,7 @@ Visit in progress (timer in status bar)
 12. Done
 
 **After (BerthCare):**
+
 1. Tap "Start Visit"
 2. Do visit
 3. Tap "Complete Visit"
@@ -112,6 +124,7 @@ Visit in progress (timer in status bar)
 ## When Things Go Wrong
 
 ### GPS Unavailable (basement, rural area)
+
 **Old approach:** Block the user. "Cannot check in without GPS."  
 **New approach:** Let them work. Flag for review later.
 
@@ -128,6 +141,7 @@ Supervisor reviews later (if needed)
 ```
 
 ### Location Doesn't Match
+
 **Old approach:** "You are not at the client location. Cannot check in."  
 **New approach:** Trust the nurse. Flag for review if pattern emerges.
 
@@ -150,6 +164,7 @@ Supervisor contacts nurse: "Hey, noticed some location issues..."
 ## The Supervisor Experience
 
 ### Dashboard (Not a Surveillance Tool)
+
 ```
 ┌─────────────────────────────────────┐
 │ Today's Visits                      │
@@ -163,6 +178,7 @@ Supervisor contacts nurse: "Hey, noticed some location issues..."
 ```
 
 ### Review Queue (Only When Needed)
+
 ```
 ┌─────────────────────────────────────┐
 │ Visits Needing Review               │
@@ -186,21 +202,27 @@ Supervisor contacts nurse: "Hey, noticed some location issues..."
 ## What We're Saying No To
 
 ### ❌ Real-time tracking
+
 **Why:** Creepy. Unnecessary. Treats nurses like suspects.
 
 ### ❌ Photo verification
+
 **Why:** Degrading. Clients aren't criminals. Nurses aren't either.
 
 ### ❌ Biometric check-in
+
 **Why:** Overkill. Fingerprint scanners for home care? Really?
 
 ### ❌ Client signature at check-in AND check-out
+
 **Why:** Once is enough. Don't waste client's time.
 
 ### ❌ Geofence configuration per client
+
 **Why:** Too complex. Auto-detect or use address.
 
 ### ❌ Manual time entry
+
 **Why:** Error-prone. Automatic is better.
 
 ---
@@ -208,6 +230,7 @@ Supervisor contacts nurse: "Hey, noticed some location issues..."
 ## The Technical Magic (Invisible to Users)
 
 ### Smart Location Detection
+
 ```
 1. Start Visit tapped
 2. Get GPS coordinates (background, non-blocking)
@@ -219,6 +242,7 @@ Supervisor contacts nurse: "Hey, noticed some location issues..."
 ```
 
 ### Intelligent Duration Tracking
+
 ```
 1. Start time: When "Start Visit" tapped
 2. End time: When "Complete Visit" tapped
@@ -230,6 +254,7 @@ Supervisor contacts nurse: "Hey, noticed some location issues..."
 ```
 
 ### Battery-Friendly Implementation
+
 ```
 - GPS only on Start/Complete (not continuous)
 - Background location: NO
@@ -242,16 +267,19 @@ Supervisor contacts nurse: "Hey, noticed some location issues..."
 ## Success Metrics
 
 ### For Nurses
+
 - **Zero additional steps** beyond Start/Complete
 - **Zero GPS wait time** (happens in background)
 - **Zero location errors** blocking work
 
 ### For Supervisors
+
 - **95%+ auto-approved** visits (no review needed)
 - **<5% flagged** for review
 - **100% compliant** with regulations
 
 ### For Organization
+
 - **Accurate billing** data
 - **Audit-ready** documentation
 - **Fraud prevention** without surveillance culture
@@ -261,18 +289,21 @@ Supervisor contacts nurse: "Hey, noticed some location issues..."
 ## The Compliance Story
 
 ### What Regulators Want
+
 - Proof visit happened
 - Proof nurse was there
 - Proof of duration
 - Audit trail
 
 ### What We Provide
+
 - GPS coordinates (when available)
 - Timestamp (always)
 - Duration (calculated)
 - Audit log (automatic)
 
 ### What We Don't Do
+
 - Continuous tracking
 - Invasive monitoring
 - Presumption of guilt
@@ -283,6 +314,7 @@ Supervisor contacts nurse: "Hey, noticed some location issues..."
 ## Implementation: The Invisible Way
 
 ### User Flow
+
 ```
 Nurse workflow:
 1. Tap "Start Visit" on client card
@@ -301,21 +333,23 @@ Nurse workflow:
 ```
 
 ### No Additional Screens
+
 - No "Check In" screen
 - No "Verify Location" screen
 - No "Check Out" screen
 - No "Confirm Duration" screen
 
 ### Only Show When Needed
+
 ```
 IF GPS unavailable:
   Show small banner: "Location unavailable"
   Don't block workflow
-  
+
 IF location variance >500m:
   Don't show anything to nurse
   Flag for supervisor review
-  
+
 IF duration <10min or >2hr:
   Don't show anything to nurse
   Flag for supervisor review
@@ -326,18 +360,23 @@ IF duration <10min or >2hr:
 ## The Philosophy in Action
 
 ### "Simplicity is the ultimate sophistication"
+
 We removed 8 steps from typical EVV. It's now 2 taps.
 
 ### "The best interface is no interface"
+
 EVV happens automatically. No EVV screens exist.
 
 ### "Make technology invisible"
+
 Nurses don't think about GPS, geofencing, or verification. They just work.
 
 ### "Say no to 1,000 things"
+
 We said no to: real-time tracking, photo verification, biometrics, manual entry, complex geofencing, approval workflows, and surveillance features.
 
 ### "Do a few things exceptionally well"
+
 We do one thing: automatically verify visits happened. That's it. But we do it perfectly.
 
 ---

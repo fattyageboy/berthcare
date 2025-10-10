@@ -7,17 +7,20 @@ The BerthCare CI/CD pipeline is configured using GitHub Actions and runs automat
 ## Pipeline Jobs
 
 ### 1. Code Quality (Lint & Format)
+
 - **ESLint**: Enforces code style and catches common errors
 - **Prettier**: Ensures consistent code formatting
 - **Timeout**: 10 minutes
 - **Required**: Yes
 
 ### 2. TypeScript Type Check
+
 - **TypeScript Compiler**: Validates type safety across the codebase
 - **Timeout**: 10 minutes
 - **Required**: Yes
 
 ### 3. Unit Tests
+
 - **Jest**: Runs all unit tests with coverage reporting
 - **Coverage Upload**: Sends coverage data to Codecov
 - **Timeout**: 15 minutes
@@ -25,23 +28,27 @@ The BerthCare CI/CD pipeline is configured using GitHub Actions and runs automat
 - **Coverage Threshold**: 70% (branches, functions, lines, statements)
 
 ### 4. Security Scan (SAST)
+
 - **Snyk**: Scans for vulnerabilities in dependencies and code
 - **CodeQL**: GitHub's semantic code analysis engine
 - **Timeout**: 15 minutes
 - **Required**: No (informational, doesn't block merge)
 
 ### 5. Dependency Audit
+
 - **npm audit**: Checks for known security vulnerabilities in dependencies
 - **Severity Threshold**: High and above
 - **Timeout**: 10 minutes
 - **Required**: Yes
 
 ### 6. Build Verification
+
 - **Build**: Compiles all packages to ensure no build errors
 - **Timeout**: 15 minutes
 - **Required**: Yes
 
 ### 7. CI Summary
+
 - **Status Check**: Aggregates all job results
 - **Required**: Yes (fails if any required job fails)
 
@@ -50,10 +57,12 @@ The BerthCare CI/CD pipeline is configured using GitHub Actions and runs automat
 Configure these secrets in GitHub repository settings:
 
 ### Optional (for enhanced features)
+
 - `CODECOV_TOKEN`: For coverage reporting (get from codecov.io)
 - `SNYK_TOKEN`: For Snyk security scanning (get from snyk.io)
 
 ### How to Add Secrets
+
 1. Go to: https://github.com/fattyageboy/BerthCare/settings/secrets/actions
 2. Click "New repository secret"
 3. Add name and value
@@ -64,6 +73,7 @@ Configure these secrets in GitHub repository settings:
 To enforce CI checks before merging, configure branch protection:
 
 ### Settings for `main` branch
+
 1. Go to: https://github.com/fattyageboy/BerthCare/settings/branches
 2. Add rule for `main` branch
 3. Enable:
@@ -74,7 +84,9 @@ To enforce CI checks before merging, configure branch protection:
    - ✅ Require conversation resolution before merging
 
 ### Required Status Checks
+
 Add these checks as required:
+
 - `Code Quality (Lint & Format)`
 - `TypeScript Type Check`
 - `Unit Tests`
@@ -85,6 +97,7 @@ Add these checks as required:
 ## Local Development
 
 ### Install Dependencies
+
 ```bash
 npm install
 ```
@@ -131,6 +144,7 @@ npm run prepare
 ## Troubleshooting
 
 ### ESLint Errors
+
 ```bash
 # See all errors
 npm run lint
@@ -140,6 +154,7 @@ npm run lint:fix
 ```
 
 ### Prettier Formatting
+
 ```bash
 # Check formatting
 npm run format:check
@@ -149,6 +164,7 @@ npm run format
 ```
 
 ### TypeScript Errors
+
 ```bash
 # Check types
 npm run type-check
@@ -159,6 +175,7 @@ npm run type-check
 ```
 
 ### Test Failures
+
 ```bash
 # Run tests in watch mode
 npm run test:watch
@@ -171,6 +188,7 @@ npm test -- -u
 ```
 
 ### Build Failures
+
 ```bash
 # Clean and rebuild
 npm run clean
@@ -181,6 +199,7 @@ npm run build
 ## CI Performance
 
 ### Expected Run Times
+
 - Code Quality: ~2-3 minutes
 - Type Check: ~2-3 minutes
 - Unit Tests: ~3-5 minutes
@@ -190,6 +209,7 @@ npm run build
 - **Total**: ~15-25 minutes
 
 ### Optimization Tips
+
 - Jobs run in parallel where possible
 - Dependencies are cached between runs
 - Concurrency cancels outdated runs
@@ -198,16 +218,19 @@ npm run build
 ## Monitoring
 
 ### GitHub Actions Dashboard
+
 - View runs: https://github.com/fattyageboy/BerthCare/actions
 - Filter by workflow, branch, or status
 - Download logs for debugging
 
 ### Coverage Reports
+
 - View on Codecov: https://codecov.io/gh/fattyageboy/BerthCare
 - Coverage trends over time
 - File-level coverage details
 
 ### Security Alerts
+
 - Dependabot alerts: https://github.com/fattyageboy/BerthCare/security/dependabot
 - CodeQL alerts: https://github.com/fattyageboy/BerthCare/security/code-scanning
 - Snyk dashboard: https://app.snyk.io
@@ -215,6 +238,7 @@ npm run build
 ## Maintenance
 
 ### Updating Dependencies
+
 ```bash
 # Check for outdated packages
 npm outdated
@@ -230,6 +254,7 @@ npm audit
 ```
 
 ### Updating GitHub Actions
+
 - Actions are pinned to major versions (e.g., `@v4`)
 - Dependabot will create PRs for action updates
 - Review and merge action updates regularly
@@ -237,6 +262,7 @@ npm audit
 ## Support
 
 For CI/CD issues:
+
 1. Check GitHub Actions logs
 2. Run checks locally to reproduce
 3. Review this documentation

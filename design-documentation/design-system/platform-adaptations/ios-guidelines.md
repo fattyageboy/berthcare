@@ -7,6 +7,7 @@
 ## iOS Design Language
 
 ### Human Interface Guidelines Compliance
+
 - Use SF Symbols for icons
 - Follow iOS navigation patterns
 - Implement native gestures
@@ -19,18 +20,21 @@
 ## Navigation Patterns
 
 ### Tab Bar (Bottom)
+
 - 3-5 tabs maximum
 - Icons + labels
 - Selected state: Primary Blue
 - Height: 49pt + safe area
 
 ### Navigation Bar (Top)
+
 - Large title (scrolls away)
 - Back button (left)
 - Actions (right, max 2)
 - Height: 44pt + status bar
 
 ### Swipe Back
+
 - Swipe from left edge to go back
 - Interactive transition
 - Can cancel mid-swipe
@@ -40,18 +44,21 @@
 ## Components
 
 ### Buttons
+
 - Rounded corners (8pt radius)
 - Minimum height: 44pt
 - Haptic feedback on tap
 - SF Pro font, Semibold
 
 ### Lists
+
 - Inset grouped style
 - Swipe actions (left/right)
 - Disclosure indicators (>)
 - Separators (inset)
 
 ### Modals
+
 - Sheet presentation
 - Drag indicator at top
 - Swipe down to dismiss
@@ -62,6 +69,7 @@
 ## Gestures
 
 ### Standard Gestures
+
 - **Tap:** Primary action
 - **Long press:** Context menu
 - **Swipe:** Navigate, reveal actions
@@ -69,6 +77,7 @@
 - **Pull down:** Refresh
 
 ### Custom Gestures
+
 - Avoid conflicting with system gestures
 - Provide button alternatives
 - Show hints for non-obvious gestures
@@ -144,12 +153,14 @@ UIColor { traitCollection in
 ## Accessibility
 
 ### VoiceOver
+
 - Descriptive labels
 - Proper traits (button, header, etc.)
 - Logical reading order
 - Custom actions for complex UI
 
 ### Larger Text
+
 - Support up to Accessibility sizes
 - Maintain layout at large sizes
 - Truncate gracefully

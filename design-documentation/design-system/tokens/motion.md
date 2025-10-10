@@ -41,6 +41,7 @@ Motion timing is calibrated for mobile devices held in one hand, often with glov
 **Hard Rule:** No animation exceeds 400ms. Nurses document 6-8 visits per shift - every millisecond compounds.
 
 **Context-Aware Timing:**
+
 - Offline mode: Reduce all durations by 30% (instant feedback critical when sync is delayed)
 - Low battery (<20%): Disable non-essential animations automatically
 - Slow device performance: Gracefully degrade to instant state changes
@@ -53,19 +54,19 @@ Physics-based easing creates natural, predictable motion that matches real-world
 
 ```css
 /* Standard - balanced motion for most transitions */
---ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+--ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
 /* Use: Screen transitions, modal appearances, content reveals */
 
 /* Emphasized - elements entering the viewport */
---ease-emphasized: cubic-bezier(0.0, 0.0, 0.2, 1);
+--ease-emphasized: cubic-bezier(0, 0, 0.2, 1);
 /* Use: Success confirmations, important alerts, data loading complete */
 
 /* Accelerate - elements exiting or dismissing */
---ease-accelerate: cubic-bezier(0.4, 0.0, 1, 1);
+--ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
 /* Use: Modal dismissals, navigation exits, form cancellations */
 
 /* Sharp - immediate, decisive actions */
---ease-sharp: cubic-bezier(0.4, 0.0, 0.6, 1);
+--ease-sharp: cubic-bezier(0.4, 0, 0.6, 1);
 /* Use: Button presses, toggle switches, checkbox selections */
 
 /* Bounce - playful feedback for positive actions */
@@ -75,6 +76,7 @@ Physics-based easing creates natural, predictable motion that matches real-world
 ```
 
 **Selection Guide:**
+
 - Entering screen: `ease-emphasized` (welcoming, decelerating)
 - Exiting screen: `ease-accelerate` (quick departure)
 - User-initiated action: `ease-sharp` (responsive, immediate)
@@ -89,15 +91,18 @@ Physics-based easing creates natural, predictable motion that matches real-world
 These animations communicate system state and must never be disabled.
 
 #### Button Press
+
 ```css
 /* Visual confirmation of touch target activation */
 transform: scale(1) → scale(0.96);
 duration: var(--duration-instant);
 easing: var(--ease-sharp);
 ```
+
 **Purpose:** Immediate tactile feedback, especially critical for gloved hands on mobile devices.
 
 #### Toggle Switch
+
 ```css
 /* State change with clear before/after */
 transform: translateX(0) → translateX(20px);
@@ -105,9 +110,11 @@ background: var(--color-neutral-300) → var(--color-primary-500);
 duration: var(--duration-quick);
 easing: var(--ease-sharp);
 ```
+
 **Purpose:** Binary state changes must be instantly clear (online/offline, enabled/disabled).
 
 #### Checkbox Selection
+
 ```css
 /* Checkmark appearance with subtle scale */
 opacity: 0 → 1;
@@ -115,6 +122,7 @@ transform: scale(0.8) → scale(1);
 duration: var(--duration-quick);
 easing: var(--ease-emphasized);
 ```
+
 **Purpose:** Confirm selection in forms where multiple items may be checked rapidly.
 
 ---
@@ -124,6 +132,7 @@ easing: var(--ease-emphasized);
 Motion maintains spatial relationships as users move through the app hierarchy.
 
 #### Screen Transition (Forward)
+
 ```css
 /* New screen slides in from right, current screen fades */
 .entering-screen {
@@ -140,9 +149,11 @@ Motion maintains spatial relationships as users move through the app hierarchy.
   easing: var(--ease-accelerate);
 }
 ```
+
 **Purpose:** Communicate hierarchy - moving deeper into content.
 
 #### Screen Transition (Back)
+
 ```css
 /* Reverse of forward - maintains spatial model */
 .entering-screen {
@@ -159,9 +170,11 @@ Motion maintains spatial relationships as users move through the app hierarchy.
   easing: var(--ease-accelerate);
 }
 ```
+
 **Purpose:** Communicate returning to previous context.
 
 #### Bottom Sheet Appearance
+
 ```css
 /* Modal content slides up from bottom */
 transform: translateY(100%) → translateY(0);
@@ -175,6 +188,7 @@ easing: var(--ease-emphasized);
   easing: linear;
 }
 ```
+
 **Purpose:** One-handed reachability on mobile - content emerges from thumb zone.
 
 ---
@@ -184,6 +198,7 @@ easing: var(--ease-emphasized);
 Communicate system processing without blocking user progress.
 
 #### Skeleton Screen Pulse
+
 ```css
 /* Subtle shimmer indicates loading state */
 opacity: 0.4 → 0.6 → 0.4;
@@ -191,9 +206,11 @@ duration: 1500ms;
 easing: ease-in-out;
 iteration: infinite;
 ```
+
 **Purpose:** Show content structure while data loads, maintain context.
 
 #### Progressive Content Reveal
+
 ```css
 /* Staggered fade-in as content loads */
 .content-item {
@@ -204,9 +221,11 @@ iteration: infinite;
   delay: calc(var(--item-index) * 50ms);
 }
 ```
+
 **Purpose:** Reduce perceived loading time, guide eye down the page naturally.
 
 #### Sync Status Indicator
+
 ```css
 /* Rotating icon for active sync */
 transform: rotate(0deg) → rotate(360deg);
@@ -219,6 +238,7 @@ transform: scale(1) → scale(1.2) → scale(1);
 duration: var(--duration-deliberate);
 easing: var(--ease-bounce);
 ```
+
 **Purpose:** Critical feedback for offline-first app - users must know sync status.
 
 ---
@@ -228,6 +248,7 @@ easing: var(--ease-bounce);
 Celebrate success, communicate errors, guide attention.
 
 #### Success Confirmation
+
 ```css
 /* Checkmark with scale and fade */
 .success-icon {
@@ -244,18 +265,22 @@ Celebrate success, communicate errors, guide attention.
   easing: ease-in-out;
 }
 ```
+
 **Purpose:** Positive reinforcement for visit completion, successful sync, task completion.
 
 #### Error Shake
+
 ```css
 /* Horizontal shake to indicate invalid input */
 transform: translateX(0) → translateX(-8px) → translateX(8px) → translateX(0);
 duration: var(--duration-standard);
 easing: var(--ease-sharp);
 ```
+
 **Purpose:** Draw attention to error without blocking workflow. Use sparingly.
 
 #### Toast Notification
+
 ```css
 /* Slide in from top with fade */
 transform: translateY(-100%) → translateY(0);
@@ -270,6 +295,7 @@ opacity: 1 → 0;
 duration: var(--duration-quick);
 easing: var(--ease-accelerate);
 ```
+
 **Purpose:** Non-blocking system messages (sync complete, new message, etc.).
 
 ---
@@ -279,6 +305,7 @@ easing: var(--ease-accelerate);
 Subtle details that make the interface feel alive and responsive.
 
 #### Input Focus
+
 ```css
 /* Border color and shadow transition */
 border-color: var(--color-neutral-300) → var(--color-primary-500);
@@ -286,9 +313,11 @@ box-shadow: 0 0 0 0 → 0 0 0 4px rgba(primary, 0.1);
 duration: var(--duration-quick);
 easing: var(--ease-standard);
 ```
+
 **Purpose:** Clear focus indication for keyboard navigation and accessibility.
 
 #### Ripple Effect (Touch Feedback)
+
 ```css
 /* Expanding circle from touch point */
 .ripple {
@@ -298,9 +327,11 @@ easing: var(--ease-standard);
   easing: var(--ease-standard);
 }
 ```
+
 **Purpose:** Material Design pattern - confirms touch registration on large buttons.
 
 #### Hover State (Web/Tablet)
+
 ```css
 /* Subtle elevation increase */
 transform: translateY(0) → translateY(-2px);
@@ -308,6 +339,7 @@ box-shadow: elevation-1 → elevation-2;
 duration: var(--duration-instant);
 easing: var(--ease-standard);
 ```
+
 **Purpose:** Indicate interactivity on pointer devices. Disable on touch-only devices.
 
 ---
@@ -328,7 +360,7 @@ Respect user preferences and cognitive needs.
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  
+
   /* Preserve critical feedback animations */
   .critical-feedback {
     animation-duration: var(--duration-instant) !important;
@@ -338,6 +370,7 @@ Respect user preferences and cognitive needs.
 ```
 
 **Critical Feedback Exceptions:**
+
 - Button press feedback (scale)
 - Toggle switch state change
 - Sync status indicators
@@ -350,7 +383,7 @@ These animations communicate essential system state and should use minimal durat
 ```javascript
 // Detect low battery and reduce animations
 if (navigator.getBattery) {
-  navigator.getBattery().then(battery => {
+  navigator.getBattery().then((battery) => {
     if (battery.level < 0.2) {
       document.documentElement.classList.add('low-battery-mode');
     }
@@ -407,12 +440,12 @@ if (navigator.getBattery) {
   --duration-quick: 150ms;
   --duration-standard: 250ms;
   --duration-deliberate: 400ms;
-  
+
   /* Easing tokens */
-  --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
-  --ease-emphasized: cubic-bezier(0.0, 0.0, 0.2, 1);
-  --ease-accelerate: cubic-bezier(0.4, 0.0, 1, 1);
-  --ease-sharp: cubic-bezier(0.4, 0.0, 0.6, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-emphasized: cubic-bezier(0, 0, 0.2, 1);
+  --ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
+  --ease-sharp: cubic-bezier(0.4, 0, 0.6, 1);
   --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
@@ -502,6 +535,7 @@ When testing motion with nurses:
 ### When to Add Animation
 
 ✅ **Add animation when:**
+
 - Communicating system state change (loading, success, error)
 - Maintaining spatial continuity during navigation
 - Providing immediate feedback for user actions
@@ -509,6 +543,7 @@ When testing motion with nurses:
 - Celebrating meaningful achievements
 
 ❌ **Don't add animation for:**
+
 - Decoration or "delight" without purpose
 - Slowing down user workflows
 - Showing off technical capability

@@ -5,6 +5,7 @@
 Follow these steps to enable branch protection for the `main` branch:
 
 ### Step 1: Navigate to Branch Protection Settings
+
 1. Go to: https://github.com/fattyageboy/BerthCare/settings/branches
 2. Click "Add branch protection rule" (or edit existing rule)
 3. Enter branch name pattern: `main`
@@ -12,6 +13,7 @@ Follow these steps to enable branch protection for the `main` branch:
 ### Step 2: Configure Protection Rules
 
 #### Pull Request Requirements
+
 - ✅ **Require a pull request before merging**
   - Required number of approvals before merging: `1`
   - ✅ Dismiss stale pull request approvals when new commits are pushed
@@ -19,6 +21,7 @@ Follow these steps to enable branch protection for the `main` branch:
   - ✅ Require approval of the most recent reviewable push
 
 #### Status Checks
+
 - ✅ **Require status checks to pass before merging**
   - ✅ Require branches to be up to date before merging
   - **Add required status checks** (search and select):
@@ -30,12 +33,15 @@ Follow these steps to enable branch protection for the `main` branch:
     - `CI Summary`
 
 #### Conversation Resolution
+
 - ✅ **Require conversation resolution before merging**
 
 #### Signed Commits
+
 - ✅ **Require signed commits**
 
 #### Additional Settings
+
 - ✅ **Require linear history** (optional, prevents merge commits)
 - ✅ **Include administrators** (enforce rules for admins too)
 - ✅ **Restrict who can push to matching branches** (optional)
@@ -43,6 +49,7 @@ Follow these steps to enable branch protection for the `main` branch:
 - ✅ **Allow deletions**: ❌ Disabled
 
 ### Step 3: Save Changes
+
 - Click "Create" (or "Save changes" if editing)
 - Verify the rule appears in the branch protection list
 
@@ -51,6 +58,7 @@ Follow these steps to enable branch protection for the `main` branch:
 After setup, verify the protection is working:
 
 1. **Create a test branch**:
+
    ```bash
    git checkout -b test/branch-protection
    git push origin test/branch-protection
@@ -86,18 +94,22 @@ If status checks don't appear in the dropdown, you need to trigger them first:
 ## Troubleshooting
 
 ### Status Checks Not Appearing
+
 - **Cause**: CI hasn't run yet on a PR to `main`
 - **Solution**: Create a test PR, wait for CI, then add checks
 
 ### Can't Merge Despite Passing Checks
+
 - **Cause**: Branch not up to date with `main`
 - **Solution**: Merge `main` into your branch or rebase
 
 ### Administrators Can Bypass Rules
+
 - **Cause**: "Include administrators" not enabled
 - **Solution**: Enable "Include administrators" in branch protection
 
 ### Force Push Blocked
+
 - **Cause**: "Allow force pushes" is disabled (correct)
 - **Solution**: This is intentional for protection
 
@@ -106,6 +118,7 @@ If status checks don't appear in the dropdown, you need to trigger them first:
 To enable signed commits for your account:
 
 ### Using GPG (Recommended)
+
 ```bash
 # Generate GPG key
 gpg --full-generate-key
@@ -120,6 +133,7 @@ gpg --armor --export YOUR_KEY_ID
 ```
 
 ### Using SSH (Simpler)
+
 ```bash
 # Configure git to use SSH signing
 git config --global gpg.format ssh
@@ -130,6 +144,7 @@ git config --global commit.gpgsign true
 ```
 
 ### Verify Signing
+
 ```bash
 # Make a signed commit
 git commit -S -m "test signed commit"
@@ -165,11 +180,13 @@ This works automatically once branch protection is enabled with "Require review 
 ## Maintenance
 
 ### Regular Reviews
+
 - Review branch protection rules quarterly
 - Update required status checks as CI evolves
 - Adjust approval requirements based on team size
 
 ### Updates
+
 - Keep this document updated when rules change
 - Notify team of any protection rule changes
 - Document exceptions or temporary bypasses
