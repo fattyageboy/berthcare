@@ -1,39 +1,53 @@
-# CDN Module Variables
+variable "project_name" {
+  description = "Project name for resource naming"
+  type        = string
+}
 
 variable "environment" {
-  description = "Environment name"
+  description = "Environment name (staging, production)"
   type        = string
 }
 
-variable "photos_bucket_id" {
-  description = "Photos S3 bucket ID"
-  type        = string
-}
-
-variable "photos_bucket_arn" {
-  description = "Photos S3 bucket ARN"
-  type        = string
-}
-
-variable "photos_bucket_domain" {
+variable "photos_bucket_domain_name" {
   description = "Photos S3 bucket domain name"
+  type        = string
+}
+
+variable "documents_bucket_domain_name" {
+  description = "Documents S3 bucket domain name"
+  type        = string
+}
+
+variable "signatures_bucket_domain_name" {
+  description = "Signatures S3 bucket domain name"
+  type        = string
+}
+
+variable "logs_bucket_domain_name" {
+  description = "Logs S3 bucket domain name"
   type        = string
 }
 
 variable "price_class" {
   description = "CloudFront price class"
   type        = string
-  default     = "PriceClass_100"
+  default     = "PriceClass_100" # North America and Europe
 }
 
-variable "enable_compression" {
-  description = "Enable CloudFront compression"
-  type        = bool
-  default     = true
+variable "acm_certificate_arn" {
+  description = "ACM certificate ARN for custom domain (optional)"
+  type        = string
+  default     = null
+}
+
+variable "alarm_actions" {
+  description = "List of ARNs to notify when alarms trigger"
+  type        = list(string)
+  default     = []
 }
 
 variable "tags" {
-  description = "Tags to apply to resources"
+  description = "Common tags for all resources"
   type        = map(string)
   default     = {}
 }

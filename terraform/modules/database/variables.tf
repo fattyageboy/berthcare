@@ -1,28 +1,33 @@
-# Database Module Variables
+variable "project_name" {
+  description = "Project name for resource naming"
+  type        = string
+}
 
 variable "environment" {
-  description = "Environment name"
+  description = "Environment name (staging, production)"
   type        = string
 }
 
 variable "vpc_id" {
-  description = "VPC ID"
+  description = "VPC ID where RDS will be deployed"
   type        = string
 }
 
-variable "database_subnet_ids" {
-  description = "Database subnet IDs"
+variable "private_subnet_ids" {
+  description = "List of private subnet IDs for RDS"
   type        = list(string)
 }
 
-variable "database_subnet_group_name" {
-  description = "Database subnet group name"
+variable "allowed_security_groups" {
+  description = "List of security group IDs allowed to access RDS"
+  type        = list(string)
+  default     = []
+}
+
+variable "engine_version" {
+  description = "PostgreSQL engine version"
   type        = string
-}
-
-variable "allowed_security_group_ids" {
-  description = "Security group IDs allowed to access the database"
-  type        = list(string)
+  default     = "15.5"
 }
 
 variable "instance_class" {
@@ -43,32 +48,46 @@ variable "max_allocated_storage" {
   default     = 500
 }
 
-variable "engine_version" {
-  description = "PostgreSQL engine version"
-  type        = string
-  default     = "15.5"
-}
-
-variable "database_name" {
+variable "db_name" {
   description = "Database name"
   type        = string
+  default     = "berthcare"
 }
 
-variable "master_username" {
+variable "db_username" {
   description = "Database master username"
   type        = string
+  default     = "berthcare_admin"
 }
 
 variable "multi_az" {
-  description = "Enable Multi-AZ deployment"
+  description = "Enable Multi-AZ deployment for high availability"
   type        = bool
   default     = true
 }
 
 variable "backup_retention_period" {
-  description = "Backup retention period in days"
+  description = "Number of days to retain automated backups"
   type        = number
   default     = 7
+}
+
+variable "backup_window" {
+  description = "Preferred backup window (UTC)"
+  type        = string
+  default     = "03:00-04:00"
+}
+
+variable "maintenance_window" {
+  description = "Preferred maintenance window (UTC)"
+  type        = string
+  default     = "sun:04:00-sun:05:00"
+}
+
+variable "skip_final_snapshot" {
+  description = "Skip final snapshot when destroying (set to false for production)"
+  type        = bool
+  default     = false
 }
 
 variable "deletion_protection" {
@@ -77,8 +96,32 @@ variable "deletion_protection" {
   default     = true
 }
 
+variable "enable_performance_insights" {
+  description = "Enable Performance Insights"
+  type        = bool
+  default     = true
+}
+
+variable "max_connections" {
+  description = "Maximum number of database connections"
+  type        = number
+  default     = 100
+}
+
+variable "kms_key_id" {
+  description = "KMS key ID for encryption (optional)"
+  type        = string
+  default     = null
+}
+
+variable "alarm_actions" {
+  description = "List of ARNs to notify when alarms trigger"
+  type        = list(string)
+  default     = []
+}
+
 variable "tags" {
-  description = "Tags to apply to resources"
+  description = "Common tags for all resources"
   type        = map(string)
   default     = {}
 }

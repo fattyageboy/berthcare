@@ -1,135 +1,126 @@
-# Database Module - RDS PostgreSQL 15
-# Philosophy: "Obsess over details" - Data integrity matters
+# RDS PostgreSQL Module
+# Creates Multi-AZ PostgreSQL 15 database with automated backups and encryption
 
-# Random password for database master user
-resource "random_password" "master" {
-  length  = 32
-  special = true
+terraform {
+  required_version = ">= 1.6"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.5"
+    }
+  }
 }
 
-# Store password in AWS Secrets Manager
-resource "aws_secretsmanager_secret" "db_password" {
-  name                    = "${var.environment}-db-master-password"
-  description             = "Master password for ${var.environment} RDS PostgreSQL"
-  recovery_window_in_days = 7
+# Generate random password for database
+resource "random_password" "db_password" {
+  length  = 32
+  special = true
+  # Exclude characters that might cause issues in connection strings
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
+# Store database credentials in AWS Secrets Manager
+resource "aws_secretsmanager_secret" "db_credentials" {
+  name        = "${var.project_name}-${var.environment}-db-credentials"
+  description = "RDS PostgreSQL credentials for ${var.project_name} ${var.environment}"
 
   tags = var.tags
 }
 
-resource "aws_secretsmanager_secret_version" "db_password" {
-  secret_id = aws_secretsmanager_secret.db_password.id
+resource "aws_secretsmanager_secret_version" "db_credentials" {
+  secret_id = aws_secretsmanager_secret.db_credentials.id
   secret_string = jsonencode({
-    username = var.master_username
-    password = random_password.master.result
+    username = var.db_username
+    password = random_password.db_password.result
     engine   = "postgres"
     host     = aws_db_instance.main.address
     port     = aws_db_instance.main.port
-    dbname   = var.database_name
+    dbname   = var.db_name
   })
 }
 
-# RDS PostgreSQL Instance
-resource "aws_db_instance" "main" {
-  identifier     = "${var.environment}-postgres"
-  engine         = "postgres"
-  engine_version = var.engine_version
-  instance_class = var.instance_class
-
-  # Storage
-  allocated_storage     = var.allocated_storage
-  max_allocated_storage = var.max_allocated_storage
-  storage_type          = "gp3"
-  storage_encrypted     = true
-  iops                  = 3000
-
-  # Database
-  db_name  = var.database_name
-  username = var.master_username
-  password = random_password.master.result
-  port     = 5432
-
-  # Network
-  db_subnet_group_name   = var.database_subnet_group_name
-  vpc_security_group_ids = [aws_security_group.database.id]
-  publicly_accessible    = false
-
-  # High Availability
-  multi_az               = var.multi_az
-  availability_zone      = var.multi_az ? null : data.aws_availability_zones.available.names[0]
-
-  # Backup
-  backup_retention_period   = var.backup_retention_period
-  backup_window             = "03:00-04:00"
-  maintenance_window        = "mon:04:00-mon:05:00"
-  copy_tags_to_snapshot     = true
-  skip_final_snapshot       = var.environment != "production"
-  final_snapshot_identifier = var.environment == "production" ? "${var.environment}-postgres-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}" : null
-  deletion_protection       = var.deletion_protection
-
-  # Performance Insights
-  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
-  performance_insights_enabled    = true
-  performance_insights_retention_period = 7
-
-  # Monitoring
-  monitoring_interval = 60
-  monitoring_role_arn = aws_iam_role.rds_monitoring.arn
-
-  # Parameters
-  parameter_group_name = aws_db_parameter_group.main.name
-
-  # Auto minor version upgrade
-  auto_minor_version_upgrade = true
+# DB Subnet Group
+resource "aws_db_subnet_group" "main" {
+  name       = "${var.project_name}-${var.environment}-db-subnet-group"
+  subnet_ids = var.private_subnet_ids
 
   tags = merge(
     var.tags,
     {
-      Name = "${var.environment}-postgres"
+      Name = "${var.project_name}-${var.environment}-db-subnet-group"
     }
   )
 }
 
 # Security Group for RDS
-resource "aws_security_group" "database" {
-  name        = "${var.environment}-rds-sg"
+resource "aws_security_group" "rds" {
+  name        = "${var.project_name}-${var.environment}-rds-sg"
   description = "Security group for RDS PostgreSQL"
   vpc_id      = var.vpc_id
 
   ingress {
-    description     = "PostgreSQL from allowed security groups"
+    description     = "PostgreSQL from application"
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
-    security_groups = var.allowed_security_group_ids
+    security_groups = var.allowed_security_groups
+  }
+
+  egress {
+    description = "Allow all outbound"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   tags = merge(
     var.tags,
     {
-      Name = "${var.environment}-rds-sg"
+      Name = "${var.project_name}-${var.environment}-rds-sg"
     }
   )
 }
 
-# DB Parameter Group
+# RDS Parameter Group for PostgreSQL 15
 resource "aws_db_parameter_group" "main" {
-  name   = "${var.environment}-postgres15"
+  name   = "${var.project_name}-${var.environment}-postgres15"
   family = "postgres15"
 
-  # Performance tuning
+  # Performance and connection settings
   parameter {
-    name  = "shared_preload_libraries"
-    value = "pg_stat_statements"
+    name  = "max_connections"
+    value = var.max_connections
   }
 
   parameter {
-    name  = "log_statement"
-    value = "all"
+    name  = "shared_buffers"
+    value = "{DBInstanceClassMemory/32768}" # 25% of instance memory
   }
 
+  parameter {
+    name  = "effective_cache_size"
+    value = "{DBInstanceClassMemory/16384}" # 50% of instance memory
+  }
+
+  parameter {
+    name  = "maintenance_work_mem"
+    value = "2097152" # 2GB in KB
+  }
+
+  parameter {
+    name  = "work_mem"
+    value = "16384" # 16MB in KB
+  }
+
+  # Logging for monitoring
   parameter {
     name  = "log_min_duration_statement"
-    value = "1000" # Log queries taking more than 1 second
+    value = "1000" # Log queries taking > 1 second
   }
 
   parameter {
@@ -142,48 +133,71 @@ resource "aws_db_parameter_group" "main" {
     value = "1"
   }
 
-  # Connection pooling optimization
-  parameter {
-    name  = "max_connections"
-    value = "200"
-  }
-
   tags = var.tags
 }
 
-# IAM Role for Enhanced Monitoring
-resource "aws_iam_role" "rds_monitoring" {
-  name = "${var.environment}-rds-monitoring-role"
+# RDS Instance
+resource "aws_db_instance" "main" {
+  identifier     = "${var.project_name}-${var.environment}-postgres"
+  engine         = "postgres"
+  engine_version = var.engine_version
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "monitoring.rds.amazonaws.com"
-        }
-      }
-    ]
-  })
+  # Instance configuration
+  instance_class        = var.instance_class
+  allocated_storage     = var.allocated_storage
+  max_allocated_storage = var.max_allocated_storage
+  storage_type          = "gp3"
+  storage_encrypted     = true
+  kms_key_id            = var.kms_key_id
 
-  tags = var.tags
+  # Database configuration
+  db_name  = var.db_name
+  username = var.db_username
+  password = random_password.db_password.result
+  port     = 5432
+
+  # Network configuration
+  db_subnet_group_name   = aws_db_subnet_group.main.name
+  vpc_security_group_ids = [aws_security_group.rds.id]
+  publicly_accessible    = false
+
+  # High availability
+  multi_az = var.multi_az
+
+  # Backup configuration
+  backup_retention_period   = var.backup_retention_period
+  backup_window             = var.backup_window
+  maintenance_window        = var.maintenance_window
+  delete_automated_backups  = false
+  copy_tags_to_snapshot     = true
+  skip_final_snapshot       = var.skip_final_snapshot
+  final_snapshot_identifier = var.skip_final_snapshot ? null : "${var.project_name}-${var.environment}-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
+
+  # Performance Insights
+  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
+  performance_insights_enabled    = var.enable_performance_insights
+  performance_insights_retention_period = var.enable_performance_insights ? 7 : null
+
+  # Parameter group
+  parameter_group_name = aws_db_parameter_group.main.name
+
+  # Auto minor version upgrade
+  auto_minor_version_upgrade = true
+
+  # Deletion protection
+  deletion_protection = var.deletion_protection
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.project_name}-${var.environment}-postgres"
+    }
+  )
 }
 
-resource "aws_iam_role_policy_attachment" "rds_monitoring" {
-  role       = aws_iam_role.rds_monitoring.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
-}
-
-# Data source for availability zones
-data "aws_availability_zones" "available" {
-  state = "available"
-}
-
-# CloudWatch Alarms
+# CloudWatch Alarms for RDS monitoring
 resource "aws_cloudwatch_metric_alarm" "database_cpu" {
-  alarm_name          = "${var.environment}-rds-cpu-utilization"
+  alarm_name          = "${var.project_name}-${var.environment}-rds-cpu-utilization"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = "2"
   metric_name         = "CPUUtilization"
@@ -192,7 +206,26 @@ resource "aws_cloudwatch_metric_alarm" "database_cpu" {
   statistic           = "Average"
   threshold           = "80"
   alarm_description   = "This metric monitors RDS CPU utilization"
-  alarm_actions       = []
+  alarm_actions       = var.alarm_actions
+
+  dimensions = {
+    DBInstanceIdentifier = aws_db_instance.main.id
+  }
+
+  tags = var.tags
+}
+
+resource "aws_cloudwatch_metric_alarm" "database_memory" {
+  alarm_name          = "${var.project_name}-${var.environment}-rds-freeable-memory"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = "2"
+  metric_name         = "FreeableMemory"
+  namespace           = "AWS/RDS"
+  period              = "300"
+  statistic           = "Average"
+  threshold           = "536870912" # 512MB in bytes
+  alarm_description   = "This metric monitors RDS freeable memory"
+  alarm_actions       = var.alarm_actions
 
   dimensions = {
     DBInstanceIdentifier = aws_db_instance.main.id
@@ -202,16 +235,16 @@ resource "aws_cloudwatch_metric_alarm" "database_cpu" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "database_storage" {
-  alarm_name          = "${var.environment}-rds-free-storage-space"
+  alarm_name          = "${var.project_name}-${var.environment}-rds-free-storage"
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = "1"
   metric_name         = "FreeStorageSpace"
   namespace           = "AWS/RDS"
   period              = "300"
   statistic           = "Average"
-  threshold           = "10000000000" # 10 GB in bytes
+  threshold           = "10737418240" # 10GB in bytes
   alarm_description   = "This metric monitors RDS free storage space"
-  alarm_actions       = []
+  alarm_actions       = var.alarm_actions
 
   dimensions = {
     DBInstanceIdentifier = aws_db_instance.main.id
@@ -221,16 +254,16 @@ resource "aws_cloudwatch_metric_alarm" "database_storage" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "database_connections" {
-  alarm_name          = "${var.environment}-rds-database-connections"
+  alarm_name          = "${var.project_name}-${var.environment}-rds-database-connections"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = "2"
   metric_name         = "DatabaseConnections"
   namespace           = "AWS/RDS"
   period              = "300"
   statistic           = "Average"
-  threshold           = "180" # 90% of max_connections (200)
+  threshold           = var.max_connections * 0.8 # 80% of max connections
   alarm_description   = "This metric monitors RDS database connections"
-  alarm_actions       = []
+  alarm_actions       = var.alarm_actions
 
   dimensions = {
     DBInstanceIdentifier = aws_db_instance.main.id

@@ -7,6 +7,7 @@
 ## Material Design Compliance
 
 ### Material Design 3 Principles
+
 - Use Material Icons
 - Implement Material ripple effects
 - Follow Material navigation patterns
@@ -19,24 +20,28 @@
 ## Navigation Patterns
 
 ### Bottom Navigation
+
 - 3-5 destinations
 - Icons + labels
 - Selected state: Primary Blue
 - Height: 56dp
 
 ### Top App Bar
+
 - Title (left-aligned)
 - Navigation icon (left)
 - Actions (right, max 3)
 - Height: 56dp
 
 ### Navigation Drawer
+
 - Swipe from left edge
 - Overlay with scrim
 - Persistent or modal
 - Width: 256dp
 
 ### Hardware Back Button
+
 - Always handle back button
 - Navigate to previous screen
 - Close modals/dialogs
@@ -47,6 +52,7 @@
 ## Components
 
 ### Buttons
+
 - Rounded corners (8dp radius)
 - Minimum height: 48dp
 - Material ripple effect
@@ -54,12 +60,14 @@
 - Elevation changes on press
 
 ### Cards
+
 - Elevation: 1dp default
 - Corner radius: 8dp
 - Ripple on tap
 - Can be elevated on hover
 
 ### FAB (Floating Action Button)
+
 - Size: 56dp × 56dp
 - Elevation: 6dp
 - Ripple effect
@@ -105,6 +113,7 @@ Raised elevation (pressed):
 ## Gestures
 
 ### Standard Gestures
+
 - **Tap:** Primary action
 - **Long press:** Context menu
 - **Swipe:** Navigate, reveal actions
@@ -112,6 +121,7 @@ Raised elevation (pressed):
 - **Swipe from edge:** Navigation drawer
 
 ### System Gestures
+
 - **Back:** Previous screen
 - **Home:** Exit to home
 - **Recent:** App switcher
@@ -140,11 +150,13 @@ vibrator.vibrate(VibrationEffect.createOneShot(10, VibrationEffect.DEFAULT_AMPLI
 ## System Bars
 
 ### Status Bar
+
 - Height: 24dp
 - Transparent or colored
 - Light/dark icons based on background
 
 ### Navigation Bar
+
 - Height: 48dp (3-button) or gesture area
 - Transparent or colored
 - Respect gesture navigation
@@ -199,17 +211,20 @@ MaterialTheme(
 ## Accessibility
 
 ### TalkBack
+
 - Content descriptions
 - Proper focus order
 - Announce state changes
 - Custom actions
 
 ### Large Text
+
 - Support up to 200% text size
 - Use sp for text sizes
 - Maintain layout at large sizes
 
 ### Touch Targets
+
 - Minimum 48dp × 48dp
 - Adequate spacing between targets
 

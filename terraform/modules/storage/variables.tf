@@ -1,39 +1,33 @@
-# Storage Module Variables
+variable "project_name" {
+  description = "Project name for resource naming"
+  type        = string
+}
 
 variable "environment" {
-  description = "Environment name"
+  description = "Environment name (staging, production)"
   type        = string
 }
 
-variable "aws_region" {
-  description = "AWS region"
+variable "kms_key_id" {
+  description = "KMS key ID for encryption (optional)"
   type        = string
+  default     = null
 }
 
-variable "photos_bucket_name" {
-  description = "S3 bucket name for photos"
+variable "allowed_origins" {
+  description = "List of allowed origins for CORS"
+  type        = list(string)
+  default     = ["*"]
+}
+
+variable "cloudfront_distribution_arn" {
+  description = "CloudFront distribution ARN for bucket policy"
   type        = string
-}
-
-variable "documents_bucket_name" {
-  description = "S3 bucket name for documents"
-  type        = string
-}
-
-variable "enable_versioning" {
-  description = "Enable S3 versioning"
-  type        = bool
-  default     = true
-}
-
-variable "lifecycle_glacier_days" {
-  description = "Days before transitioning to Glacier"
-  type        = number
-  default     = 365
+  default     = ""
 }
 
 variable "tags" {
-  description = "Tags to apply to resources"
+  description = "Common tags for all resources"
   type        = map(string)
   default     = {}
 }

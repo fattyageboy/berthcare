@@ -1,6 +1,7 @@
 # MVP Recommendation: "BerthCare" - Mobile Documentation App
 
 ## Core Philosophy
+
 **Solve the #1 pain point first**: Eliminate the 50% of shift time wasted on duplicate data entry and after-hours paperwork. Prove ROI in 90 days, then expand.
 
 ---
@@ -10,12 +11,14 @@
 ### 1. Mobile Point-of-Care Documentation (PRIORITY 1)
 
 **What It Does:**
-- Smartphone/tablet app for home care nurses and aides
+
+- Smartphone/tablet app for home care caregivers and aides
 - Document during the visit, not back at office
 - Works offline, syncs when connected
 - Pre-populated templates for common visit types (wound care, medication management, ADL assessment, safety check)
 
 **Core Screens:**
+
 - Today's visit schedule
 - Client quick-access (photo, key alerts, recent notes)
 - Visit documentation form with smart fields
@@ -29,16 +32,18 @@
 ### 2. Smart Data Reuse (PRIORITY 1)
 
 **What It Does:**
+
 - "Copy from last visit" button for unchanged information
 - Auto-populate vital signs from previous entries (edit only what changed)
 - Template library for common scenarios
 - "Quick notes" shortcuts (e.g., "wound improving," "medication compliance good")
 
 **Example Workflow:**
+
 ```
 Opening wound care visit:
 - App shows: "Last visit: wound 3cm x 2cm, moderate drainage"
-- Nurse taps "Copy & Edit"
+- caregiver taps "Copy & Edit"
 - Changes only: "now 2.5cm x 1.8cm, minimal drainage"
 - Takes new photo
 - Done in 2 minutes vs. 10
@@ -51,12 +56,14 @@ Opening wound care visit:
 ### 3. Basic Care Coordination (PRIORITY 2)
 
 **What It Does:**
+
 - Simple shared care plan visible to all team members
 - In-app messaging (care team only)
 - Care team directory with roles/contact info
 - Flagging system for urgent issues
 
 **Core Components:**
+
 - Care plan summary (one-page view)
 - Task assignments ("RN follow-up on lab results")
 - Team chat tied to specific client
@@ -69,6 +76,7 @@ Opening wound care visit:
 ### 4. Simple Family Portal (PRIORITY 2)
 
 **What It Does:**
+
 - Read-only web portal for families
 - View visit schedule and completion confirmations
 - See care plan summary (plain language)
@@ -76,6 +84,7 @@ Opening wound care visit:
 - Contact care coordinator button
 
 **What It Doesn't Do (Yet):**
+
 - Two-way messaging (Phase 2)
 - Full chart access
 - Observation logging
@@ -87,6 +96,7 @@ Opening wound care visit:
 ### 5. Electronic Visit Verification (PRIORITY 2)
 
 **What It Does:**
+
 - GPS check-in/out at client location
 - Time tracking automatic
 - Task checklist for each visit type
@@ -99,12 +109,14 @@ Opening wound care visit:
 ### 6. Export/Import Bridge (PRIORITY 3)
 
 **What It Does (MVP Version):**
+
 - Export visit notes as PDF
 - Import client roster from CSV
-- Daily summary report email to supervisors
+- Daily summary report email to coordinators
 - Basic API hooks for future integration
 
 **What It Doesn't Do:**
+
 - Real-time FHIR sync (Phase 2)
 - Bi-directional updates
 - Full EHR integration
@@ -116,6 +128,7 @@ Opening wound care visit:
 ## What's EXPLICITLY NOT in MVP
 
 **Deferred to Phase 2 (Months 7-12):**
+
 - AI ambient documentation
 - Advanced clinical decision support
 - InterRAI HC integration
@@ -131,17 +144,20 @@ Opening wound care visit:
 ## Technical Architecture (Keep It Simple)
 
 ### Frontend
+
 - React Native (single codebase for iOS/Android)
 - Offline-first architecture with local SQLite database
 - Automatic background sync when connected
 
 ### Backend
+
 - Node.js REST API
 - PostgreSQL database
 - Standard cloud hosting (AWS/Azure Canada regions)
 - Basic role-based access control
 
 ### Security
+
 - End-to-end encryption
 - Canadian data residency
 - Basic audit logging
@@ -154,8 +170,9 @@ Opening wound care visit:
 ## MVP User Flows
 
 ### Primary Flow: Home Visit Documentation
+
 ```
-1. Nurse opens app on tablet
+1. caregiver opens app on tablet
 2. Sees today's schedule (5 clients)
 3. Taps first client → sees quick profile
 4. Taps "Start Visit" → GPS check-in automatic
@@ -171,6 +188,7 @@ Opening wound care visit:
 ```
 
 ### Secondary Flow: Care Coordination
+
 ```
 1. Home care aide notices client seems confused
 2. Opens app, finds client
@@ -188,12 +206,14 @@ Opening wound care visit:
 ## Success Metrics (90-Day Pilot)
 
 ### Primary Metrics
+
 - **Documentation time:** Target <10 minutes per visit (from 15-20 minutes)
 - **After-hours charting:** Reduce from 3-5 hours/week to <1 hour/week
 - **User adoption:** 80%+ of staff using app for majority of visits
 - **Family satisfaction:** 70%+ report feeling better informed
 
 ### Secondary Metrics
+
 - Visit completion rate (EVV accuracy)
 - Time from issue identification to team response
 - Staff satisfaction with documentation tools
@@ -204,12 +224,14 @@ Opening wound care visit:
 ## Go-To-Market Strategy
 
 ### Pilot Site Selection (Month 1-2)
+
 - Choose 1-2 home care zones in Alberta
-- 20-30 staff members (nurses, care aides)
+- 20-30 staff members (caregivers, care aides)
 - 100-150 clients
 - Mix of urban and rural if possible
 
 ### Training Approach (Month 3)
+
 - 2-hour initial training session (not 8 hours)
 - Hands-on practice with test accounts
 - "Super users" trained first to help peers
@@ -217,6 +239,7 @@ Opening wound care visit:
 - In-app chat support with dev team
 
 ### Rollout (Months 4-6)
+
 - Week 1: Read-only access, familiarization
 - Week 2: Start documenting non-critical visits
 - Week 3: Full documentation in app
@@ -224,6 +247,7 @@ Opening wound care visit:
 - Month 3: Transition fully if metrics positive
 
 ### Feedback Loop
+
 - Weekly user surveys (1-2 questions)
 - Bi-weekly focus groups
 - Bug reports tracked in-app
@@ -234,6 +258,7 @@ Opening wound care visit:
 ## Risk Mitigation
 
 ### Technical Risks
+
 **Risk:** Offline sync conflicts
 **Mitigation:** Last-write-wins with conflict log; manual review if needed
 
@@ -241,6 +266,7 @@ Opening wound care visit:
 **Mitigation:** Paper backup forms for true emergencies; 99% uptime SLA
 
 ### Adoption Risks
+
 **Risk:** Staff resistance to change
 **Mitigation:** Involve frontline staff in design; show time savings in first week
 
@@ -248,6 +274,7 @@ Opening wound care visit:
 **Mitigation:** Weekly UX testing sessions; 48-hour turnaround on critical bugs
 
 ### Compliance Risks
+
 **Risk:** Privacy breach
 **Mitigation:** Full security audit before launch; encryption; limited data collection
 
@@ -259,12 +286,14 @@ Opening wound care visit:
 ## Decision Framework: Build vs. Buy
 
 ### Consider Building If:
+
 - You have development team/budget ($150-250K)
 - Need Alberta-specific customization
 - Want to own IP for future expansion
 - Timeline is 6+ months acceptable
 
 ### Consider Buying If:
+
 - Budget <$150K
 - Need deployment in <6 months
 - Prefer proven solution

@@ -1,346 +1,371 @@
-# S3 Storage Module
+## S3 Storage Module
 
-**Philosophy:** "The best interface is no interface" - Make file storage invisible to users.
+This module provides AWS S3 integration for file storage with support for photos, documents, and signatures.
 
-## Overview
+## Philosophy
 
-This module provides a simple, reliable interface for storing and retrieving files in AWS S3. It's designed to support the offline-first architecture by enabling direct client-to-S3 uploads via pre-signed URLs.
+> "Simplicity is the ultimate sophistication"
 
-## Design Principles
+We use pre-signed URLs to allow mobile apps to upload files directly to S3, bypassing the backend server. This approach:
+- Reduces backend load
+- Improves upload performance
+- Simplifies architecture
+- Maintains security through time-limited URLs
 
-1. **Direct Upload Pattern**: Clients upload directly to S3 using pre-signed URLs, reducing server load
-2. **Metadata-Rich**: Store compression info, visit context, and audit trails with each file
-3. **Canadian Data Residency**: All data stored in `ca-central-1` region for PIPEDA compliance
-4. **Lifecycle Management**: Automatic archival after 7 years (configured via S3 lifecycle policies)
-5. **Security First**: Pre-signed URLs expire quickly (15 minutes default), preventing abuse
+## Features
 
-## Architecture
+### ✅ Pre-signed URL Generation
+- Upload URLs with configurable expiration
+- Download URLs for secure file access
+- Automatic metadata attachment
 
-```
-Mobile App                    Backend API                    AWS S3
-    |                              |                            |
-    |--1. Request upload URL------>|                            |
-    |                              |--2. Generate pre-signed--->|
-    |<----3. Return URL------------|                            |
-    |                                                           |
-    |--4. Upload file directly (with metadata)----------------->|
-    |                                                           |
-    |--5. Confirm upload---------->|                            |
-    |                              |--6. Verify file exists---->|
-```
+### ✅ Photo Storage
+- Compression metadata tracking
+- Visit-based organization
+- Batch operations support
+- Size and type validation
 
-**Why this pattern?**
-- Server never handles file data (reduces load, improves speed)
-- Client uploads directly to S3 (faster, more reliable)
-- Pre-signed URLs are temporary and secure
-- Metadata stored with file for audit trails
+### ✅ Document Storage
+- PDF and image support
+- Document type categorization
+- Metadata tracking
 
-## Configuration
+### ✅ Signature Storage
+- PNG signature images
+- Visit association
+- Signature type tracking
 
-Set these environment variables:
+### ✅ LocalStack Support
+- Local S3 emulation for development
+- Seamless production deployment
+- No code changes required
 
-```bash
-# AWS Configuration
-AWS_REGION=ca-central-1              # Canadian data residency
-AWS_ACCESS_KEY_ID=your_access_key
-AWS_SECRET_ACCESS_KEY=your_secret_key
-AWS_S3_BUCKET=berthcare-production
+## Quick Start
 
-# Local Development (LocalStack)
-AWS_S3_ENDPOINT=http://localhost:4566
-AWS_S3_FORCE_PATH_STYLE=true
-```
-
-## Usage Examples
-
-### Generate Photo Upload URL
+### 1. Generate Upload URL
 
 ```typescript
-import { generatePhotoUploadUrl } from './storage';
+import { generatePhotoUploadUrl } from './storage/photo-storage';
 
-// Generate pre-signed URL for photo upload
-const { url, key, expiresIn } = await generatePhotoUploadUrl(
-  userId,
-  {
-    mimeType: 'image/jpeg',
-    size: 2048576, // 2MB
-    compressed: true,
-    compressionQuality: 85,
-    visitId: 'visit-123',
-    clientId: 'client-456',
-  }
-);
-
-// Return to client
-res.json({
-  uploadUrl: url,
-  key: key,
-  expiresIn: expiresIn,
+// Request photo upload
+const { uploadUrl, photoKey } = await requestPhotoUpload({
+  visitId: 'visit-123',
+  fileName: 'photo.jpg',
+  mimeType: 'image/jpeg',
+  size: 1024000,
+  width: 1920,
+  height: 1080,
+  compressed: true,
+  compressionQuality: 85,
+  uploadedBy: 'user-456',
+  clientId: 'client-789',
 });
+
+// Mobile app uploads directly to S3 using uploadUrl
+// PUT request to uploadUrl with photo data
 ```
 
-### Generate Signature Upload URL
+### 2. Generate Download URL
 
 ```typescript
-import { generateSignatureUploadUrl } from './storage';
+import { getPhotoDownloadUrl } from './storage/photo-storage';
 
-// Generate pre-signed URL for signature
-const { url, key } = await generateSignatureUploadUrl(
-  userId,
-  visitId
-);
+// Get photo download URL
+const photoInfo = await getPhotoDownloadUrl(photoKey);
 
-res.json({ uploadUrl: url, key });
+// Mobile app downloads from photoInfo.downloadUrl
+// GET request to downloadUrl
 ```
 
-### Batch Upload URLs
+### 3. Delete Photo
 
 ```typescript
-import { generateBatchPhotoUploadUrls } from './storage';
+import { deletePhoto } from './storage/photo-storage';
 
-// Generate multiple upload URLs at once
-const urls = await generateBatchPhotoUploadUrls(
-  userId,
-  5, // Number of URLs
-  {
-    mimeType: 'image/jpeg',
-    visitId: 'visit-123',
-  }
-);
-
-res.json({ uploadUrls: urls });
+// Delete photo
+await deletePhoto(photoKey);
 ```
 
-### Get File Metadata
+## S3 Buckets
 
-```typescript
-import { getFileMetadata } from './storage';
+### Development (LocalStack)
+- `berthcare-photos-dev` - Visit photos
+- `berthcare-documents-dev` - Care plans, assessments
+- `berthcare-signatures-dev` - Digital signatures
 
-// Retrieve metadata for a file
-const metadata = await getFileMetadata(key);
+### Production (AWS S3)
+- `berthcare-photos-prod` - Visit photos
+- `berthcare-documents-prod` - Care plans, assessments
+- `berthcare-signatures-prod` - Digital signatures
 
-if (metadata) {
-  console.log('Uploaded by:', metadata.uploadedBy);
-  console.log('Compressed:', metadata.compressed);
-  console.log('Visit ID:', metadata.visitId);
-}
+## File Organization
+
+### Photos
+```
+visits/{visitId}/photos/{timestamp}-{filename}
 ```
 
-### Generate Download URL
-
-```typescript
-import { generateDownloadUrl } from './storage';
-
-// Generate temporary download URL
-const downloadUrl = await generateDownloadUrl(
-  key,
-  3600 // Expires in 1 hour
-);
-
-res.json({ downloadUrl });
+Example:
+```
+visits/visit-123/photos/1696789012345-photo.jpg
+visits/visit-123/photos/1696789023456-photo2.jpg
 ```
 
-### Check File Exists
-
-```typescript
-import { fileExists } from './storage';
-
-const exists = await fileExists(key);
-if (!exists) {
-  return res.status(404).json({ error: 'File not found' });
-}
+### Documents
+```
+documents/{documentType}/{timestamp}-{filename}
 ```
 
-### Health Check
-
-```typescript
-import { healthCheck } from './storage';
-
-const health = await healthCheck();
-console.log('S3 healthy:', health.healthy);
-console.log('Latency:', health.latency, 'ms');
+Example:
+```
+documents/care-plan/1696789012345-care-plan.pdf
+documents/assessment/1696789023456-assessment.pdf
 ```
 
-## Storage Structure
-
-Files are organized by type and user:
-
+### Signatures
 ```
-berthcare-production/
-├── photos/
-│   ├── user-123/
-│   │   ├── 1704067200000-uuid1.jpg
-│   │   ├── 1704067201000-uuid2.jpg
-│   │   └── ...
-│   └── user-456/
-│       └── ...
-├── signatures/
-│   ├── user-123/
-│   │   ├── 1704067200000-uuid1.png
-│   │   └── ...
-│   └── ...
-└── documents/
-    └── ...
+visits/{visitId}/signatures/{signatureType}-{timestamp}.png
 ```
 
-**Why this structure?**
-- Easy to find files by user
-- Timestamp in filename for chronological sorting
-- UUID prevents collisions
-- Path-based organization for lifecycle policies
+Example:
+```
+visits/visit-123/signatures/caregiver-1696789012345.png
+visits/visit-123/signatures/client-1696789023456.png
+visits/visit-123/signatures/family-1696789034567.png
+```
 
-## Metadata Schema
+## Metadata
 
-Each file stores metadata in S3 object metadata:
-
+### Photo Metadata
 ```typescript
 {
+  originalName: string;      // Original filename
+  mimeType: string;          // MIME type (image/jpeg, etc.)
+  size: number;              // File size in bytes
+  width?: number;            // Image width in pixels
+  height?: number;           // Image height in pixels
+  compressed?: boolean;      // Whether image was compressed
+  compressionQuality?: number; // Compression quality (0-100)
   uploadedBy: string;        // User ID who uploaded
-  uploadedAt: string;        // ISO 8601 timestamp
-  mimeType: string;          // Content type
-  size: string;              // File size in bytes
-  visitId?: string;          // Associated visit
-  clientId?: string;         // Associated client
-  compressed?: string;       // "true" or "false"
-  compressionQuality?: string; // 1-100
+  uploadedAt: string;        // ISO timestamp
+  visitId?: string;          // Associated visit ID
+  clientId?: string;         // Associated client ID
 }
 ```
 
 ## Lifecycle Policies
 
-Configure S3 lifecycle policies for automatic archival:
+### Photos
+- **Retention**: 7 years (regulatory requirement)
+- **Transition to Glacier**: After 1 year
+- **Deletion**: After 7 years
 
-```json
-{
-  "Rules": [
-    {
-      "Id": "ArchiveOldPhotos",
-      "Status": "Enabled",
-      "Prefix": "photos/",
-      "Transitions": [
-        {
-          "Days": 2555,
-          "StorageClass": "GLACIER"
-        }
-      ]
+### Documents
+- **Retention**: 7 years (regulatory requirement)
+- **Transition to Glacier**: After 1 year
+- **Deletion**: After 7 years
+
+### Signatures
+- **Retention**: 7 years (regulatory requirement)
+- **Transition to Glacier**: After 1 year
+- **Deletion**: After 7 years
+
+### Lifecycle Policy Configuration (Terraform)
+
+```hcl
+# See: terraform/modules/storage/main.tf
+
+resource "aws_s3_bucket_lifecycle_configuration" "photos" {
+  bucket = aws_s3_bucket.photos.id
+
+  rule {
+    id     = "archive-old-photos"
+    status = "Enabled"
+
+    # Transition to Glacier after 1 year
+    transition {
+      days          = 365
+      storage_class = "GLACIER"
     }
-  ]
+
+    # Delete after 7 years
+    expiration {
+      days = 2555  # 7 years
+    }
+  }
 }
 ```
 
-**Policy Details:**
-- Photos archived to Glacier after 7 years (2555 days)
-- Reduces storage costs by 90%
-- Meets compliance requirements for data retention
-- Files remain accessible (retrieval takes 3-5 hours)
+## Security
 
-## Security Considerations
+### Pre-signed URLs
+- Time-limited (default: 1 hour)
+- Specific to one operation (upload or download)
+- Includes content type validation
+- No AWS credentials exposed
 
-1. **Pre-signed URLs expire quickly** (15 minutes default)
-2. **Bucket is private** (no public access)
-3. **IAM roles** limit server permissions
-4. **Metadata validation** prevents injection attacks
-5. **Content-Type enforcement** prevents file type confusion
+### Access Control
+- Bucket policies restrict access
+- IAM roles for backend service
+- No public access
+- Encryption at rest (AES-256)
+- Encryption in transit (TLS)
 
-## Error Handling
+### Validation
+- File size limits enforced
+- MIME type validation
+- Metadata validation
+- Virus scanning (production)
 
-```typescript
-try {
-  const { url, key } = await generatePhotoUploadUrl(userId, metadata);
-  res.json({ url, key });
-} catch (error) {
-  console.error('S3 upload URL generation failed:', error);
-  res.status(500).json({
-    error: 'Failed to generate upload URL',
-    message: error.message,
-  });
-}
+## Environment Variables
+
+```bash
+# AWS Configuration
+AWS_REGION=ca-central-1
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+
+# LocalStack (Development)
+AWS_ENDPOINT=http://localhost:4566
+
+# S3 Buckets
+S3_BUCKET_PHOTOS=berthcare-photos-dev
+S3_BUCKET_DOCUMENTS=berthcare-documents-dev
+S3_BUCKET_SIGNATURES=berthcare-signatures-dev
+
+# S3 Configuration
+S3_FORCE_PATH_STYLE=true  # Required for LocalStack
+S3_SIGNATURE_VERSION=v4
 ```
 
 ## Testing
 
-### Local Development with LocalStack
+### Test S3 Connection
 
 ```bash
 # Start LocalStack
-docker run -d -p 4566:4566 localstack/localstack
+docker-compose up -d localstack
 
-# Create bucket
-aws --endpoint-url=http://localhost:4566 s3 mb s3://berthcare-dev
-
-# Test upload
-node test-s3.js
+# Test connection
+npm run test:connection --prefix apps/backend
 ```
 
-### Production Testing
+### Upload Test File
 
 ```bash
-# Test S3 connectivity
-npm run test:storage
+# Generate upload URL
+curl -X POST http://localhost:3000/api/v1/photos/upload \
+  -H "Content-Type: application/json" \
+  -d '{
+    "visitId": "test-visit",
+    "fileName": "test.jpg",
+    "mimeType": "image/jpeg",
+    "size": 1024000,
+    "uploadedBy": "test-user"
+  }'
 
-# Check health endpoint
-curl http://localhost:3000/v1/health
+# Upload file using pre-signed URL
+curl -X PUT "<upload-url>" \
+  -H "Content-Type: image/jpeg" \
+  --data-binary @test.jpg
+```
+
+### Verify Upload
+
+```bash
+# List files in bucket
+aws --endpoint-url=http://localhost:4566 s3 ls s3://berthcare-photos-dev/visits/test-visit/photos/
+
+# Download file
+aws --endpoint-url=http://localhost:4566 s3 cp s3://berthcare-photos-dev/visits/test-visit/photos/test.jpg ./downloaded.jpg
+```
+
+## Error Handling
+
+### Common Errors
+
+**Upload URL Expired**
+```
+Error: Pre-signed URL has expired
+Solution: Generate new upload URL
+```
+
+**File Too Large**
+```
+Error: Photo size exceeds maximum allowed size
+Solution: Compress photo before upload
+```
+
+**Invalid MIME Type**
+```
+Error: Invalid MIME type: image/bmp
+Solution: Convert to supported format (JPEG, PNG, WebP, HEIC)
+```
+
+**Bucket Not Found**
+```
+Error: The specified bucket does not exist
+Solution: Check bucket name and AWS configuration
 ```
 
 ## Performance
 
-- **Pre-signed URL generation**: <50ms
-- **File existence check**: <100ms
-- **Metadata retrieval**: <100ms
-- **Upload speed**: Limited by client bandwidth, not server
+### Upload Performance
+- Direct S3 upload: ~1-5 seconds (depending on file size and network)
+- Pre-signed URL generation: <100ms
+- No backend bottleneck
+
+### Download Performance
+- Direct S3 download: ~1-5 seconds
+- Pre-signed URL generation: <100ms
+- CloudFront CDN for faster delivery (production)
+
+### Optimization
+- Use CloudFront CDN for downloads
+- Compress images before upload
+- Use WebP format for better compression
+- Implement progressive JPEG for faster loading
 
 ## Monitoring
 
-Key metrics to track:
-- Pre-signed URL generation rate
+### Metrics to Track
 - Upload success rate
-- Average file size
-- Storage costs
-- Lifecycle transitions
+- Download success rate
+- Pre-signed URL generation time
+- S3 API errors
+- Storage usage per bucket
+- Cost per bucket
 
-## Common Issues
-
-### Issue: "Access Denied" errors
-
-**Solution:** Check IAM permissions include:
-```json
-{
-  "Effect": "Allow",
-  "Action": [
-    "s3:PutObject",
-    "s3:GetObject",
-    "s3:DeleteObject",
-    "s3:ListBucket"
-  ],
-  "Resource": [
-    "arn:aws:s3:::berthcare-production/*",
-    "arn:aws:s3:::berthcare-production"
-  ]
-}
-```
-
-### Issue: Pre-signed URLs not working
-
-**Solution:** Ensure server time is synchronized (NTP). AWS rejects requests with >15 minute time skew.
-
-### Issue: LocalStack connection fails
-
-**Solution:** Check endpoint configuration:
-```bash
-AWS_S3_ENDPOINT=http://localhost:4566
-AWS_S3_FORCE_PATH_STYLE=true
-```
+### CloudWatch Metrics
+- `S3.PutObject` - Upload operations
+- `S3.GetObject` - Download operations
+- `S3.DeleteObject` - Delete operations
+- `S3.BucketSize` - Storage usage
+- `S3.NumberOfObjects` - Object count
 
 ## Future Enhancements
 
-- [ ] Image compression on upload
-- [ ] Automatic thumbnail generation
+- [ ] Image thumbnail generation
+- [ ] Automatic image optimization
 - [ ] Virus scanning integration
-- [ ] Multi-region replication
 - [ ] CDN integration for faster downloads
+- [ ] Batch upload support
+- [ ] Progress tracking for large files
+- [ ] Automatic backup to secondary region
+- [ ] Image recognition for automatic tagging
 
 ## References
 
-- [AWS SDK v3 Documentation](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/)
-- [S3 Pre-signed URLs](https://docs.aws.amazon.com/AmazonS3/latest/userguide/PresignedUrlUploadObject.html)
-- [S3 Lifecycle Policies](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lifecycle-mgmt.html)
+- Architecture Blueprint: `project-documentation/architecture-output.md`
+- Task Plan: `project-documentation/task-plan.md` (B4)
+- AWS S3 Documentation: https://docs.aws.amazon.com/s3/
+- LocalStack Documentation: https://docs.localstack.cloud/
+- Terraform Storage Module: `terraform/modules/storage/`
+
+## Notes
+
+- All files are stored in Canadian region (ca-central-1) for data residency
+- Lifecycle policies ensure regulatory compliance (7-year retention)
+- Pre-signed URLs provide secure, scalable file uploads
+- LocalStack enables local development without AWS costs
+- Metadata tracking enables audit trails and compliance

@@ -6,11 +6,11 @@
 
 ## The Truth About Cards
 
-Cards aren't decoration. They're decision-making tools for nurses documenting 6-8 visits per shift, often while standing in hallways, wearing gloves, with one hand holding supplies.
+Cards aren't decoration. They're decision-making tools for caregivers documenting 6-8 visits per shift, often while standing in hallways, wearing gloves, with one hand holding supplies.
 
 **One card design. Multiple contexts. Zero confusion.**
 
-Every pixel serves the nurse's goal: get to the right patient, at the right time, with the right information.
+Every pixel serves the caregiver's goal: get to the right patient, at the right time, with the right information.
 
 ---
 
@@ -19,12 +19,14 @@ Every pixel serves the nurse's goal: get to the right patient, at the right time
 ### "Start with the user experience, then work backwards"
 
 **User Context:**
+
 - Sarah, 34, RN, visits 6-8 clients daily
 - Documenting while standing, often with gloves
 - Needs to know: Who's next? Where? What care is needed?
 - Pain point: 50% of shift time wasted on paperwork
 
 **Card's Job:**
+
 1. Show visit status at a glance (upcoming, in progress, overdue)
 2. Display essential info: time, patient, location, care type
 3. Enable instant navigation to documentation
@@ -37,6 +39,7 @@ Cards don't feel like UI elements. They feel like your schedule. Tap to document
 ### "Say no to 1,000 things"
 
 **What we eliminated:**
+
 - Card variants (elevated, outlined, interactive)
 - Swipe actions (hidden, discoverable)
 - Overflow menus (what would go there?)
@@ -45,6 +48,7 @@ Cards don't feel like UI elements. They feel like your schedule. Tap to document
 - Multiple card types (visits only)
 
 **What we kept:**
+
 - Essential visit information
 - Clear status indication
 - One tap to document
@@ -69,6 +73,7 @@ Cards don't feel like UI elements. They feel like your schedule. Tap to document
 ### Specifications
 
 **Dimensions:**
+
 - Width: Full width minus 32px (16px margins each side)
 - Height: Minimum 88px (ensures 48px+ touch target with padding)
 - Padding: 16px all sides
@@ -76,11 +81,13 @@ Cards don't feel like UI elements. They feel like your schedule. Tap to document
 - Vertical spacing: 16px between cards
 
 **Surface:**
+
 - Background: `surface-primary` (#FFFFFF)
 - Shadow: `shadow-1` (0 1px 3px rgba(0,0,0,0.12))
 - Border: None (status indicated by left accent)
 
 **Typography Hierarchy:**
+
 ```
 Time:        18px, Semibold (600), text-primary (#212121)
 Patient:     20px, Semibold (600), text-primary (#212121)
@@ -90,6 +97,7 @@ Alert:       16px, Medium (500), attention-700 (#CC7A00)
 ```
 
 **Line Spacing:**
+
 - Time to Patient: 8px
 - Patient to Location: 8px
 - Between detail lines: 6px
@@ -111,9 +119,10 @@ Alert:       16px, Medium (500), attention-700 (#CC7A00)
 ## Interactive States
 
 ### Default (Ready to Document)
+
 ```css
-background: surface-primary (#FFFFFF);
-box-shadow: shadow-1 (0 1px 3px rgba(0,0,0,0.12));
+background: surface-primary (#ffffff);
+box-shadow: shadow-1 (0 1px 3px rgba(0, 0, 0, 0.12));
 transform: scale(1);
 ```
 
@@ -121,14 +130,16 @@ transform: scale(1);
 **Message:** "Tap to document this visit"
 
 ### Pressed (Acknowledging Tap)
+
 ```css
-background: neutral-100 (#F5F5F5);
-box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+background: neutral-100 (#f5f5f5);
+box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 transform: scale(0.98);
 transition: all 100ms ease-out;
 ```
 
 **Haptic Feedback:**
+
 - iOS: Light impact (UIImpactFeedbackGenerator)
 - Android: 10ms vibration (HapticFeedbackConstants.CONTEXT_CLICK)
 
@@ -136,6 +147,7 @@ transition: all 100ms ease-out;
 **Message:** "Got it, opening documentation..."
 
 ### Offline Indicator
+
 ```css
 /* Subtle overlay when offline */
 &::after {
@@ -145,9 +157,9 @@ transition: all 100ms ease-out;
   right: 8px;
   width: 8px;
   height: 8px;
-  background: neutral-500 (#9E9E9E);
+  background: neutral-500 (#9e9e9e);
   border-radius: 50%;
-  border: 2px solid surface-primary (#FFFFFF);
+  border: 2px solid surface-primary (#ffffff);
 }
 ```
 
@@ -164,48 +176,58 @@ transition: all 100ms ease-out;
 
 ### Information Hierarchy (Designed for Scanning)
 
-Nurses glance at their schedule while walking between visits. Information must be scannable in under 2 seconds.
+caregivers glance at their schedule while walking between visits. Information must be scannable in under 2 seconds.
 
 **Priority 1: Time Window**
+
 ```
 9:00 AM - 9:45 AM
 ```
+
 - 18px, Semibold (600), text-primary
 - **Why first:** Determines urgency - "Am I late?"
 - **Format:** 12-hour time (familiar, no mental conversion)
-- **Duration shown:** Helps nurses plan their day
+- **Duration shown:** Helps caregivers plan their day
 
 **Priority 2: Patient Identity**
+
 ```
 Margaret Thompson, 82
 ```
+
 - 20px, Semibold (600), text-primary
 - **Why prominent:** Personal connection, verification
 - **Age included:** Clinical context (82 vs 45 = different care needs)
 - **Format:** First Last, Age (consistent, scannable)
 
 **Priority 3: Location**
+
 ```
 📍 123 Oak Street, Apt 4B
 ```
+
 - 16px, Regular (400), text-secondary
 - **Icon:** Location pin (universal, no translation needed)
 - **Why essential:** Navigation, route planning
 - **Apartment included:** Prevents wrong-door visits
 
 **Priority 4: Care Type**
+
 ```
 💊 Medication + Vital Signs
 ```
+
 - 16px, Regular (400), text-secondary
 - **Icon:** Indicates care category at a glance
 - **Format:** Primary task + secondary (if applicable)
 - **Why matters:** Mental preparation, supplies needed
 
 **Priority 5: Alerts (Conditional)**
+
 ```
 ⚠️ New care plan - review required
 ```
+
 - 16px, Medium (500), attention-700 (#CC7A00)
 - **Only shown when:** Action required before visit
 - **Icon:** Warning triangle (attention, not panic)
@@ -252,12 +274,14 @@ Margaret Thompson, 82
 ### Status Specifications
 
 **Border Dimensions:**
+
 - Width: 4px
 - Height: 100% of card
 - Position: Absolute left edge
 - Border radius: 8px 0 0 8px (matches card corners)
 
 **Status Colors:**
+
 ```
 Upcoming:     visit-upcoming (trust-500, #0066CC)
 In Progress:  visit-in-progress (care-500, #00A896) + pulse animation
@@ -267,10 +291,16 @@ Cancelled:    visit-cancelled (neutral-500, #9E9E9E)
 ```
 
 **Pulse Animation (In Progress Only):**
+
 ```css
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
 }
 
 .card--in-progress::before {
@@ -303,12 +333,14 @@ Cancelled:    visit-cancelled (neutral-500, #9E9E9E)
 Cards serve one purpose: display scheduled visits for documentation. This constraint creates clarity.
 
 **Cards are for:**
+
 - Today's visit schedule
 - Upcoming visits (next 7 days)
 - Completed visits (history view)
 - Overdue visits (requires action)
 
 **Not for:**
+
 - Client profiles → Use dedicated profile screen
 - Messages → Use message list component
 - Care coordination alerts → Use alert banner
@@ -339,11 +371,13 @@ All cards green. Day complete. No mental math, no second-guessing. Visual confir
 ### Primary Action: Tap to Document
 
 **Single interaction model:**
+
 ```
 Tap card → Navigate to visit documentation screen
 ```
 
 **Why one action:**
+
 - Glove-friendly (no precision required)
 - Obvious (no hidden gestures)
 - Fast (no menus, no decisions)
@@ -352,7 +386,7 @@ Tap card → Navigate to visit documentation screen
 **What we eliminated:**
 
 **Swipe actions** (delete, reschedule, etc.)  
-**Why:** Hidden interactions fail the "no manual" test. Nurses shouldn't discover features by accident. Actions belong in the detail screen.
+**Why:** Hidden interactions fail the "no manual" test. caregivers shouldn't discover features by accident. Actions belong in the detail screen.
 
 **Long-press menus**  
 **Why:** Requires holding phone steady for 500ms+ while standing. Fails in real-world conditions. Also hidden.
@@ -379,6 +413,7 @@ Schedule Screen (Card now green/completed)
 ```
 
 **Why this flow:**
+
 - Separates viewing from documenting (prevents accidental edits)
 - Allows review of care plan before starting
 - Provides confirmation step (reduces errors)
@@ -389,46 +424,55 @@ Schedule Screen (Card now green/completed)
 ## Design Decisions: What We Eliminated
 
 ### ❌ Card Variants (Elevated, Outlined, Flat)
+
 **Why eliminated:** Every variant creates a decision point. "Should this be elevated or outlined?" multiplied by every screen = design debt. One card style = zero decisions.
 
 **User impact:** Consistency. Every visit card looks the same. No cognitive load.
 
 ### ❌ Swipe Actions (Delete, Reschedule, Mark Complete)
-**Why eliminated:** Hidden interactions violate "if users need a manual, the design has failed." Tested with 5 nurses - none discovered swipe without prompting.
+
+**Why eliminated:** Hidden interactions violate "if users need a manual, the design has failed." Tested with 5 caregivers - none discovered swipe without prompting.
 
 **User impact:** Obvious interactions only. All actions in detail screen where they're visible.
 
 ### ❌ Long-Press Menus
+
 **Why eliminated:** Requires 500ms+ steady hold. Fails when standing, walking, or wearing gloves. Also hidden (discoverability problem).
 
 **User impact:** Faster interaction. Tap = instant response.
 
 ### ❌ Expandable/Collapsible Cards
+
 **Why eliminated:** Breaks scroll position. User taps card 3, it expands, pushes cards 4-6 down, user loses context. Also adds complexity (two states to manage).
 
 **User impact:** Predictable scrolling. Card position never changes.
 
 ### ❌ Inline Quick Actions (Buttons on Card)
+
 **Why eliminated:** Reduces primary touch target size. Tested: 48px card with 32px button = 40% mis-tap rate. Also clutters card.
 
 **User impact:** Larger touch target = fewer mis-taps with gloves.
 
 ### ❌ Status Badges (Colored Pills)
+
 **Why eliminated:** Redundant with left border. Tested: border alone = 95% status recognition. Border + badge = 96% (not worth the clutter).
 
 **User impact:** Cleaner cards, faster scanning.
 
 ### ❌ Card Headers/Footers
+
 **Why eliminated:** Adds visual weight without adding value. Tested: cards with headers felt "heavier," slowed scanning.
 
 **User impact:** Lighter visual weight = faster scanning.
 
 ### ❌ Overflow Menus (Three Dots)
+
 **Why eliminated:** Hides functionality. If actions are important, show them. If not important, remove them.
 
 **User impact:** No hidden features to discover.
 
 ### ❌ Multiple Card Types (Visit, Client, Message, Alert)
+
 **Why eliminated:** Breaks pattern recognition. When cards mean different things, users must think before tapping.
 
 **User impact:** Muscle memory. See card = visit = tap to document.
@@ -449,6 +493,7 @@ Status border:      4px width, 0px from left edge
 ```
 
 **Why 16px base:**
+
 - Aligns with 8px grid system (16 = 2 × 8)
 - Tested: 12px felt cramped, 20px wasted space
 - Consistent with spacing tokens across app
@@ -457,6 +502,7 @@ Status border:      4px width, 0px from left edge
 ### Width Behavior
 
 **Mobile (< 768px):**
+
 ```
 Card width: 100vw - 32px (16px margins each side)
 Max width: None
@@ -464,6 +510,7 @@ Min width: 280px (smallest supported device)
 ```
 
 **Tablet (768px - 1024px):**
+
 ```
 Card width: 100vw - 48px (24px margins each side)
 Max width: 600px (optimal reading width)
@@ -471,18 +518,21 @@ Centered: Yes (if screen > 600px)
 ```
 
 **Desktop (> 1024px):**
+
 ```
 Not applicable - mobile app only
 (Family portal uses different card style)
 ```
 
 **Why full-width:**
+
 - Maximizes touch target (entire card width is tappable)
 - Shows more content per card (no wasted horizontal space)
 - Simpler layout (no grid calculations)
 - Faster scrolling (vertical only, no horizontal scanning)
 
 **No multi-column layouts:**
+
 - Tested: Two-column on tablet = 50% more scrolling to find specific visit
 - Vertical scanning is faster than grid scanning
 - Maintains consistency across devices
@@ -491,6 +541,7 @@ Not applicable - mobile app only
 ### Responsive Behavior
 
 **Portrait → Landscape:**
+
 - Maintain single column (don't switch to two-column)
 - Increase side margins: 16px → 32px
 - Maintain card height (don't shrink)
@@ -513,6 +564,7 @@ Not applicable - mobile app only
 ```
 
 **Specifications:**
+
 - Dimensions: Match real card (88px min height)
 - Background: neutral-100 (#F5F5F5)
 - Shimmer blocks: neutral-300 (#E0E0E0)
@@ -520,25 +572,26 @@ Not applicable - mobile app only
 - Quantity: Show 3 skeleton cards while loading
 
 **Shimmer Animation:**
+
 ```css
 @keyframes shimmer {
-  0% { background-position: -468px 0; }
-  100% { background-position: 468px 0; }
+  0% {
+    background-position: -468px 0;
+  }
+  100% {
+    background-position: 468px 0;
+  }
 }
 
 .skeleton-card {
-  background: linear-gradient(
-    90deg,
-    #F5F5F5 0px,
-    #E0E0E0 40px,
-    #F5F5F5 80px
-  );
+  background: linear-gradient(90deg, #f5f5f5 0px, #e0e0e0 40px, #f5f5f5 80px);
   background-size: 800px;
   animation: shimmer 2s infinite linear;
 }
 ```
 
 **Why skeleton over spinner:**
+
 - Instant feedback (appears immediately, no delay)
 - Shows layout structure (users know what's coming)
 - Feels faster (perceived performance improvement)
@@ -546,6 +599,7 @@ Not applicable - mobile app only
 - Standard pattern (users recognize it)
 
 **When to show:**
+
 - App launch (first load)
 - Pull-to-refresh (while fetching new data)
 - Date change (loading different day's schedule)
@@ -572,6 +626,7 @@ Not applicable - mobile app only
 ```
 
 **Specifications:**
+
 - Icon: 64px, neutral-300 (#E0E0E0)
 - Title: 20px, Semibold (600), text-primary (#212121)
 - Message: 16px, Regular (400), text-secondary (#616161)
@@ -580,6 +635,7 @@ Not applicable - mobile app only
 - No card styling (not a card, just content)
 
 **Why no card styling:**
+
 - Empty state serves different purpose (information, not action)
 - Card implies tappable - empty state is not interactive
 - Visual distinction prevents confusion
@@ -588,6 +644,7 @@ Not applicable - mobile app only
 **Contextual Variations:**
 
 **No visits today (day off):**
+
 ```
 📅 No Visits Today
 You have no visits scheduled.
@@ -595,6 +652,7 @@ Enjoy your day off!
 ```
 
 **All visits completed:**
+
 ```
 ✅ All Done!
 You've completed all 6 visits today.
@@ -602,18 +660,21 @@ Great work!
 ```
 
 **No visits this week:**
+
 ```
 📅 No Visits This Week
 Check back later for your schedule.
 ```
 
 **Filtered view (no results):**
+
 ```
 🔍 No Visits Found
 Try adjusting your filters.
 ```
 
 **Why positive messaging:**
+
 - "Enjoy your day off" vs "No data" = human, supportive
 - Acknowledges completion ("Great work!") = motivating
 - Reduces anxiety (empty ≠ error)
@@ -625,8 +686,9 @@ Try adjusting your filters.
 ### Screen Reader Support
 
 **Semantic HTML:**
+
 ```html
-<article 
+<article
   role="button"
   aria-label="Visit with Margaret Thompson at 9:00 AM to 9:45 AM. 
               Location: 123 Oak Street, Apartment 4B. 
@@ -640,12 +702,14 @@ Try adjusting your filters.
 ```
 
 **Announcement Strategy:**
+
 - **Complete context:** All essential info in one announcement
 - **Status included:** "Upcoming" / "Overdue" / "Completed"
 - **Action clear:** "Tap to view details and start documentation"
 - **Order:** Time → Patient → Location → Care type → Status → Action
 
 **Why verbose:**
+
 - Screen reader users can't scan visually
 - One announcement = complete picture
 - Prevents need to explore card structure
@@ -663,13 +727,14 @@ Try adjusting your filters.
 
 ```css
 .card:focus {
-  outline: 2px solid border-focus (#0066CC);
+  outline: 2px solid border-focus (#0066cc);
   outline-offset: 2px;
   box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.1);
 }
 ```
 
 **Specifications:**
+
 - Color: border-focus (trust-500, #0066CC)
 - Width: 2px solid
 - Offset: 2px from card edge
@@ -677,6 +742,7 @@ Try adjusting your filters.
 - Visible: Keyboard focus only (not touch)
 
 **Why this design:**
+
 - High contrast (blue on white = 7.3:1)
 - Offset prevents overlap with card content
 - Glow increases visibility in bright conditions
@@ -687,6 +753,7 @@ Try adjusting your filters.
 ## Platform Specifics
 
 ### iOS
+
 ```swift
 VStack(alignment: .leading, spacing: 8) {
     Text("9:00 AM - 9:45 AM")
@@ -706,6 +773,7 @@ VStack(alignment: .leading, spacing: 8) {
 ```
 
 ### Android
+
 ```kotlin
 Card(
     modifier = Modifier
@@ -724,6 +792,7 @@ Card(
 ```
 
 ### Web
+
 ```html
 <div class="card" onclick="openVisitDetail()">
   <div class="card-content">
@@ -736,16 +805,16 @@ Card(
 
 ```css
 .card {
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   padding: 16px;
   margin: 16px;
   cursor: pointer;
 }
 
 .card:active {
-  background: #F5F5F5;
+  background: #f5f5f5;
   transform: scale(0.99);
 }
 ```
@@ -757,8 +826,9 @@ Card(
 ### Pre-Launch Checklist
 
 **Physical Testing:**
-- [ ] Works with latex gloves (tested with 3 nurses)
-- [ ] Works with nitrile gloves (tested with 3 nurses)
+
+- [ ] Works with latex gloves (tested with 3 caregivers)
+- [ ] Works with nitrile gloves (tested with 3 caregivers)
 - [ ] Readable in direct sunlight (tested outdoors, noon)
 - [ ] Readable in dim hallway lighting (tested in hospital)
 - [ ] Readable in car dashboard mount (tested in 3 vehicles)
@@ -766,6 +836,7 @@ Card(
 - [ ] Thumb reach to all cards (tested in portrait mode)
 
 **Measurements:**
+
 - [ ] Touch target ≥88px height (measured, exceeds 48px minimum)
 - [ ] Card width = viewport - 32px (verified on 5 devices)
 - [ ] Border radius = 8px (measured)
@@ -775,6 +846,7 @@ Card(
 - [ ] Between cards = 16px (measured)
 
 **Interaction:**
+
 - [ ] Haptic feedback on tap (iOS: light impact, Android: 10ms)
 - [ ] Press animation = 100ms (timed with dev tools)
 - [ ] Scale transform = 0.98 (measured)
@@ -782,6 +854,7 @@ Card(
 - [ ] No accidental taps when scrolling (tested with 5 users)
 
 **Accessibility:**
+
 - [ ] Screen reader announces complete context (tested with VoiceOver, TalkBack)
 - [ ] Keyboard focus visible (2px blue outline, 2px offset)
 - [ ] Tab order logical (top to bottom)
@@ -789,13 +862,15 @@ Card(
 - [ ] Text contrast ≥4.5:1 (measured with WebAIM)
 
 **Performance:**
-- [ ] Content scannable in <2 seconds (tested with 10 nurses)
+
+- [ ] Content scannable in <2 seconds (tested with 10 caregivers)
 - [ ] Skeleton loads instantly (<100ms)
 - [ ] Real data loads in <1.5s (tested on 3G)
 - [ ] Smooth scrolling at 60fps (tested on 3-year-old devices)
 - [ ] No layout shift when loading (measured CLS score)
 
 **Edge Cases:**
+
 - [ ] Long patient names truncate gracefully (tested 50+ char names)
 - [ ] Long addresses truncate gracefully (tested 80+ char addresses)
 - [ ] Multiple alerts stack properly (tested 3+ alerts)
@@ -806,13 +881,15 @@ Card(
 ### Real-World Validation
 
 **Before shipping:**
-1. Shadow 3 nurses for full shift - observe card usage
+
+1. Shadow 3 caregivers for full shift - observe card usage
 2. Test in actual patient homes (lighting, distractions)
 3. Verify in moving vehicle (dashboard mount scenario)
-4. Test with nurses age 25-65 (varying tech comfort)
+4. Test with caregivers age 25-65 (varying tech comfort)
 5. Validate with colorblind team member
 
 **Success Metrics:**
+
 - 95%+ status recognition accuracy (glance test)
 - <2 seconds to find specific visit (scanning test)
 - <5% mis-tap rate with gloves (interaction test)
@@ -823,18 +900,23 @@ Card(
 ## The Philosophy in Action
 
 ### "Simplicity is the ultimate sophistication"
+
 One card. One purpose. One interaction. Perfect.
 
 ### "If users need a manual, the design has failed"
+
 White rectangle. Information inside. Tap it. Opens detail. No explanation needed.
 
 ### "Say no to 1,000 things"
+
 Said no to card variants, actions, swipes, menus, badges, headers, footers. Said yes to one perfect card.
 
 ### "Do a few things exceptionally well"
+
 One card. For visits. Executed perfectly.
 
 ### "Obsess over every pixel"
+
 - 16px padding not 15px or 17px (grid system)
 - 8px radius not 4px or 12px (feels right)
 - 4px status border not 2px or 6px (visible but not heavy)
@@ -846,37 +928,45 @@ One card. For visits. Executed perfectly.
 ## Evolution Strategy
 
 ### Phase 1: MVP (Months 1-6)
+
 **Goal:** Prove core value - reduce documentation time by 50%
 
 **Card features:**
+
 - Basic visit information (time, patient, location, care type)
 - Status indication (upcoming, in progress, completed, overdue)
 - Tap to document
 - Offline support
 
 **Success criteria:**
+
 - 80% user adoption
 - <2 seconds to find specific visit
 - <5% mis-tap rate with gloves
 
 ### Phase 2: Refinement (Months 7-12)
+
 **Goal:** Optimize based on real-world usage data
 
 **Potential additions (data-driven):**
+
 - Smart sorting (overdue first, then in-progress, then upcoming)
 - Distance indicator (if GPS shows you're far from next visit)
 - Estimated travel time (if running behind schedule)
 - Care plan change indicator (if updated since last visit)
 
 **What we won't add:**
+
 - Swipe actions (still hidden, still bad)
 - Card variants (still unnecessary)
 - Inline editing (still error-prone)
 
 ### Phase 3: Intelligence (Year 2+)
+
 **Goal:** Anticipate needs, reduce cognitive load
 
 **Potential features:**
+
 - Predictive alerts ("Traffic delay detected, notify coordinator?")
 - Smart reordering ("Visit 3 is closer, suggest switching order?")
 - Context-aware details (show medication list if med management visit)
@@ -908,4 +998,4 @@ Every decision traced back to Sarah, 34, RN, documenting visits with gloves in d
 
 **Not a card system. Not card variants. Not card options.**
 
-**One card. For visits. Designed for nurses. Tested in reality. Executed perfectly.**
+**One card. For visits. Designed for caregivers. Tested in reality. Executed perfectly.**

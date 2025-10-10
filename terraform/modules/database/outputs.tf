@@ -1,8 +1,11 @@
-# Database Module Outputs
-
 output "db_instance_id" {
   description = "RDS instance ID"
   value       = aws_db_instance.main.id
+}
+
+output "db_instance_arn" {
+  description = "RDS instance ARN"
+  value       = aws_db_instance.main.arn
 }
 
 output "db_instance_endpoint" {
@@ -20,32 +23,29 @@ output "db_instance_port" {
   value       = aws_db_instance.main.port
 }
 
-output "db_instance_name" {
+output "db_name" {
   description = "Database name"
   value       = aws_db_instance.main.db_name
 }
 
-output "db_master_username" {
+output "db_username" {
   description = "Database master username"
   value       = aws_db_instance.main.username
-}
-
-output "db_instance_resource_id" {
-  description = "RDS instance resource ID"
-  value       = aws_db_instance.main.resource_id
-}
-
-output "db_instance_arn" {
-  description = "RDS instance ARN"
-  value       = aws_db_instance.main.arn
+  sensitive   = true
 }
 
 output "db_security_group_id" {
-  description = "Database security group ID"
-  value       = aws_security_group.database.id
+  description = "Security group ID for RDS"
+  value       = aws_security_group.rds.id
 }
 
-output "db_password_secret_arn" {
-  description = "ARN of the Secrets Manager secret containing the database password"
-  value       = aws_secretsmanager_secret.db_password.arn
+output "db_credentials_secret_arn" {
+  description = "ARN of the Secrets Manager secret containing database credentials"
+  value       = aws_secretsmanager_secret.db_credentials.arn
+}
+
+output "db_connection_string" {
+  description = "PostgreSQL connection string"
+  value       = "postgresql://${aws_db_instance.main.username}:${random_password.db_password.result}@${aws_db_instance.main.address}:${aws_db_instance.main.port}/${aws_db_instance.main.db_name}"
+  sensitive   = true
 }

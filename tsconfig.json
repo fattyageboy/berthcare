@@ -1,47 +1,16 @@
 {
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "lib": ["ES2022"],
-    "types": ["jest", "node"],
     "module": "commonjs",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "allowJs": true,
-    "checkJs": false,
     "outDir": "./dist",
-    "rootDir": "./",
-    "removeComments": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "strictBindCallApply": true,
-    "strictPropertyInitialization": true,
-    "noImplicitThis": true,
-    "alwaysStrict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "skipLibCheck": true,
-    "baseUrl": ".",
-    "paths": {
-      "@berthcare/shared": ["libs/shared/src/index.ts"]
-    }
+    "declaration": true,
+    "declarationMap": true
   },
-  "include": [
-    "apps/**/*.ts",
-    "apps/**/*.tsx",
-    "libs/**/*.ts",
-    "libs/**/*.tsx"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "build",
-    "coverage"
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "./libs/shared"
+    }
   ]
 }

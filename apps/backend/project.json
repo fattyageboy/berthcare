@@ -3,21 +3,23 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/backend/src",
   "projectType": "application",
+  "tags": ["type:app", "platform:backend"],
   "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsx watch src/main.ts",
+        "cwd": "apps/backend"
+      }
+    },
     "build": {
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/apps/backend",
-        "main": "apps/backend/src/index.ts",
+        "outputPath": "apps/backend/dist",
+        "main": "apps/backend/src/main.ts",
         "tsConfig": "apps/backend/tsconfig.json",
-        "assets": ["apps/backend/src/assets"]
-      }
-    },
-    "serve": {
-      "executor": "@nx/js:node",
-      "options": {
-        "buildTarget": "backend:build"
+        "assets": []
       }
     },
     "lint": {
@@ -28,13 +30,11 @@
       }
     },
     "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/apps/backend"],
+      "executor": "nx:run-commands",
       "options": {
-        "jestConfig": "apps/backend/jest.config.js",
-        "passWithNoTests": true
+        "command": "jest",
+        "cwd": "apps/backend"
       }
     }
-  },
-  "tags": ["type:app", "scope:backend"]
+  }
 }

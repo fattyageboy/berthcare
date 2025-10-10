@@ -1,144 +1,93 @@
 # BerthCare Documentation
 
-This directory contains technical documentation for the BerthCare project.
+This directory contains technical documentation, completion summaries, and guides for the BerthCare project.
 
-## Quick Links
-
-### Getting Started
-- **[Quick Start Guide](quick-start.md)** - Get up and running quickly with the CI pipeline
-
-### CI/CD Pipeline (Task E2)
-- **[CI Setup Documentation](ci-setup.md)** - Complete CI pipeline documentation
-- **[GitHub Branch Protection Setup](github-branch-protection-setup.md)** - Step-by-step guide for branch protection
-- **[E2 Completion Summary](E2-completion-summary.md)** - Task E2 deliverables and status
-
-### Project Documentation
-- **[Architecture Blueprint](../project-documentation/architecture-output.md)** - Complete technical architecture
-- **[Task Plan](../project-documentation/task-plan.md)** - Implementation roadmap
-- **[MVP Specification](../project-documentation/mvp.md)** - MVP requirements
-
-### Design Documentation
-- **[Design System](../design-documentation/design-system/)** - UI/UX design system
-- **[Feature Specifications](../design-documentation/features/)** - Feature-specific designs
-
-## Documentation Structure
+## Directory Structure
 
 ```
 docs/
-├── README.md                              # This file
-├── quick-start.md                         # Quick start guide
-├── ci-setup.md                            # CI pipeline documentation
-├── github-branch-protection-setup.md      # Branch protection guide
-└── E2-completion-summary.md               # Task E2 summary
-
-project-documentation/
-├── architecture-output.md                 # Technical architecture
-├── task-plan.md                           # Implementation plan
-├── mvp.md                                 # MVP specification
-└── product-manager-output.md              # Product requirements
-
-design-documentation/
-├── design-system/                         # Design system
-│   ├── components/                        # Component specifications
-│   ├── tokens/                            # Design tokens
-│   └── platform-adaptations/              # Platform-specific guidelines
-├── features/                              # Feature designs
-└── accessibility/                         # Accessibility guidelines
+├── README.md                           # This file
+├── E1-git-repository-initialization.md # Task E1: Git repository setup
+├── E2-ci-pipeline-setup.md            # Task E2: CI/CD pipeline configuration
+└── [future completion summaries]       # Additional task documentation
 ```
 
-## For Developers
+## Documentation Types
 
-### First Time Setup
-1. Read [Quick Start Guide](quick-start.md)
-2. Install dependencies: `npm ci`
-3. Run checks: `npm run lint && npm test`
+### Completion Summaries
 
-### Before Every Commit
-1. Format code: `npm run format`
-2. Fix linting: `npm run lint -- --fix`
-3. Run tests: `npm test`
+Task completion summaries follow the naming pattern: `[TaskID]-[descriptive-name].md`
 
-### Creating Pull Requests
-1. Create feature branch
-2. Make changes
-3. Run all checks locally
-4. Push and create PR
-5. Wait for CI to pass
-6. Request review
+Each summary includes:
 
-## For DevOps Engineers
+- Task overview and objectives
+- Deliverables completed
+- Verification checklist
+- Next steps and dependencies
+- Reference documentation
 
-### CI/CD Setup
-- [CI Setup Documentation](ci-setup.md) - Complete pipeline setup
-- [Branch Protection Guide](github-branch-protection-setup.md) - GitHub configuration
+### Technical Guides
 
-### Infrastructure Tasks
-- E1: Initialize Git repository ✅
-- E2: Set up CI bootstrap ✅
-- E3: Configure monorepo structure (next)
-- E4: Set up local development environment (next)
-- E5: Configure AWS infrastructure (next)
-- E6: Set up monitoring & observability (next)
+Located in `.github/` directory:
 
-## For Project Managers
+- `ci-setup.md` - CI/CD pipeline setup and troubleshooting
+- `github-branch-protection-setup.md` - Branch protection configuration
 
-### Project Status
-- **Current Phase**: E - Environment & Tooling
-- **Completed Tasks**: E1, E2
-- **Next Tasks**: E3, E4, E5, E6
-- **Timeline**: See [Task Plan](../project-documentation/task-plan.md)
+### Architecture Documentation
 
-### Key Documents
-- [Architecture Blueprint](../project-documentation/architecture-output.md) - Technical decisions
-- [MVP Specification](../project-documentation/mvp.md) - Product scope
-- [Task Plan](../project-documentation/task-plan.md) - Implementation roadmap
+Located in `project-documentation/` directory:
 
-## For Designers
+- `architecture-output.md` - Complete technical architecture
+- `mvp.md` - MVP scope and features
+- `task-plan.md` - Development task breakdown
+- `product-manager-output.md` - Product requirements
 
-### Design Resources
-- [Design System](../design-documentation/design-system/) - Complete design system
-- [Style Guide](../design-documentation/design-system/style-guide.md) - Visual design guidelines
-- [Components](../design-documentation/design-system/components/) - Component specifications
-- [Accessibility](../design-documentation/accessibility/) - WCAG compliance
+### Design Documentation
 
-## Contributing
+Located in `design-documentation/` directory:
 
-### Documentation Standards
-- Use Markdown for all documentation
-- Include code examples where relevant
-- Keep documentation up to date with code changes
-- Link to related documents
+- Design system components
+- Platform-specific guidelines
+- Feature designs
+- Accessibility standards
 
-### File Naming
-- Use kebab-case: `my-document.md`
-- Be descriptive: `ci-setup.md` not `setup.md`
-- Include task IDs where relevant: `E2-completion-summary.md`
+## Quick Links
 
-### Document Structure
-1. Title and overview
-2. Prerequisites (if applicable)
-3. Main content with clear sections
-4. Examples and code snippets
-5. Troubleshooting (if applicable)
-6. References and links
+### Setup Guides
 
-## Need Help?
+- [Git Repository Setup](./E1-git-repository-initialization.md)
+- [CI/CD Pipeline Setup](./E2-ci-pipeline-setup.md)
+- [CI Configuration Guide](../.github/ci-setup.md)
+- [Branch Protection Guide](../.github/github-branch-protection-setup.md)
 
-- **CI/CD Issues**: See [CI Setup](ci-setup.md) troubleshooting section
-- **Development Setup**: See [Quick Start Guide](quick-start.md)
-- **Architecture Questions**: See [Architecture Blueprint](../project-documentation/architecture-output.md)
-- **Design Questions**: See [Design Documentation](../design-documentation/)
+### Architecture
 
-## Version History
+- [Technical Architecture](../project-documentation/architecture-output.md)
+- [MVP Scope](../project-documentation/mvp.md)
+- [Task Plan](../project-documentation/task-plan.md)
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0.0 | Oct 7, 2025 | Initial documentation for E2 completion |
+### Design
 
-## References
+- [Design System](../design-documentation/README.md)
+- [Style Guide](../design-documentation/design-system/style-guide.md)
 
-- [GitHub Actions Documentation](https://docs.github.com/en/actions)
-- [Jest Documentation](https://jestjs.io/)
-- [ESLint Documentation](https://eslint.org/)
-- [Prettier Documentation](https://prettier.io/)
-- [TypeScript Documentation](https://www.typescriptlang.org/)
+## Contributing Documentation
+
+When completing a task, create a completion summary:
+
+1. Use the naming pattern: `[TaskID]-[descriptive-name].md`
+2. Include all required sections (see existing summaries as templates)
+3. Update this README with a link to the new document
+4. Cross-reference related documentation
+
+## Maintenance
+
+- Review and update documentation quarterly
+- Archive outdated documentation to `docs/archive/`
+- Keep links and references current
+- Ensure code examples remain valid
+
+---
+
+**Last Updated**: October 10, 2025  
+**Maintained By**: Tech Leads

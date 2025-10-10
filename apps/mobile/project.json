@@ -3,28 +3,39 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/mobile/src",
   "projectType": "application",
+  "tags": ["type:app", "platform:mobile"],
   "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "expo start",
+        "cwd": "apps/mobile"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "expo export --platform ios --output-dir dist/ios",
+          "expo export --platform android --output-dir dist/android"
+        ],
+        "cwd": "apps/mobile",
+        "parallel": false
+      }
+    },
     "lint": {
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": ["apps/mobile/**/*.{ts,tsx}"]
+        "lintFilePatterns": ["apps/mobile/**/*.{ts,tsx,js,jsx}"]
       }
     },
     "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/apps/mobile"],
-      "options": {
-        "jestConfig": "apps/mobile/jest.config.js",
-        "passWithNoTests": true
-      }
-    },
-    "type-check": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "tsc --noEmit -p apps/mobile/tsconfig.json"
+        "command": "jest",
+        "cwd": "apps/mobile"
       }
     }
-  },
-  "tags": ["type:app", "scope:mobile", "platform:react-native"]
+  }
 }

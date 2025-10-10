@@ -1,5 +1,3 @@
-# BerthCare Staging Environment Outputs
-
 # Networking Outputs
 output "vpc_id" {
   description = "VPC ID"
@@ -16,50 +14,36 @@ output "private_subnet_ids" {
   value       = module.networking.private_subnet_ids
 }
 
-output "database_subnet_ids" {
-  description = "Database subnet IDs"
-  value       = module.networking.database_subnet_ids
-}
-
-output "backend_security_group_id" {
-  description = "Backend security group ID"
-  value       = module.networking.backend_security_group_id
-}
-
 # Database Outputs
-output "db_instance_endpoint" {
+output "db_endpoint" {
   description = "RDS instance endpoint"
   value       = module.database.db_instance_endpoint
-  sensitive   = true
 }
 
-output "db_instance_address" {
+output "db_address" {
   description = "RDS instance address"
   value       = module.database.db_instance_address
-  sensitive   = true
 }
 
-output "db_instance_port" {
+output "db_port" {
   description = "RDS instance port"
   value       = module.database.db_instance_port
 }
 
-output "db_instance_name" {
+output "db_name" {
   description = "Database name"
-  value       = module.database.db_instance_name
+  value       = module.database.db_name
 }
 
-output "db_master_username" {
-  description = "Database master username"
-  value       = module.database.db_master_username
-  sensitive   = true
+output "db_credentials_secret_arn" {
+  description = "ARN of Secrets Manager secret containing database credentials"
+  value       = module.database.db_credentials_secret_arn
 }
 
 # Cache Outputs
 output "redis_endpoint" {
   description = "Redis primary endpoint"
   value       = module.cache.redis_primary_endpoint
-  sensitive   = true
 }
 
 output "redis_port" {
@@ -67,149 +51,106 @@ output "redis_port" {
   value       = module.cache.redis_port
 }
 
-output "redis_reader_endpoint" {
-  description = "Redis reader endpoint"
-  value       = module.cache.redis_reader_endpoint
-  sensitive   = true
+output "redis_credentials_secret_arn" {
+  description = "ARN of Secrets Manager secret containing Redis credentials"
+  value       = module.cache.redis_credentials_secret_arn
 }
 
 # Storage Outputs
 output "photos_bucket_name" {
   description = "Photos S3 bucket name"
-  value       = module.storage.photos_bucket_name
-}
-
-output "photos_bucket_arn" {
-  description = "Photos S3 bucket ARN"
-  value       = module.storage.photos_bucket_arn
+  value       = module.storage.photos_bucket_id
 }
 
 output "documents_bucket_name" {
   description = "Documents S3 bucket name"
-  value       = module.storage.documents_bucket_name
+  value       = module.storage.documents_bucket_id
 }
 
-output "documents_bucket_arn" {
-  description = "Documents S3 bucket ARN"
-  value       = module.storage.documents_bucket_arn
+output "signatures_bucket_name" {
+  description = "Signatures S3 bucket name"
+  value       = module.storage.signatures_bucket_id
 }
 
 # CDN Outputs
+output "cloudfront_domain_name" {
+  description = "CloudFront distribution domain name"
+  value       = module.cdn.cloudfront_domain_name
+}
+
 output "cloudfront_distribution_id" {
   description = "CloudFront distribution ID"
-  value       = module.cdn.distribution_id
+  value       = module.cdn.cloudfront_distribution_id
 }
 
-output "cloudfront_domain_name" {
-  description = "CloudFront domain name"
-  value       = module.cdn.distribution_domain_name
+# Security Outputs
+output "ecs_task_execution_role_arn" {
+  description = "ECS task execution role ARN"
+  value       = module.security.ecs_task_execution_role_arn
 }
 
-# IAM Outputs
-output "backend_service_role_arn" {
-  description = "Backend service IAM role ARN"
-  value       = module.iam.backend_service_role_arn
+output "ecs_task_role_arn" {
+  description = "ECS task role ARN"
+  value       = module.security.ecs_task_role_arn
 }
 
-output "backend_service_role_name" {
-  description = "Backend service IAM role name"
-  value       = module.iam.backend_service_role_name
+output "alb_security_group_id" {
+  description = "Application Load Balancer security group ID"
+  value       = module.security.alb_security_group_id
 }
 
-# Connection Strings (for backend configuration)
-output "database_connection_string" {
-  description = "Database connection string (without password)"
-  value       = "postgresql://${module.database.db_master_username}@${module.database.db_instance_address}:${module.database.db_instance_port}/${module.database.db_instance_name}"
-  sensitive   = true
+output "ecs_tasks_security_group_id" {
+  description = "ECS tasks security group ID"
+  value       = module.security.ecs_tasks_security_group_id
 }
 
-output "redis_connection_string" {
-  description = "Redis connection string"
-  value       = "redis://${module.cache.redis_primary_endpoint}"
-  sensitive   = true
-}
-
-# Summary Output
-output "infrastructure_summary" {
-  description = "Summary of deployed infrastructure"
-  value = {
-    environment = var.environment
-    region      = var.aws_region
-    vpc_id      = module.networking.vpc_id
-    database = {
-      endpoint = module.database.db_instance_endpoint
-      name     = module.database.db_instance_name
-    }
-    cache = {
-      endpoint = module.cache.redis_primary_endpoint
-    }
-    storage = {
-      photos_bucket    = module.storage.photos_bucket_name
-      documents_bucket = module.storage.documents_bucket_name
-    }
-    cdn = {
-      domain = module.cdn.distribution_domain_name
-    }
-  }
-  sensitive = true
+output "kms_key_id" {
+  description = "KMS key ID for encryption"
+  value       = module.security.kms_key_id
 }
 
 # Monitoring Outputs
+output "cloudwatch_dashboard_name" {
+  description = "CloudWatch dashboard name"
+  value       = module.monitoring.dashboard_name
+}
+
+output "cloudwatch_dashboard_url" {
+  description = "CloudWatch dashboard URL"
+  value       = module.monitoring.dashboard_url
+}
+
 output "api_log_group_name" {
-  description = "CloudWatch log group name for API logs"
+  description = "API CloudWatch log group name"
   value       = module.monitoring.api_log_group_name
 }
 
-output "error_log_group_name" {
-  description = "CloudWatch log group name for error logs"
-  value       = module.monitoring.error_log_group_name
+output "application_log_group_name" {
+  description = "Application CloudWatch log group name"
+  value       = module.monitoring.application_log_group_name
 }
 
-output "api_performance_dashboard_arn" {
-  description = "CloudWatch dashboard ARN for API performance"
-  value       = module.monitoring.api_performance_dashboard_arn
-}
-
-output "database_performance_dashboard_arn" {
-  description = "CloudWatch dashboard ARN for database performance"
-  value       = module.monitoring.database_performance_dashboard_arn
-}
-
-output "error_tracking_dashboard_arn" {
-  description = "CloudWatch dashboard ARN for error tracking"
-  value       = module.monitoring.error_tracking_dashboard_arn
-}
-
-output "alarm_sns_topic_arn" {
-  description = "SNS topic ARN for alarms"
+output "sns_alerts_topic_arn" {
+  description = "SNS topic ARN for alerts"
   value       = module.monitoring.sns_topic_arn
 }
 
-# =============================================================================
-# Secrets Outputs (Twilio Configuration)
-# =============================================================================
-
-output "twilio_account_secret_arn" {
-  description = "ARN of the Twilio account credentials secret"
-  value       = module.secrets.twilio_account_secret_arn
+output "alarm_names" {
+  description = "List of CloudWatch alarm names"
+  value       = module.monitoring.alarm_names
 }
 
-output "twilio_account_secret_name" {
-  description = "Name of the Twilio account credentials secret"
-  value       = module.secrets.twilio_account_secret_name
-}
-
-output "twilio_phone_numbers_secret_arn" {
-  description = "ARN of the Twilio phone numbers secret"
-  value       = module.secrets.twilio_phone_numbers_secret_arn
-}
-
-output "twilio_webhooks_secret_arn" {
-  description = "ARN of the Twilio webhooks configuration secret"
-  value       = module.secrets.twilio_webhooks_secret_arn
-}
-
-output "secrets_access_policy_arn" {
-  description = "ARN of the IAM policy for accessing Twilio secrets"
-  value       = module.secrets.secrets_access_policy_arn
+# Connection Information (for backend configuration)
+output "connection_info" {
+  description = "Connection information for backend services"
+  value = {
+    region                      = var.aws_region
+    vpc_id                      = module.networking.vpc_id
+    db_endpoint                 = module.database.db_instance_endpoint
+    redis_endpoint              = module.cache.redis_primary_endpoint
+    cloudfront_domain           = module.cdn.cloudfront_domain_name
+    db_credentials_secret_arn   = module.database.db_credentials_secret_arn
+    redis_credentials_secret_arn = module.cache.redis_credentials_secret_arn
+  }
+  sensitive = false
 }

@@ -9,7 +9,7 @@
 
 > "Simplicity is the ultimate sophistication. If users need a manual, the design has failed."
 
-BerthCare exists to eliminate friction between caregivers and the people they serve. Every design decision starts with a simple question: **Does this help a nurse provide better care?**
+BerthCare exists to eliminate friction between caregivers and the people they serve. Every design decision starts with a simple question: **Does this help a caregiver provide better care?**
 
 ### Core Principles
 
@@ -35,17 +35,20 @@ The parts you can't see should be as beautiful as the parts you can. Quality goe
 
 **Ocean Blue** `#0A7AFF`  
 Our primary action color. Calm, trustworthy, unmistakably interactive.
+
 - **Use:** Primary buttons, links, active states
 - **Contrast:** 4.5:1 on white (WCAG AA)
 - **Why this blue:** Tested in bright sunlight and dim hallways. Visible but never aggressive.
 
 **Ocean Blue Dark** `#0051D5`  
 Pressed states and emphasis.
+
 - **Use:** Button press, hover on dark backgrounds
 - **Contrast:** 7.1:1 on white (WCAG AAA)
 
 **Ocean Blue Subtle** `#E5F2FF`  
 Whisper-quiet backgrounds.
+
 - **Use:** Selected states, subtle highlights
 - **Never for text:** Decorative only
 
@@ -53,21 +56,25 @@ Whisper-quiet backgrounds.
 
 **Success** `#34C759`  
 Visit complete. Task done. Everything's good.
+
 - **Contrast:** 3.2:1 on white (WCAG AA Large)
 - **Paired with:** Checkmark icon, "Complete" label
 
 **Warning** `#FF9500`  
 Attention needed. Not urgent, but don't ignore.
+
 - **Contrast:** 2.9:1 on white (WCAG AA Large)
 - **Paired with:** Clock icon, "Pending" label
 
 **Critical** `#FF3B30`  
 Stop. Error. Overdue. Immediate action required.
+
 - **Contrast:** 4.5:1 on white (WCAG AA)
 - **Paired with:** Alert icon, clear next steps
 
 **Offline** `#8E8E93`  
 System status. No connectivity. Working locally.
+
 - **Contrast:** 4.6:1 on white (WCAG AA)
 - **Paired with:** Cloud-off icon, reassuring message
 
@@ -77,14 +84,17 @@ We use a 6-step gray scale. No more, no less.
 
 **Text Primary** `#000000`  
 Body text. Headings. Maximum readability.
+
 - **Contrast:** 21:1 on white (WCAG AAA)
 
 **Text Secondary** `#3C3C43` (60% opacity)  
 Supporting information. Timestamps. Metadata.
+
 - **Contrast:** 11.2:1 on white (WCAG AAA)
 
 **Text Tertiary** `#3C3C43` (30% opacity)  
 Placeholder text. Disabled states.
+
 - **Contrast:** 4.5:1 on white (WCAG AA)
 
 **Separator** `#3C3C43` (12% opacity)  
@@ -99,7 +109,7 @@ The canvas. Clean, bright, unobtrusive.
 ### Color Usage Rules
 
 **Never use color alone to convey information.**  
-Pair color with icons, labels, or position. A colorblind nurse should never be confused.
+Pair color with icons, labels, or position. A colorblind caregiver should never be confused.
 
 **Test in context.**  
 Colors look different on phones vs tablets, in sunlight vs fluorescent lighting. Test everywhere.
@@ -149,7 +159,7 @@ Labels. Tiny details. Use sparingly.
 **Semibold (600)** — Emphasis, buttons, headings  
 **Bold (700)** — Rare. Only for critical alerts.
 
-**Never use light weights.** Nurses work in all lighting conditions. Thin fonts disappear.
+**Never use light weights.** caregivers work in all lighting conditions. Thin fonts disappear.
 
 ### Line Length
 
@@ -163,11 +173,13 @@ Longer lines are harder to read. Shorter lines feel choppy. We aim for the sweet
 **Create hierarchy through size, weight, and space—not color.**
 
 Good hierarchy:
+
 - Large Title (34pt, Semibold)
 - 24px space
 - Body (17pt, Regular)
 
 Bad hierarchy:
+
 - Body (17pt, Blue)
 - Body (17pt, Gray)
 - Body (17pt, Light Gray)
@@ -190,7 +202,8 @@ Bad hierarchy:
 
 Every measurement is a multiple of 8.
 
-**Why 8?**  
+**Why 8?**
+
 - Divides evenly by 2 (for half-spacing)
 - Scales perfectly across screen densities
 - Creates consistent rhythm
@@ -224,7 +237,7 @@ Every screen has one main thing to do. Make it obvious. Make it easy.
 **Ideal:** 56pt × 56pt for primary actions
 
 **Why so big?**  
-Nurses wear gloves. They're moving. They're tired. Make targets impossible to miss.
+caregivers wear gloves. They're moving. They're tired. Make targets impossible to miss.
 
 **Spacing between targets:** Minimum 8px  
 Prevent accidental taps. Frustration kills adoption.
@@ -283,7 +296,8 @@ Soft enough to feel friendly. Sharp enough to feel precise. Scales well across s
 **Use borders sparingly.**  
 Prefer shadows or background color changes to create separation.
 
-**When you must use borders:**  
+**When you must use borders:**
+
 - 1px solid
 - `rgba(0, 0, 0, 0.1)` opacity
 - Never thicker than 1px
@@ -300,7 +314,8 @@ Prefer shadows or background color changes to create separation.
 **Android:** Material Symbols  
 **Web:** System icons or SF Symbols via font
 
-**Why native icons?**  
+**Why native icons?**
+
 - Load instantly
 - Feel familiar
 - Scale perfectly
@@ -421,21 +436,24 @@ Easing: Ease Out
 
 ### Non-Negotiables
 
-**Color Contrast**  
+**Color Contrast**
+
 - Body text: 4.5:1 minimum (WCAG AA)
 - Large text (20pt+): 3:1 minimum
 - Interactive elements: 3:1 minimum
 
 **Test every color combination.** No exceptions.
 
-**Touch Targets**  
+**Touch Targets**
+
 - Minimum: 44pt × 44pt
 - Ideal: 56pt × 56pt
 - Spacing: 8pt minimum between targets
 
-**Nurses wear gloves. Make targets big.**
+**caregivers wear gloves. Make targets big.**
 
-**Focus Indicators**  
+**Focus Indicators**
+
 - Always visible
 - 3px solid Ocean Blue
 - 2px offset from element
@@ -449,20 +467,23 @@ Easing: Ease Out
 `<button>` not `<div onclick>`  
 `<h1>` not `<div class="title">`
 
-**Provide text alternatives**  
+**Provide text alternatives**
+
 - Alt text for images
 - Labels for form inputs
 - ARIA labels for icon buttons
 
 **Announce dynamic changes**  
 Use ARIA live regions for:
+
 - Form validation errors
 - Loading states
 - Success messages
 
 ### Voice Control
 
-**Support voice commands**  
+**Support voice commands**
+
 - "Tap Complete Visit"
 - "Scroll down"
 - "Go back"
@@ -558,12 +579,12 @@ Chrome, Safari, Firefox, Edge (latest 2 versions)
 ```css
 :root {
   /* Colors */
-  --color-ocean-blue: #0A7AFF;
-  --color-ocean-blue-dark: #0051D5;
-  --color-success: #34C759;
-  --color-warning: #FF9500;
-  --color-critical: #FF3B30;
-  
+  --color-ocean-blue: #0a7aff;
+  --color-ocean-blue-dark: #0051d5;
+  --color-success: #34c759;
+  --color-warning: #ff9500;
+  --color-critical: #ff3b30;
+
   /* Spacing (8pt grid) */
   --space-4: 4px;
   --space-8: 8px;
@@ -571,19 +592,19 @@ Chrome, Safari, Firefox, Edge (latest 2 versions)
   --space-24: 24px;
   --space-32: 32px;
   --space-48: 48px;
-  
+
   /* Typography */
   --font-large-title: 34px;
   --font-title: 28px;
   --font-body: 17px;
   --font-subhead: 15px;
   --font-caption: 13px;
-  
+
   /* Shadows */
   --shadow-resting: 0 1px 3px rgba(0, 0, 0, 0.1);
   --shadow-raised: 0 2px 8px rgba(0, 0, 0, 0.12);
   --shadow-floating: 0 8px 24px rgba(0, 0, 0, 0.15);
-  
+
   /* Radius */
   --radius-default: 12px;
   --radius-small: 8px;
@@ -597,13 +618,15 @@ Chrome, Safari, Firefox, Edge (latest 2 versions)
 ### Question Everything
 
 **Before adding a feature, ask:**
-- Does this help a nurse provide better care?
+
+- Does this help a caregiver provide better care?
 - Can we solve this without adding UI?
 - What can we remove instead?
 
 ### Start with the User Experience
 
 **Work backwards from the goal:**
+
 1. What is the user trying to accomplish?
 2. What's the fastest path to that goal?
 3. What can we eliminate?
@@ -612,12 +635,14 @@ Chrome, Safari, Firefox, Edge (latest 2 versions)
 ### Obsess Over Details
 
 **The details matter:**
+
 - Corner radius: 12px, not 10px or 15px
 - Animation: 200ms, not 250ms
 - Touch target: 56pt, not 48pt
 - Line height: 1.4, not 1.5
 
 **Test everything:**
+
 - In bright sunlight
 - In dim hallways
 - With gloves on
@@ -628,12 +653,14 @@ Chrome, Safari, Firefox, Edge (latest 2 versions)
 ### Say No
 
 **We say no to:**
+
 - Features that serve edge cases
 - Customization that creates complexity
 - "Nice to have" additions
 - Anything that doesn't serve the core mission
 
 **We say yes to:**
+
 - Removing features
 - Simplifying workflows
 - Eliminating steps
@@ -646,6 +673,7 @@ Chrome, Safari, Firefox, Edge (latest 2 versions)
 This style guide evolves. As we learn from users, we refine our approach.
 
 **Current focus areas:**
+
 - Offline state communication
 - Glove-friendly interactions
 - One-handed operation

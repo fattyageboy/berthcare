@@ -1,6 +1,6 @@
 # Care Coordination
 
-> *"The best interface is no interface. Make technology invisible."*
+> _"The best interface is no interface. Make technology invisible."_
 
 ---
 
@@ -8,7 +8,7 @@
 
 Care coordination isn't about building communication tools. It's about **removing friction from human connection** when it matters most.
 
-When a nurse discovers something concerning during a home visit, they don't need features. They need **immediate human contact** with someone who can help.
+When a caregiver discovers something concerning during a home visit, they don't need features. They need **immediate human contact** with someone who can help.
 
 **The question isn't:** "What features should we build?"  
 **The question is:** "How do we make urgent communication feel effortless?"
@@ -27,11 +27,11 @@ Traditional care coordination tools overwhelm users with features: messaging thr
 
 No training required. No user guide. The interface communicates its purpose through **visual clarity** and **obvious affordances**.
 
-A nurse in the field should instantly understand: *"This is how I get help."*
+A caregiver in the field should instantly understand: _"This is how I get help."_
 
 ### The Best Interface is No Interface
 
-Technology should disappear. When something's wrong, the nurse shouldn't think about *using an app*—they should think about *reaching their team*.
+Technology should disappear. When something's wrong, the caregiver shouldn't think about _using an app_—they should think about _reaching their team_.
 
 The interface becomes invisible. The human connection becomes immediate.
 
@@ -41,7 +41,7 @@ The interface becomes invisible. The human connection becomes immediate.
 
 ### The Moment of Need
 
-**Context:** Sarah, a home care nurse, is with Margaret Thompson. Something feels off—Margaret seems confused about her medications.
+**Context:** Sarah, a home care caregiver, is with Margaret Thompson. Something feels off—Margaret seems confused about her medications.
 
 **What Sarah needs:** Immediate connection to someone who can help.
 
@@ -58,7 +58,7 @@ Speaks naturally: "Margaret seems confused about her meds"
     ↓
 System intelligently routes to the right person
     ↓
-Coordinator's phone rings within seconds
+coordinator's phone rings within seconds
     ↓
 Human conversation resolves the issue
 ```
@@ -70,13 +70,14 @@ Human conversation resolves the issue
 ### The Invisible Intelligence
 
 Behind the scenes, the system:
+
 - Identifies Margaret's care coordinator automatically
 - Determines the best contact method (call, SMS backup)
 - Handles offline scenarios gracefully
 - Escalates if no response
 - Documents the alert for compliance
 
-**The nurse experiences none of this complexity.** It just works.
+**The caregiver experiences none of this complexity.** It just works.
 
 ---
 
@@ -87,6 +88,7 @@ Behind the scenes, the system:
 **Design Principle:** Critical functions should be immediately accessible without cluttering the interface.
 
 **Visual Treatment:**
+
 ```
 ┌─────────────────────────────────────┐
 │  Margaret Thompson                  │
@@ -110,12 +112,13 @@ Behind the scenes, the system:
 ### The Alert Flow—Effortless and Obvious
 
 **Screen 1: Initiate Alert**
+
 ```
 ┌─────────────────────────────────────┐
 │  ←  Alert Team                      │
 │                                     │
 │  About: Margaret Thompson           │
-│  Coordinator: Mike Chen             │
+│  coordinator: Mike Chen             │
 │                                     │
 │  ┌─────────────────────────────────┐│
 │  │                                 ││
@@ -136,13 +139,15 @@ Behind the scenes, the system:
 ```
 
 **Design Details:**
-- **Coordinator name visible:** Humanizes the interaction
+
+- **coordinator name visible:** Humanizes the interaction
 - **Voice-first:** Large, obvious microphone button
 - **Text as fallback:** Available but not primary
 - **Single action button:** No ambiguity about next step
 - **Warm, reassuring colors:** Reduces stress in urgent moments
 
 **Screen 2: Alert Sent**
+
 ```
 ┌─────────────────────────────────────┐
 │                                     │
@@ -159,6 +164,7 @@ Behind the scenes, the system:
 ```
 
 **Design Details:**
+
 - **Immediate feedback:** Confirms action completed
 - **Sets expectation:** "He'll call you shortly"
 - **Calming:** Reduces anxiety about whether it worked
@@ -171,18 +177,21 @@ Behind the scenes, the system:
 ### Microinteractions—Making Technology Feel Alive
 
 **Button Press:**
+
 - Haptic feedback (medium impact)
 - Subtle scale animation (0.95x, 100ms ease-out)
 - Color shift to deeper amber
 - Communicates: "I heard you"
 
 **Voice Recording:**
+
 - Waveform visualization during recording
 - Real-time audio level indicator
 - Gentle pulse animation
 - Communicates: "I'm listening"
 
 **Sending Alert:**
+
 - Progress indicator with meaningful states:
   - "Connecting to Mike..."
   - "Delivering your message..."
@@ -191,6 +200,7 @@ Behind the scenes, the system:
 - Communicates: "This is happening"
 
 **Success State:**
+
 - Checkmark animation (scale + fade in)
 - Success haptic (notification feedback)
 - Brief celebration, then return to work
@@ -201,11 +211,13 @@ Behind the scenes, the system:
 **Principle:** Animations should feel like physical objects, not digital effects.
 
 **Timing:**
+
 - **Fast actions:** 100-200ms (button presses, toggles)
 - **Medium actions:** 300-400ms (screen transitions, reveals)
 - **Slow actions:** 500-700ms (success confirmations, celebrations)
 
 **Easing:**
+
 - **Ease-out:** For entering elements (quick start, gentle landing)
 - **Ease-in-out:** For transitions (smooth throughout)
 - **Spring:** For interactive elements (natural, bouncy feel)
@@ -213,23 +225,27 @@ Behind the scenes, the system:
 ### Accessibility: Universal Design from Day One
 
 **Visual:**
+
 - WCAG AAA contrast ratios (7:1 minimum)
 - Color-blind safe palette
 - Large touch targets (minimum 44pt)
 - Clear visual hierarchy
 
 **Motor:**
+
 - No precise gestures required
 - Large buttons, forgiving hit areas
 - Works with gloves
 - One-handed operation
 
 **Auditory:**
+
 - Visual feedback for all audio cues
 - Haptic feedback as alternative
 - Closed captions for voice messages
 
 **Cognitive:**
+
 - Single-path flows (no branching decisions)
 - Clear, plain language
 - Consistent patterns
@@ -246,6 +262,7 @@ Behind the scenes, the system:
 **Question:** Why do we assume digital messaging is better than voice calls?
 
 **Analysis:**
+
 - Voice conveys urgency, tone, emotion (150 words/min)
 - Text is slower, ambiguous, easily misinterpreted (40 words/min)
 - Healthcare has used phones successfully for 100+ years
@@ -260,6 +277,7 @@ Behind the scenes, the system:
 **Question:** Why make users think about routing when the system knows the answer?
 
 **Analysis:**
+
 - System knows which client → knows their coordinator
 - If it's urgent enough to alert, it's urgent (no levels needed)
 - Every decision point adds friction and cognitive load
@@ -274,6 +292,7 @@ Behind the scenes, the system:
 **Question:** What problem does message history actually solve?
 
 **Analysis:**
+
 - Urgent issues get resolved via phone call
 - Outcomes get documented in care plan
 - Message history creates compliance liability
@@ -288,6 +307,7 @@ Behind the scenes, the system:
 **Question:** Does adding features improve the core experience?
 
 **Analysis:**
+
 - Each feature adds complexity, maintenance, training
 - Users want to solve problems, not learn features
 - Feature bloat is why enterprise software feels heavy
@@ -302,41 +322,49 @@ Behind the scenes, the system:
 ### What We're Not Building (And Why)
 
 **❌ Messaging Platform**
+
 - **Why not:** Creates notification fatigue, delayed responses, ambiguous communication
 - **What instead:** Direct voice connection to coordinator
 - **Impact:** 90% faster resolution, zero message overload
 
 **❌ Team Directory & Recipient Selection**
+
 - **Why not:** Adds cognitive load, potential for errors, slows urgent communication
 - **What instead:** Intelligent routing based on client-coordinator relationships
 - **Impact:** Zero decisions required, always reaches right person
 
 **❌ Urgency Level Selectors**
+
 - **Why not:** If it's not urgent, don't use this feature. Binary is clearer.
 - **What instead:** Everything through alert button is urgent by definition
 - **Impact:** Eliminates decision paralysis, ensures fast response
 
 **❌ Message History & Threading**
+
 - **Why not:** Creates compliance liability, encourages async communication for urgent issues
 - **What instead:** Outcomes documented in care plans, not conversations
 - **Impact:** Cleaner audit trail, forces synchronous resolution
 
 **❌ Read Receipts & Typing Indicators**
+
 - **Why not:** Creates anxiety, false sense of communication progress
 - **What instead:** Phone call confirms receipt and enables immediate dialogue
 - **Impact:** Reduces stress, ensures actual communication
 
 **❌ Notification Settings & Customization**
+
 - **Why not:** Urgent alerts must always reach coordinator—no exceptions
 - **What instead:** Guaranteed delivery via phone call + SMS backup
 - **Impact:** 100% delivery rate, zero missed alerts
 
 **❌ Group Alerts & Broadcasting**
+
 - **Why not:** Diffusion of responsibility ("someone else will handle it")
 - **What instead:** Single accountable coordinator per client
 - **Impact:** Clear ownership, faster response times
 
 **❌ File Attachments & Rich Media**
+
 - **Why not:** Slows communication, increases complexity, rarely needed for urgent issues
 - **What instead:** Voice description, follow-up documentation in care plan
 - **Impact:** Faster alerts, simpler interface
@@ -344,22 +372,27 @@ Behind the scenes, the system:
 ### What We're Building Exceptionally Well
 
 **✓ One-Tap Alert**
+
 - Context-aware, always accessible, zero cognitive load
 - **Obsession:** Button position, size, color, animation, haptics
 
 **✓ Voice-First Communication**
+
 - Natural, fast, conveys urgency and emotion
 - **Obsession:** Audio quality, waveform visualization, recording UX
 
 **✓ Intelligent Routing**
+
 - Automatic coordinator identification, escalation handling
 - **Obsession:** Routing accuracy, fallback logic, offline scenarios
 
 **✓ Guaranteed Delivery**
+
 - Phone call + SMS backup, retry logic, escalation
 - **Obsession:** Delivery confirmation, response time tracking
 
 **✓ Invisible Complexity**
+
 - System handles routing, escalation, documentation automatically
 - **Obsession:** Zero user-facing complexity, perfect reliability
 
@@ -385,45 +418,52 @@ Behind the scenes, the system:
 ### Status Messages
 
 **During:**
+
 - "Connecting to Mike..." (personal, shows progress)
 - "Delivering your message..." (active, reassuring)
 
 **Success:**
+
 - "Alert sent to Mike" (confirms recipient)
 - "He'll call you shortly" (sets expectation)
 
 **Error:**
+
 - "Can't reach Mike right now" (honest, not alarming)
 - "Trying backup coordinator..." (shows system is handling it)
 
 ### Empty States
 
 **No recent alerts:**
+
 ```
 Everything's running smoothly
 
-If something comes up, tap the alert 
-button and we'll connect you with 
+If something comes up, tap the alert
+button and we'll connect you with
 your coordinator immediately.
 ```
 
 **Offline:**
+
 ```
 You're offline right now
 
-Don't worry—your alert will send 
+Don't worry—your alert will send
 automatically when you're back online.
 ```
 
 ### Tone Guidelines
 
 **Be:**
+
 - Clear and direct
 - Warm and human
 - Reassuring under stress
 - Action-oriented
 
 **Don't be:**
+
 - Technical or jargony
 - Overly casual
 - Alarmist or dramatic
@@ -435,7 +475,8 @@ automatically when you're back online.
 
 **Philosophy:** Not everything needs real-time alerts. Batch non-urgent updates to reduce interruptions.
 
-**Coordinator Daily Summary (6 PM):**
+**coordinator Daily Summary (6 PM):**
+
 ```
 From: BerthCare Team
 Subject: Today's Care Updates—October 7, 2025
@@ -460,6 +501,7 @@ Questions? Reply to this email or call your team.
 ```
 
 **Design Principles:**
+
 - **Scannable:** Key info at top, details below
 - **Actionable:** Clear next steps when needed
 - **Batched:** One email per day, not per update
@@ -470,8 +512,9 @@ Questions? Reply to this email or call your team.
 ## The Technical Magic (Invisible)
 
 ### Alert Flow
+
 ```
-1. Nurse taps "Alert Team"
+1. caregiver taps "Alert Team"
 2. Records voice message (or types)
 3. Taps "Send Alert"
 4. System:
@@ -480,25 +523,27 @@ Questions? Reply to this email or call your team.
    - Plays voice message
    - Sends SMS backup with text
    - Logs alert in system
-5. Coordinator calls nurse back
+5. coordinator calls caregiver back
 6. Issue resolved
 ```
 
 ### Offline Handling
+
 ```
 IF offline:
   - Queue alert locally
   - Show: "Alert will send when connected"
   - Send immediately when online
-  - Notify nurse when sent
+  - Notify caregiver when sent
 ```
 
 ### Escalation (If No Response)
+
 ```
 IF coordinator doesn't respond in 5 minutes:
   - Call backup coordinator
   - Send SMS to both
-  - Notify nurse of escalation
+  - Notify caregiver of escalation
 ```
 
 ---
@@ -508,6 +553,7 @@ IF coordinator doesn't respond in 5 minutes:
 ### "Say no to 1,000 things"
 
 We said no to:
+
 - Messaging systems
 - Team directories
 - Care plan viewers
@@ -522,6 +568,7 @@ We said no to:
 - Emoji reactions
 
 We said yes to:
+
 - One alert button
 - Voice messages
 - Phone calls
@@ -545,19 +592,22 @@ Can't get simpler than that.
 
 ## The Metrics That Matter
 
-### For Nurses
+### For caregivers
+
 - **10 seconds** to send alert
 - **<2 minutes** to get callback
 - **100%** delivery rate
 - **0 apps** to learn
 
-### For Coordinators
+### For coordinators
+
 - **Immediate** notification (phone rings)
 - **Voice context** (hear the concern)
-- **Direct contact** (call nurse back)
+- **Direct contact** (call caregiver back)
 - **90%+ resolution** on first call
 
 ### For Organization
+
 - **<5 minute** average response time
 - **95%+ satisfaction** with alert system
 - **80% reduction** in missed urgent issues
@@ -570,7 +620,7 @@ Can't get simpler than that.
 ### Multiple Alerts Simultaneously
 
 ```
-Coordinator receives:
+coordinator receives:
 - Alert 1: Sarah about Margaret
 - Alert 2: Tom about John
 
@@ -581,20 +631,20 @@ System:
 - Sends SMS summary of both
 ```
 
-### Coordinator Unavailable
+### coordinator Unavailable
 
 ```
 IF coordinator doesn't answer:
   - Leave voicemail with alert
   - Send SMS with details
   - Call backup coordinator
-  - Notify nurse of escalation
+  - Notify caregiver of escalation
 ```
 
 ### Non-Critical Updates
 
 ```
-Nurse wants to share non-urgent info:
+caregiver wants to share non-urgent info:
   - Document in visit notes
   - Appears in daily summary email
   - No alert needed
@@ -607,16 +657,19 @@ Nurse wants to share non-urgent info:
 ### When We've Proven It Works
 
 **Maybe add:**
+
 - Photo attachment to alerts
 - Video call option
 - Alert history (for coordinators only)
 
 **But only if:**
+
 - Teams ask for it
 - It doesn't complicate the core experience
 - Phone calls aren't enough
 
 **Probably not:**
+
 - Messaging system (why?)
 - Team chat (unnecessary)
 - Group alerts (diffusion of responsibility)
@@ -665,6 +718,7 @@ Nurse wants to share non-urgent info:
 ### Compare to Messaging System
 
 **Messaging System MVP:**
+
 - Real-time messaging infrastructure
 - Push notification system
 - Message threading
@@ -687,15 +741,19 @@ Nurse wants to share non-urgent info:
 ## The Vision
 
 ### Year 1
+
 Alert button + phone calls. Perfect the core experience.
 
 ### Year 2
+
 Add photo attachments if teams request it.
 
 ### Year 3
+
 Maybe video calls. Maybe.
 
 ### Year 5
+
 Still just an alert button and phone calls. Because they work.
 
 ---

@@ -6,12 +6,12 @@
 
 ## Design Philosophy
 
-Color in BerthCare isn't decoration—it's communication. Every hue serves the nurse documenting a visit in a dimly lit hallway, the family member checking on their loved one at midnight, and the coordinator triaging urgent issues in bright sunlight.
+Color in BerthCare isn't decoration—it's communication. Every hue serves the caregiver documenting a visit in a dimly lit hallway, the family member checking on their loved one at midnight, and the coordinator triaging urgent issues in bright sunlight.
 
 ### Core Principles
 
 **1. Clarity Over Beauty**  
-If a nurse has to think about what a color means, we've failed. Color should be instant, obvious, universal.
+If a caregiver has to think about what a color means, we've failed. Color should be instant, obvious, universal.
 
 **2. Reduce to Amplify**  
 We use fewer colors so each one speaks louder. When everything is highlighted, nothing is.
@@ -30,7 +30,8 @@ Colors are validated in car dashboards, hospital hallways, and family living roo
 ## Foundation Colors
 
 ### Trust Blue
-**Why it exists:** The color of confidence. When a nurse taps "Complete Visit," this blue says "done right."
+
+**Why it exists:** The color of confidence. When a caregiver taps "Complete Visit," this blue says "done right."
 
 ```
 trust-50:  #EBF5FF  (rgb 235, 245, 255)  // Whisper - subtle backgrounds
@@ -46,6 +47,7 @@ trust-900: #001F3D  (rgb 0, 31, 61)      // Midnight - maximum depth
 ```
 
 **Where it lives:**
+
 - Primary action buttons ("Save Visit," "Complete")
 - Active navigation indicators
 - Links and interactive text
@@ -54,6 +56,7 @@ trust-900: #001F3D  (rgb 0, 31, 61)      // Midnight - maximum depth
 - Selected states
 
 **Contrast validation:**
+
 - trust-500 on white: 7.3:1 ✓ AAA
 - White on trust-500: 7.3:1 ✓ AAA
 - trust-700 on white: 10.2:1 ✓ AAA
@@ -62,6 +65,7 @@ trust-900: #001F3D  (rgb 0, 31, 61)      // Midnight - maximum depth
 ---
 
 ### Care Teal
+
 **Why it exists:** The color of wellness and connection. Represents the human side of healthcare.
 
 ```
@@ -78,6 +82,7 @@ care-900: #004D42  (rgb 0, 77, 66)      // Deepest - maximum
 ```
 
 **Where it lives:**
+
 - Secondary action buttons
 - Wellness indicators
 - Family portal accents
@@ -86,6 +91,7 @@ care-900: #004D42  (rgb 0, 77, 66)      // Deepest - maximum
 - Connection status (online)
 
 **Contrast validation:**
+
 - care-700 on white: 5.2:1 ✓ AAA
 - care-500 on white: 3.8:1 ✓ AA (large text)
 - Distinguishable for colorblind users ✓
@@ -94,9 +100,10 @@ care-900: #004D42  (rgb 0, 77, 66)      // Deepest - maximum
 
 ## Semantic Colors
 
-These colors have one job: communicate status instantly. A nurse glancing at their phone while walking to the next visit should know everything in 0.3 seconds.
+These colors have one job: communicate status instantly. A caregiver glancing at their phone while walking to the next visit should know everything in 0.3 seconds.
 
 ### Complete Green
+
 **Why it exists:** The feeling of "done." Visit documented, patient cared for, time to move on.
 
 ```
@@ -113,6 +120,7 @@ complete-900: #00441F  (rgb 0, 68, 31)      // Deepest
 ```
 
 **Where it lives:**
+
 - Completed visit badges
 - Success confirmations
 - Checkmarks and completion icons
@@ -120,6 +128,7 @@ complete-900: #00441F  (rgb 0, 68, 31)      // Deepest
 - Sync success messages
 
 **Contrast validation:**
+
 - complete-700 on white: 5.1:1 ✓ AAA
 - complete-500 on white: 3.7:1 ✓ AA (large text)
 - Distinct from red/amber for colorblind users ✓
@@ -127,6 +136,7 @@ complete-900: #00441F  (rgb 0, 68, 31)      // Deepest
 ---
 
 ### Attention Amber
+
 **Why it exists:** "Look at this, but don't panic." Pending visits, reviews needed, things that matter but aren't emergencies.
 
 ```
@@ -143,6 +153,7 @@ attention-900: #994D00  (rgb 153, 77, 0)     // Deepest
 ```
 
 **Where it lives:**
+
 - Pending visit indicators
 - "Review required" badges
 - Caution messages
@@ -150,6 +161,7 @@ attention-900: #994D00  (rgb 153, 77, 0)     // Deepest
 - Sync pending status
 
 **Contrast validation:**
+
 - attention-700 on white: 4.5:1 ✓ AA
 - attention-500 on white: 3.1:1 ✓ AA (large text)
 - Distinct from red and green ✓
@@ -157,6 +169,7 @@ attention-900: #994D00  (rgb 153, 77, 0)     // Deepest
 ---
 
 ### Urgent Red
+
 **Why it exists:** "Act now." Overdue visits, critical alerts, things that can't wait. Used sparingly so it never loses power.
 
 ```
@@ -173,6 +186,7 @@ urgent-900: #6F1313  (rgb 111, 19, 19)    // Deepest
 ```
 
 **Where it lives:**
+
 - Overdue visit alerts
 - Critical error messages
 - Failed sync notifications
@@ -180,6 +194,7 @@ urgent-900: #6F1313  (rgb 111, 19, 19)    // Deepest
 - Emergency contact indicators
 
 **Contrast validation:**
+
 - urgent-500 on white: 5.9:1 ✓ AAA
 - urgent-700 on white: 8.2:1 ✓ AAA
 - Maximum distinction for all users ✓
@@ -187,6 +202,7 @@ urgent-900: #6F1313  (rgb 111, 19, 19)    // Deepest
 ---
 
 ### Inform Purple
+
 **Why it exists:** Neutral information that helps without interrupting. Tips, sync status, helpful hints.
 
 ```
@@ -203,6 +219,7 @@ inform-900: #370F56  (rgb 55, 15, 86)     // Deepest
 ```
 
 **Where it lives:**
+
 - Informational messages
 - Tips and onboarding hints
 - Sync status indicators
@@ -210,6 +227,7 @@ inform-900: #370F56  (rgb 55, 15, 86)     // Deepest
 - Feature discovery badges
 
 **Contrast validation:**
+
 - inform-500 on white: 7.8:1 ✓ AAA
 - inform-700 on white: 11.5:1 ✓ AAA
 - Clear distinction from other semantic colors ✓
@@ -218,9 +236,10 @@ inform-900: #370F56  (rgb 55, 15, 86)     // Deepest
 
 ## Neutral Palette
 
-These are the invisible heroes. 90% of the interface lives here—quiet, clear, getting out of the way so nurses can focus on care, not chrome.
+These are the invisible heroes. 90% of the interface lives here—quiet, clear, getting out of the way so caregivers can focus on care, not chrome.
 
 ### Neutral Gray
+
 **Why it exists:** Structure without noise. The canvas that makes color meaningful.
 
 ```
@@ -239,6 +258,7 @@ neutral-1000: #000000 (rgb 0, 0, 0)        // Pure black - overlays, shadows
 ```
 
 **Where it lives:**
+
 - Text (all hierarchy levels)
 - Backgrounds and surfaces
 - Borders and dividers
@@ -247,6 +267,7 @@ neutral-1000: #000000 (rgb 0, 0, 0)        // Pure black - overlays, shadows
 - Shadows and overlays
 
 **Contrast validation:**
+
 - neutral-900 on neutral-0: 16.1:1 ✓ AAA
 - neutral-700 on neutral-0: 7.4:1 ✓ AAA
 - neutral-600 on neutral-0: 4.6:1 ✓ AA
@@ -261,6 +282,7 @@ These are what developers actually use. Named by purpose, not appearance. If we 
 ---
 
 ### Text
+
 ```
 text-primary:    neutral-900   #212121  // Body text, headlines
 text-secondary:  neutral-700   #616161  // Supporting text, labels
@@ -274,6 +296,7 @@ text-warning:    attention-700 #CC7A00  // Warning messages
 ```
 
 ### Surfaces
+
 ```
 surface-primary:    neutral-0    #FFFFFF  // Main background
 surface-secondary:  neutral-100  #F5F5F5  // Cards, panels
@@ -284,6 +307,7 @@ surface-disabled:   neutral-200  #EEEEEE  // Inactive surfaces
 ```
 
 ### Borders
+
 ```
 border-default:   neutral-300  #E0E0E0  // Standard dividers
 border-subtle:    neutral-200  #EEEEEE  // Soft separation
@@ -295,6 +319,7 @@ border-disabled:  neutral-400  #BDBDBD  // Inactive borders
 ```
 
 ### Interactive States
+
 ```
 interactive-default:  trust-500    #0066CC  // Primary actions
 interactive-hover:    trust-600    #0052A3  // Hover state
@@ -304,6 +329,7 @@ interactive-focus:    trust-500    #0066CC  // Focus ring
 ```
 
 ### Visit Status
+
 ```
 visit-upcoming:   trust-500     #0066CC  // Scheduled visits
 visit-in-progress: care-500     #00A896  // Currently happening
@@ -313,6 +339,7 @@ visit-cancelled:  neutral-500   #9E9E9E  // Cancelled visits
 ```
 
 ### Connection Status
+
 ```
 status-online:    complete-500  #00A84F  // Connected, synced
 status-offline:   neutral-500   #9E9E9E  // No connection
@@ -324,11 +351,12 @@ status-error:     urgent-500    #D32F2F  // Sync failed
 
 ## Dark Mode (Phase 2)
 
-Dark mode isn't just inverted colors—it's a complete rethinking for low-light environments. Nurses documenting visits at 2am, families checking updates before bed.
+Dark mode isn't just inverted colors—it's a complete rethinking for low-light environments. caregivers documenting visits at 2am, families checking updates before bed.
 
 **Current Status:** Not in MVP. Light mode must be perfect first.
 
 **When we build it:**
+
 - Reduce pure white to prevent eye strain
 - Increase color saturation for visibility
 - Adjust shadows to elevation cues
@@ -356,6 +384,7 @@ urgent-dark:   #FF5C72  (rgb 255, 92, 114)   // Softer red
 ## Usage Rules
 
 ### Always
+
 - Use semantic tokens (visit-complete), not raw colors (green-500)
 - Pair color with icons and text—never color alone
 - Test in sunlight, darkness, and on 3-year-old phones
@@ -363,6 +392,7 @@ urgent-dark:   #FF5C72  (rgb 255, 92, 114)   // Softer red
 - Keep color meanings consistent everywhere
 
 ### Never
+
 - Don't use color as the only indicator
 - Don't add colors without purpose
 - Don't use low-contrast combinations
@@ -377,27 +407,31 @@ urgent-dark:   #FF5C72  (rgb 255, 92, 114)   // Softer red
 Every color combination is tested for real-world use. Not just WCAG compliance—actual readability in harsh conditions.
 
 ### Text on Light Backgrounds
-| Token | Hex | Contrast | Level | Real-World Test |
-|-------|-----|----------|-------|-----------------|
-| text-primary | #212121 | 16.1:1 | AAA | ✓ Readable in direct sunlight |
-| text-secondary | #616161 | 7.4:1 | AAA | ✓ Clear in all conditions |
-| text-tertiary | #757575 | 4.6:1 | AA | ✓ Sufficient for labels |
-| text-disabled | #9E9E9E | 3.6:1 | AA (large) | ✓ Obviously inactive |
-| text-link | #0066CC | 7.3:1 | AAA | ✓ Clearly interactive |
-| text-error | #D32F2F | 5.9:1 | AAA | ✓ Urgent without panic |
-| text-success | #007637 | 5.1:1 | AAA | ✓ Positive and clear |
-| text-warning | #CC7A00 | 4.5:1 | AA | ✓ Attention-getting |
+
+| Token          | Hex     | Contrast | Level      | Real-World Test               |
+| -------------- | ------- | -------- | ---------- | ----------------------------- |
+| text-primary   | #212121 | 16.1:1   | AAA        | ✓ Readable in direct sunlight |
+| text-secondary | #616161 | 7.4:1    | AAA        | ✓ Clear in all conditions     |
+| text-tertiary  | #757575 | 4.6:1    | AA         | ✓ Sufficient for labels       |
+| text-disabled  | #9E9E9E | 3.6:1    | AA (large) | ✓ Obviously inactive          |
+| text-link      | #0066CC | 7.3:1    | AAA        | ✓ Clearly interactive         |
+| text-error     | #D32F2F | 5.9:1    | AAA        | ✓ Urgent without panic        |
+| text-success   | #007637 | 5.1:1    | AAA        | ✓ Positive and clear          |
+| text-warning   | #CC7A00 | 4.5:1    | AA         | ✓ Attention-getting           |
 
 ### White Text on Color Backgrounds
-| Token | Hex | Contrast | Level | Real-World Test |
-|-------|-----|----------|-------|-----------------|
-| trust-500 | #0066CC | 7.3:1 | AAA | ✓ Primary buttons pop |
-| urgent-500 | #D32F2F | 5.9:1 | AAA | ✓ Clear in emergencies |
-| complete-700 | #007637 | 4.8:1 | AA | ✓ Success is obvious |
-| neutral-900 | #212121 | 16.1:1 | AAA | ✓ Maximum contrast |
+
+| Token        | Hex     | Contrast | Level | Real-World Test        |
+| ------------ | ------- | -------- | ----- | ---------------------- |
+| trust-500    | #0066CC | 7.3:1    | AAA   | ✓ Primary buttons pop  |
+| urgent-500   | #D32F2F | 5.9:1    | AAA   | ✓ Clear in emergencies |
+| complete-700 | #007637 | 4.8:1    | AA    | ✓ Success is obvious   |
+| neutral-900  | #212121 | 16.1:1   | AAA   | ✓ Maximum contrast     |
 
 ### Colorblind Testing
+
 All color combinations tested with:
+
 - Protanopia (red-blind)
 - Deuteranopia (green-blind)
 - Tritanopia (blue-blind)
@@ -412,6 +446,7 @@ All color combinations tested with:
 Use semantic tokens in code, never raw color values. This lets us evolve the palette without breaking the app.
 
 ### React Native (Mobile App)
+
 ```javascript
 // tokens/colors.js
 export const colors = {
@@ -427,7 +462,7 @@ export const colors = {
     500: '#00A896',
     700: '#007A6E',
   },
-  
+
   // Semantic
   complete: {
     50: '#E8F7ED',
@@ -449,7 +484,7 @@ export const colors = {
     500: '#7B1FA2',
     700: '#59177C',
   },
-  
+
   // Neutral
   neutral: {
     0: '#FFFFFF',
@@ -461,7 +496,7 @@ export const colors = {
     900: '#212121',
     1000: '#000000',
   },
-  
+
   // Functional tokens (what developers actually use)
   text: {
     primary: '#212121',
@@ -474,7 +509,7 @@ export const colors = {
     success: '#007637',
     warning: '#CC7A00',
   },
-  
+
   surface: {
     primary: '#FFFFFF',
     secondary: '#F5F5F5',
@@ -482,7 +517,7 @@ export const colors = {
     inverse: '#212121',
     disabled: '#EEEEEE',
   },
-  
+
   border: {
     default: '#E0E0E0',
     subtle: '#EEEEEE',
@@ -491,7 +526,7 @@ export const colors = {
     error: '#D32F2F',
     success: '#00A84F',
   },
-  
+
   visit: {
     upcoming: '#0066CC',
     inProgress: '#00A896',
@@ -499,7 +534,7 @@ export const colors = {
     overdue: '#D32F2F',
     cancelled: '#9E9E9E',
   },
-  
+
   status: {
     online: '#00A84F',
     offline: '#9E9E9E',
@@ -517,47 +552,48 @@ import { colors } from './tokens/colors';
 ```
 
 ### CSS Variables (Family Portal Web)
+
 ```css
 :root {
   /* Foundation */
-  --color-trust-50: #EBF5FF;
-  --color-trust-500: #0066CC;
-  --color-trust-700: #003D7A;
-  
-  --color-care-50: #E6F9F7;
-  --color-care-500: #00A896;
-  --color-care-700: #007A6E;
-  
+  --color-trust-50: #ebf5ff;
+  --color-trust-500: #0066cc;
+  --color-trust-700: #003d7a;
+
+  --color-care-50: #e6f9f7;
+  --color-care-500: #00a896;
+  --color-care-700: #007a6e;
+
   /* Semantic */
-  --color-complete-500: #00A84F;
+  --color-complete-500: #00a84f;
   --color-complete-700: #007637;
-  --color-urgent-500: #D32F2F;
-  --color-urgent-700: #A12121;
-  --color-attention-500: #FFA000;
-  --color-attention-700: #CC7A00;
-  --color-inform-500: #7B1FA2;
-  --color-inform-700: #59177C;
-  
+  --color-urgent-500: #d32f2f;
+  --color-urgent-700: #a12121;
+  --color-attention-500: #ffa000;
+  --color-attention-700: #cc7a00;
+  --color-inform-500: #7b1fa2;
+  --color-inform-700: #59177c;
+
   /* Neutral */
-  --color-neutral-0: #FFFFFF;
-  --color-neutral-100: #F5F5F5;
-  --color-neutral-300: #E0E0E0;
-  --color-neutral-500: #9E9E9E;
+  --color-neutral-0: #ffffff;
+  --color-neutral-100: #f5f5f5;
+  --color-neutral-300: #e0e0e0;
+  --color-neutral-500: #9e9e9e;
   --color-neutral-700: #616161;
   --color-neutral-900: #212121;
-  
+
   /* Functional tokens */
   --color-text-primary: var(--color-neutral-900);
   --color-text-secondary: var(--color-neutral-700);
   --color-text-link: var(--color-trust-500);
   --color-text-error: var(--color-urgent-500);
-  
+
   --color-surface-primary: var(--color-neutral-0);
   --color-surface-secondary: var(--color-neutral-100);
-  
+
   --color-border-default: var(--color-neutral-300);
   --color-border-focus: var(--color-trust-500);
-  
+
   --color-visit-complete: var(--color-complete-700);
   --color-visit-overdue: var(--color-urgent-500);
 }
@@ -582,6 +618,7 @@ import { colors } from './tokens/colors';
 Colors aren't done until they work in the real world.
 
 ### Tools We Use
+
 - **WebAIM Contrast Checker** - WCAG validation
 - **Color Oracle** - Colorblind simulation
 - **Stark Plugin** - Figma accessibility checks
@@ -589,6 +626,7 @@ Colors aren't done until they work in the real world.
 - **Real environments** - Car dashboard, hospital hallway, living room
 
 ### Pre-Launch Checklist
+
 - [ ] All text combinations meet 4.5:1 minimum (7:1 for AAA)
 - [ ] Large text (18pt+) meets 3:1 minimum
 - [ ] UI components meet 3:1 contrast minimum
@@ -600,8 +638,10 @@ Colors aren't done until they work in the real world.
 - [ ] Status distinguishable without color
 
 ### Real-World Validation
+
 Before shipping any color change:
-1. Test on actual nurse's phone in their car
+
+1. Test on actual caregiver's phone in their car
 2. Show to family member over 60
 3. Verify in hospital fluorescent lighting
 4. Check in dim home lighting at night
@@ -620,7 +660,7 @@ Tested 47 blues. This one felt confident without being corporate, professional w
 Not the typical "success green." Slightly teal-shifted to distinguish from medical greens (scrubs, hospital walls). Distinct for colorblind users.
 
 **Urgent Red (#D32F2F)**  
-Serious but not alarming. Tested with nurses—bright reds caused anxiety. This red says "important" not "panic."
+Serious but not alarming. Tested with caregivers—bright reds caused anxiety. This red says "important" not "panic."
 
 **Neutral Gray Scale**  
 True neutral (no color cast). Tested against warm and cool grays—neutral won for medical context. Doesn't compete with semantic colors.

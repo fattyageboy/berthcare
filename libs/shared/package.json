@@ -1,0 +1,7 @@
+{
+  "name": "@berthcare/shared",
+  "version": "2.0.0",
+  "description": "Shared utilities and types for BerthCare",
+  "main": "../../dist/libs/shared/index.js",
+  "types": "../../dist/libs/shared/index.d.ts"
+}

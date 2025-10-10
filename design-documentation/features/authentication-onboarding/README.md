@@ -4,7 +4,7 @@
 
 ## Overview
 
-BerthCare's authentication and onboarding experience is designed to get home care nurses documenting visits within 60 seconds of first launch. We've eliminated traditional multi-step registration flows in favor of a streamlined, role-aware system that recognizes users are often starting their shift and need immediate access.
+BerthCare's authentication and onboarding experience is designed to get home care caregivers documenting visits within 60 seconds of first launch. We've eliminated traditional multi-step registration flows in favor of a streamlined, role-aware system that recognizes users are often starting their shift and need immediate access.
 
 **Core Principle**: The best interface is no interface. Authentication should be invisible, onboarding should be instant, and users should feel productive from moment one.
 
@@ -13,6 +13,7 @@ BerthCare's authentication and onboarding experience is designed to get home car
 ## User Experience Strategy
 
 ### Primary User Goals
+
 1. **Get to work immediately** - No lengthy setup processes blocking access to patient documentation
 2. **Feel confident using the app** - Intuitive design that requires zero training
 3. **Trust the security** - Biometric authentication that feels both secure and effortless
@@ -21,6 +22,7 @@ BerthCare's authentication and onboarding experience is designed to get home car
 ### Design Decisions
 
 #### What We're Eliminating
+
 - ❌ Traditional username/password creation flows
 - ❌ Multi-screen registration wizards
 - ❌ Email verification delays
@@ -29,6 +31,7 @@ BerthCare's authentication and onboarding experience is designed to get home car
 - ❌ Unnecessary profile setup steps
 
 #### What We're Embracing
+
 - ✓ Pre-provisioned accounts (admin creates, user activates)
 - ✓ Biometric-first authentication (Face ID/Touch ID/fingerprint)
 - ✓ Contextual just-in-time guidance
@@ -41,6 +44,7 @@ BerthCare's authentication and onboarding experience is designed to get home car
 ## Information Architecture
 
 ### Authentication Flow
+
 ```
 App Launch
     ↓
@@ -60,16 +64,19 @@ Role Confirmation (5 seconds)
 ### Role-Based Entry Points
 
 **Frontline Care Worker (Primary Persona)**
+
 - Direct to patient schedule
 - Quick-access documentation shortcuts
 - Offline mode indicator prominent
 
-**Care Coordinator**
+**Care coordinator**
+
 - Team overview dashboard
 - Urgent alerts front and center
 - Communication tools accessible
 
 **Family Member**
+
 - Loved one's care summary
 - Visit history timeline
 - Simple contact options
@@ -79,11 +86,13 @@ Role Confirmation (5 seconds)
 ## Screen-by-Screen Specifications
 
 ### Screen 1: Welcome & Activation
+
 **Purpose**: Transform a pre-provisioned account into an active, personalized experience in under 60 seconds.
 
 #### Visual Design
 
 **Layout Structure**
+
 ```
 ┌─────────────────────────────┐
 │                             │
@@ -108,9 +117,10 @@ Role Confirmation (5 seconds)
 ```
 
 **Visual Specifications**
+
 - **Background**: Soft gradient from `#FFFFFF` to `#F8FAFB` (barely perceptible, creates depth without distraction)
 - **Logo**: 64px height, centered, 80px from top
-- **Welcome Text**: 
+- **Welcome Text**:
   - Font: SF Pro Display Semibold (iOS) / Roboto Medium (Android)
   - Size: 28px
   - Color: `#1A1A1A`
@@ -132,7 +142,8 @@ Role Confirmation (5 seconds)
   - Active state: Subtle scale animation (0.98x on press)
 
 **Interaction Specifications**
-1. **On Launch**: 
+
+1. **On Launch**:
    - Fade in logo (300ms ease-out)
    - Slide up content (400ms ease-out, 100ms delay)
    - Auto-focus activation code input
@@ -151,12 +162,14 @@ Role Confirmation (5 seconds)
    - Network error: Offline mode explanation with retry option
 
 **Accessibility**
+
 - VoiceOver: "Welcome to BerthCare. Enter your 8-character activation code received from your care coordinator."
 - Dynamic Type: Supports up to XXL text sizes
 - High Contrast: Border widths increase to 3px
 - Keyboard Navigation: Tab order follows visual hierarchy
 
 **Edge Cases**
+
 - **No activation code**: "Contact your care coordinator" link opens in-app support chat
 - **Expired code**: Clear message with "Request new code" action
 - **Already activated**: Redirect to biometric setup or login
@@ -165,11 +178,13 @@ Role Confirmation (5 seconds)
 ---
 
 ### Screen 2: Biometric Setup
+
 **Purpose**: Establish secure, frictionless authentication in 15 seconds.
 
 #### Visual Design
 
 **Layout Structure**
+
 ```
 ┌─────────────────────────────┐
 │                             │
@@ -190,12 +205,13 @@ Role Confirmation (5 seconds)
 ```
 
 **Visual Specifications**
-- **Biometric Icon**: 
+
+- **Biometric Icon**:
   - 80px diameter circle
   - Animated gradient background (`#0066CC` to `#0052A3`)
   - Face ID/Touch ID/Fingerprint icon in white
   - Subtle pulse animation (2s cycle, infinite)
-- **Headline**: 
+- **Headline**:
   - Font: SF Pro Display Semibold, 24px
   - Color: `#1A1A1A`
   - Center aligned
@@ -205,13 +221,14 @@ Role Confirmation (5 seconds)
   - Line height: 1.5
   - Max width: 280px, center aligned
 - **Primary Button**: Same specs as Screen 1
-- **Secondary Link**: 
+- **Secondary Link**:
   - Font: SF Pro Text Regular, 15px
   - Color: `#0066CC`
   - No background, no border
   - Underline on press
 
 **Interaction Specifications**
+
 1. **On Entry**:
    - Detect device biometric capability
    - Show appropriate icon (Face ID/Touch ID/Fingerprint)
@@ -229,11 +246,13 @@ Role Confirmation (5 seconds)
    - Strength indicator (must not be 123456, 000000, etc.)
 
 **Accessibility**
+
 - VoiceOver: "Enable Face ID for quick and secure access. Your patient data will be protected."
 - Alternative text for icons based on device capability
 - Support for assistive touch and switch control
 
 **Edge Cases**
+
 - **Biometric enrollment fails**: Graceful fallback to passcode
 - **User declines biometric**: Remember preference, don't ask again
 - **Device doesn't support biometric**: Skip directly to passcode
@@ -242,11 +261,13 @@ Role Confirmation (5 seconds)
 ---
 
 ### Screen 3: Role Confirmation
+
 **Purpose**: Set user expectations and personalize the experience in 5 seconds.
 
 #### Visual Design
 
 **Layout Structure**
+
 ```
 ┌─────────────────────────────┐
 │                             │
@@ -255,7 +276,7 @@ Role Confirmation (5 seconds)
 │   You're all set, Sarah!    │
 │                             │
 │   Your role:                │
-│   Home Care Nurse           │
+│   Home Care caregiver           │
 │                             │
 │   You can:                  │
 │   • Document patient visits │
@@ -268,6 +289,7 @@ Role Confirmation (5 seconds)
 ```
 
 **Visual Specifications**
+
 - **Success Animation**:
   - Checkmark in circle, 64px
   - Animated draw (500ms) + scale bounce (300ms)
@@ -287,6 +309,7 @@ Role Confirmation (5 seconds)
   - Icons next to each capability (16px, `#0066CC`)
 
 **Interaction Specifications**
+
 1. **On Entry**:
    - Play success animation
    - Fade in content sequentially (stagger 100ms)
@@ -298,10 +321,12 @@ Role Confirmation (5 seconds)
    - Show loading skeleton if data not ready
 
 **Accessibility**
-- VoiceOver: "Setup complete. You're all set, Sarah. Your role is Home Care Nurse. You can document patient visits, update care plans, and communicate with your team."
+
+- VoiceOver: "Setup complete. You're all set, Sarah. Your role is Home Care caregiver. You can document patient visits, update care plans, and communicate with your team."
 - Skip button for users who want immediate access
 
 **Edge Cases**
+
 - **Multiple roles**: Show primary role, mention "and more" with details in profile
 - **Restricted permissions**: Clearly communicate limitations
 - **Offline setup**: Show "Will sync when online" message
@@ -309,9 +334,11 @@ Role Confirmation (5 seconds)
 ---
 
 ### Screen 4: First-Time Experience (Contextual Guidance)
+
 **Purpose**: Provide just-in-time guidance without blocking workflow.
 
 #### Design Approach
+
 **No traditional tutorial**. Instead, use:
 
 1. **Contextual Tooltips**
@@ -331,6 +358,7 @@ Role Confirmation (5 seconds)
    - Suggest next steps based on usage patterns
 
 **Visual Specifications**
+
 - **Tooltip Style**:
   - Background: `#1A1A1A` with 95% opacity
   - Text: White, SF Pro Text Regular, 15px
@@ -340,6 +368,7 @@ Role Confirmation (5 seconds)
   - Drop shadow: 0 4px 12px rgba(0,0,0,0.15)
 
 **Interaction Specifications**
+
 - Appear with 300ms fade + slight scale (0.95 to 1.0)
 - Auto-dismiss after 5 seconds OR user tap
 - Never show same tooltip twice
@@ -364,7 +393,8 @@ Success → Patient List (500ms transition)
 ```
 
 **Visual Design**
-- **Splash Screen**: 
+
+- **Splash Screen**:
   - BerthCare logo on white background
   - Subtle fade-in animation
   - Pre-load critical data in background
@@ -375,7 +405,8 @@ Success → Patient List (500ms transition)
   - Clear "Cancel" option returns to passcode
 
 **Error Handling**
-- **Biometric Fails**: 
+
+- **Biometric Fails**:
   - Allow 3 attempts
   - After 3 failures: Require passcode
   - Clear message: "Face ID not recognized. Use passcode?"
@@ -387,17 +418,20 @@ Success → Patient List (500ms transition)
 ### Session Management
 
 **Session Duration**
+
 - **Active Use**: Infinite (while app is in use)
 - **Background**: 30 minutes before re-auth required
 - **Overnight**: Always require re-auth next day
 
 **Re-authentication Triggers**
+
 - App backgrounded for >30 minutes
 - Device locked and unlocked
 - Sensitive action (e.g., viewing full patient record)
 - User manually logs out
 
 **Seamless Re-auth**
+
 - Biometric prompt appears over current screen
 - Success: Resume exactly where user left off
 - Failure: Return to login, preserve app state
@@ -407,19 +441,23 @@ Success → Patient List (500ms transition)
 ## Role-Specific Onboarding Variations
 
 ### Frontline Care Worker
+
 **Focus**: Get to patient documentation immediately
 
 **Onboarding Emphasis**:
+
 - Offline capabilities highlighted
 - Quick documentation shortcuts shown first
 - Smart data reuse feature introduced on second visit
 
 **First Action Prompt**: "Ready to document your first visit?"
 
-### Care Coordinator
+### Care coordinator
+
 **Focus**: Team oversight and communication
 
 **Onboarding Emphasis**:
+
 - Team dashboard overview
 - Alert management introduction
 - Communication tools highlighted
@@ -427,9 +465,11 @@ Success → Patient List (500ms transition)
 **First Action Prompt**: "Your team's schedule is ready to review"
 
 ### Family Member
+
 **Focus**: Understanding care transparency
 
 **Onboarding Emphasis**:
+
 - Privacy and security explanation
 - What information they can see (and can't)
 - How to contact care team
@@ -443,6 +483,7 @@ Success → Patient List (500ms transition)
 ### State Management
 
 **Authentication State**
+
 ```typescript
 interface AuthState {
   isAuthenticated: boolean;
@@ -454,6 +495,7 @@ interface AuthState {
 ```
 
 **Onboarding State**
+
 ```typescript
 interface OnboardingState {
   isComplete: boolean;
@@ -466,18 +508,21 @@ interface OnboardingState {
 ### Security Requirements
 
 **Token Management**
+
 - Access token: 1-hour expiry
 - Refresh token: 30-day expiry, secure storage
 - Biometric tokens: Device keychain only
 - Automatic token refresh in background
 
 **Data Protection**
+
 - All auth data in device secure enclave
 - No credentials stored in plain text
 - Biometric data never leaves device
 - Session tokens encrypted at rest
 
 **Compliance**
+
 - HIA (Health Information Act) compliant
 - PIPEDA privacy standards
 - SOC 2 Type II requirements
@@ -486,12 +531,14 @@ interface OnboardingState {
 ### Performance Targets
 
 **Critical Metrics**
+
 - App launch to biometric prompt: <500ms
 - Biometric auth to patient list: <2 seconds total
 - Activation flow completion: <60 seconds average
 - First-time setup to first action: <90 seconds
 
 **Optimization Strategies**
+
 - Pre-load patient list during biometric auth
 - Cache user role and permissions locally
 - Lazy load non-critical features
@@ -500,12 +547,14 @@ interface OnboardingState {
 ### Offline Capabilities
 
 **Offline Activation**
+
 - Allow activation code entry offline
 - Queue validation for when online
 - Provide limited offline access during setup
 - Clear communication about sync status
 
 **Offline Authentication**
+
 - Biometric works offline (device-level)
 - Cached credentials for offline access
 - Sync auth events when connection restored
@@ -516,14 +565,17 @@ interface OnboardingState {
 ## Animation & Motion Specifications
 
 ### Transition Timing
+
 **Philosophy**: Animations should feel instant yet smooth. Nothing should feel sluggish.
 
 **Timing Functions**
+
 - **Ease-out**: Default for most transitions (feels responsive)
 - **Spring**: For interactive elements (feels natural)
 - **Linear**: For progress indicators only
 
 **Duration Scale**
+
 - **Instant**: 100ms - Feedback for taps
 - **Quick**: 200-300ms - Screen transitions
 - **Standard**: 400ms - Complex animations
@@ -532,6 +584,7 @@ interface OnboardingState {
 ### Key Animations
 
 **Success Checkmark**
+
 ```
 Duration: 800ms total
   0-500ms: Draw checkmark path (ease-out)
@@ -539,6 +592,7 @@ Duration: 800ms total
 ```
 
 **Screen Transitions**
+
 ```
 Duration: 400ms
   Outgoing: Fade to 0 opacity + scale to 0.95 (ease-out)
@@ -547,6 +601,7 @@ Duration: 400ms
 ```
 
 **Button Press**
+
 ```
 Duration: 100ms
   Press: Scale to 0.98 (ease-out)
@@ -555,6 +610,7 @@ Duration: 100ms
 ```
 
 **Error Shake**
+
 ```
 Duration: 400ms
   Translate X: 0 → -10 → 10 → -10 → 0 (ease-in-out)
@@ -565,6 +621,7 @@ Duration: 400ms
 ### Haptic Feedback
 
 **iOS Haptic Engine**
+
 - **Light Impact**: Button taps, character entry
 - **Medium Impact**: Successful actions
 - **Heavy Impact**: Errors, important alerts
@@ -572,6 +629,7 @@ Duration: 400ms
 - **Error Notification**: Invalid code, auth failure
 
 **Android Vibration**
+
 - **Short (10ms)**: Button taps
 - **Medium (50ms)**: Successful actions
 - **Pattern**: Errors (50ms, 100ms pause, 50ms)
@@ -583,30 +641,35 @@ Duration: 400ms
 ### WCAG 2.1 AA Standards
 
 **Visual Accessibility**
+
 - **Color Contrast**: Minimum 4.5:1 for text, 3:1 for UI components
 - **Text Size**: Support Dynamic Type up to 200% scaling
 - **Touch Targets**: Minimum 44x44pt (iOS) / 48x48dp (Android)
 - **Focus Indicators**: 2px border, high contrast color
 
 **Screen Reader Support**
+
 - **VoiceOver/TalkBack**: Full navigation support
 - **Semantic Labels**: Descriptive labels for all interactive elements
 - **Announcements**: State changes announced clearly
 - **Reading Order**: Logical flow matching visual hierarchy
 
 **Motor Accessibility**
+
 - **Large Touch Targets**: All buttons minimum 56px height
 - **Spacing**: Minimum 8px between interactive elements
 - **Alternative Input**: Full keyboard navigation support
 - **Voice Control**: Compatible with voice navigation
 
 **Cognitive Accessibility**
+
 - **Simple Language**: 8th-grade reading level maximum
 - **Clear Instructions**: One action per instruction
 - **Error Messages**: Plain language with clear resolution steps
 - **Consistent Patterns**: Same interactions work the same way everywhere
 
 ### Testing Requirements
+
 - Test with VoiceOver/TalkBack enabled
 - Test with 200% text scaling
 - Test with high contrast mode
@@ -618,6 +681,7 @@ Duration: 400ms
 ## Quality Assurance Checklist
 
 ### Design System Compliance
+
 - [ ] All colors from approved palette
 - [ ] Typography follows scale and hierarchy
 - [ ] Spacing uses 8px grid system
@@ -625,6 +689,7 @@ Duration: 400ms
 - [ ] Animations follow motion guidelines
 
 ### UX Validation
+
 - [ ] User can complete activation in <60 seconds
 - [ ] Biometric setup takes <15 seconds
 - [ ] Returning user login takes <2 seconds
@@ -633,6 +698,7 @@ Duration: 400ms
 - [ ] Offline mode clearly communicated
 
 ### Accessibility Compliance
+
 - [ ] WCAG 2.1 AA color contrast met
 - [ ] VoiceOver/TalkBack fully functional
 - [ ] Dynamic Type supported
@@ -641,6 +707,7 @@ Duration: 400ms
 - [ ] High contrast mode supported
 
 ### Technical Validation
+
 - [ ] Biometric auth works on all supported devices
 - [ ] Offline activation queues properly
 - [ ] Session management handles edge cases
@@ -649,6 +716,7 @@ Duration: 400ms
 - [ ] Security requirements satisfied
 
 ### Platform-Specific
+
 - [ ] iOS: Face ID/Touch ID integration correct
 - [ ] iOS: Safe area handling for notch devices
 - [ ] Android: Fingerprint/face unlock integration
@@ -661,6 +729,7 @@ Duration: 400ms
 ## Success Metrics
 
 ### Primary Metrics
+
 - **Time to First Action**: <90 seconds from app launch to first productive action
 - **Activation Completion Rate**: >95% of users complete activation
 - **Biometric Adoption**: >85% of users enable biometric auth
@@ -668,6 +737,7 @@ Duration: 400ms
 - **User Satisfaction**: >4.5/5 rating for onboarding experience
 
 ### Secondary Metrics
+
 - **Support Tickets**: <2% of users need activation help
 - **Biometric Failure Rate**: <1% of auth attempts fail
 - **Session Re-auth Frequency**: <3 times per 8-hour shift
@@ -675,6 +745,7 @@ Duration: 400ms
 - **Feature Discovery**: >80% of users find key features within first week
 
 ### Long-term Indicators
+
 - **Retention**: >90% of activated users remain active after 30 days
 - **Login Frequency**: Average 5+ logins per day for frontline workers
 - **Biometric Preference**: <5% of users switch back to passcode
@@ -685,6 +756,7 @@ Duration: 400ms
 ## Future Enhancements (Post-MVP)
 
 ### Phase 2 Considerations
+
 - **Single Sign-On (SSO)**: Integration with health authority identity providers
 - **Multi-Device Support**: Seamless switching between phone and tablet
 - **Biometric Re-enrollment**: Easy recovery if biometric data changes
@@ -692,6 +764,7 @@ Duration: 400ms
 - **Personalization**: User-customizable home screen and shortcuts
 
 ### Innovation Opportunities
+
 - **Ambient Authentication**: Context-aware auth (location, time, behavior patterns)
 - **Voice Authentication**: Voice biometric as alternative to Face ID
 - **Wearable Integration**: Apple Watch/Android Wear quick auth
@@ -703,6 +776,7 @@ Duration: 400ms
 ## Design Rationale
 
 ### Why No Traditional Registration?
+
 **Problem**: Traditional registration flows create friction and delay value delivery.
 
 **Solution**: Pre-provisioned accounts mean users are expected and welcomed, not interrogated. The care coordinator handles administrative setup; the user just activates and starts working.
@@ -710,6 +784,7 @@ Duration: 400ms
 **Impact**: 60-second activation vs. 5-10 minute traditional registration.
 
 ### Why Biometric-First?
+
 **Problem**: Passwords are forgotten, insecure, and slow to enter.
 
 **Solution**: Biometric authentication is faster, more secure, and feels magical. It's the standard users expect from modern apps.
@@ -717,6 +792,7 @@ Duration: 400ms
 **Impact**: 2-second login vs. 15-30 second password entry.
 
 ### Why No Tutorial Carousel?
+
 **Problem**: Users skip tutorials, then feel lost. Tutorials delay getting to actual work.
 
 **Solution**: Contextual, just-in-time guidance appears exactly when needed. Empty states teach through use, not through reading.
@@ -724,6 +800,7 @@ Duration: 400ms
 **Impact**: Users start working immediately, learn by doing, retain knowledge better.
 
 ### Why Role Confirmation Screen?
+
 **Problem**: Users need to understand what they can do and why.
 
 **Solution**: Brief confirmation screen sets expectations and personalizes the experience. It's a moment of clarity, not a barrier.
@@ -735,25 +812,29 @@ Duration: 400ms
 ## Developer Handoff Notes
 
 ### Implementation Priority
+
 1. **P0 - Critical Path**: Activation flow, biometric setup, basic auth
 2. **P1 - Core Experience**: Role confirmation, contextual tooltips, session management
 3. **P2 - Polish**: Advanced animations, haptic feedback, edge case handling
 
 ### Key Integration Points
+
 - **Backend API**: `/auth/activate`, `/auth/biometric/register`, `/auth/token/refresh`
 - **Device APIs**: Biometric (Face ID/Touch ID/Fingerprint), Keychain/Keystore, Haptics
 - **Analytics**: Track activation funnel, auth success rates, time-to-first-action
 - **Error Logging**: Capture auth failures, activation errors, session issues
 
 ### Testing Scenarios
+
 1. **Happy Path**: New user activates, enables biometric, starts working
 2. **Biometric Unavailable**: User completes setup with passcode only
 3. **Offline Activation**: User activates without network, syncs later
 4. **Session Expiry**: User returns after 30 minutes, re-authenticates seamlessly
-5. **Multiple Roles**: User with coordinator + nurse roles sees appropriate experience
+5. **Multiple Roles**: User with coordinator + caregiver roles sees appropriate experience
 6. **Accessibility**: Complete flow with VoiceOver, large text, high contrast
 
 ### Performance Monitoring
+
 - Track P95 latency for each screen transition
 - Monitor biometric auth success/failure rates
 - Alert on activation completion rate drops

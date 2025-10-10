@@ -1,49 +1,40 @@
-# CODEOWNERS - Code Review Assignments
+# CODEOWNERS - Automatic code review assignments
 # https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
 # Default owners for everything in the repo
-* @technical-manager
+* @berthcare/tech-leads
 
 # Mobile application
-/mobile/ @frontend-engineer @technical-manager
+/apps/mobile/ @berthcare/mobile-team @berthcare/tech-leads
 
 # Backend services
-/backend/ @backend-engineer @technical-manager
+/apps/backend/ @berthcare/backend-team @berthcare/tech-leads
 
-# Infrastructure and DevOps
-/infrastructure/ @devops-engineer @technical-manager
-/.github/ @devops-engineer
-/docker-compose.yml @devops-engineer
-/Dockerfile* @devops-engineer
+# Shared libraries
+/libs/ @berthcare/tech-leads
+
+# Infrastructure and deployment
+/terraform/ @berthcare/devops-team @berthcare/tech-leads
+/.github/ @berthcare/devops-team @berthcare/tech-leads
+/docker-compose.yml @berthcare/devops-team
+/Dockerfile* @berthcare/devops-team
 
 # Design documentation
-/design-documentation/ @ux-ui-designer @frontend-engineer
+/design-documentation/ @berthcare/design-team @berthcare/product-team
 
 # Project documentation
-/project-documentation/ @technical-manager @system-architect
+/project-documentation/ @berthcare/tech-leads @berthcare/product-team
 
 # Security-sensitive files
-/backend/src/auth/ @security-analyst @backend-engineer
-/backend/src/middleware/security.ts @security-analyst @backend-engineer
-/.env.example @security-analyst @devops-engineer
+/.env.example @berthcare/security-team @berthcare/tech-leads
+/SECURITY.md @berthcare/security-team
 
-# Database schemas and migrations
-/backend/src/database/ @backend-engineer @system-architect
-/backend/migrations/ @backend-engineer @system-architect
+# Database migrations
+/apps/backend/src/database/migrations/ @berthcare/backend-team @berthcare/tech-leads
 
-# Testing
-**/*.test.ts @qa-engineer
-**/*.test.tsx @qa-engineer
-**/*.spec.ts @qa-engineer
-**/*.spec.tsx @qa-engineer
-/mobile/__tests__/ @qa-engineer @frontend-engineer
-/backend/__tests__/ @qa-engineer @backend-engineer
+# CI/CD workflows
+/.github/workflows/ @berthcare/devops-team @berthcare/tech-leads
 
-# CI/CD pipelines
-/.github/workflows/ @devops-engineer @technical-manager
-
-# Configuration files
-package.json @technical-manager
-tsconfig.json @technical-manager
-.eslintrc.* @technical-manager
-.prettierrc.* @technical-manager
+# Package dependencies
+/package.json @berthcare/tech-leads
+/apps/*/package.json @berthcare/tech-leads

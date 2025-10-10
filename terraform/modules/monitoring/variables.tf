@@ -17,43 +17,42 @@ variable "log_retention_days" {
   default     = 30
 }
 
-variable "error_log_retention_days" {
-  description = "Error log retention in days (longer for compliance)"
+variable "error_rate_threshold" {
+  description = "Threshold for 5XX error count alarm"
   type        = number
-  default     = 90
+  default     = 10
 }
 
-variable "db_instance_id" {
-  description = "RDS database instance identifier for alarms"
+variable "response_time_threshold_ms" {
+  description = "Threshold for API response time alarm in milliseconds"
+  type        = number
+  default     = 2000
+}
+
+variable "database_cpu_threshold" {
+  description = "Threshold for database CPU utilization alarm (%)"
+  type        = number
+  default     = 80
+}
+
+variable "database_instance_id" {
+  description = "RDS database instance identifier"
   type        = string
 }
 
-variable "db_max_connections" {
-  description = "Maximum database connections for alarm threshold"
+variable "database_max_connections" {
+  description = "Maximum database connections"
   type        = number
   default     = 100
 }
 
-variable "alarm_sns_topic_arn" {
-  description = "SNS topic ARN for alarm notifications (optional)"
+variable "redis_cluster_id" {
+  description = "ElastiCache Redis cluster identifier"
   type        = string
-  default     = ""
 }
 
-variable "create_sns_topic" {
-  description = "Whether to create SNS topic for alarms"
-  type        = bool
-  default     = true
-}
-
-variable "alarm_email" {
-  description = "Email address for alarm notifications"
-  type        = string
-  default     = ""
-}
-
-variable "tags" {
-  description = "Tags to apply to all resources"
-  type        = map(string)
-  default     = {}
+variable "alert_email_addresses" {
+  description = "List of email addresses to receive alerts"
+  type        = list(string)
+  default     = []
 }

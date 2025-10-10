@@ -1,0 +1,10 @@
+# Nx ignore patterns
+node_modules
+dist
+build
+coverage
+.nx/cache
+.DS_Store
+*.log
+.env
+.env.*

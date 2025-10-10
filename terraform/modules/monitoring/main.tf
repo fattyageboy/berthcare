@@ -1,38 +1,42 @@
 # BerthCare Monitoring & Observability Module
 # CloudWatch dashboards, alarms, and log aggregation
-# Philosophy: "Obsess over every detail" - Monitor everything that matters
+
+terraform {
+  required_version = ">= 1.6"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
 
 # CloudWatch Log Groups
-resource "aws_cloudwatch_log_group" "backend_api" {
-  name              = "/berthcare/${var.environment}/backend/api"
+resource "aws_cloudwatch_log_group" "api_logs" {
+  name              = "/aws/ecs/${var.environment}/berthcare-api"
   retention_in_days = var.log_retention_days
 
-  tags = merge(var.tags, {
-    Name = "berthcare-${var.environment}-backend-api-logs"
-  })
+  tags = {
+    Name        = "berthcare-api-logs-${var.environment}"
+    Environment = var.environment
+    Project     = "BerthCare"
+  }
 }
 
-resource "aws_cloudwatch_log_group" "backend_errors" {
-  name              = "/berthcare/${var.environment}/backend/errors"
-  retention_in_days = var.error_log_retention_days
-
-  tags = merge(var.tags, {
-    Name = "berthcare-${var.environment}-backend-errors"
-  })
-}
-
-resource "aws_cloudwatch_log_group" "database" {
-  name              = "/berthcare/${var.environment}/database"
+resource "aws_cloudwatch_log_group" "application_logs" {
+  name              = "/berthcare/${var.environment}/application"
   retention_in_days = var.log_retention_days
 
-  tags = merge(var.tags, {
-    Name = "berthcare-${var.environment}-database-logs"
-  })
+  tags = {
+    Name        = "berthcare-application-logs-${var.environment}"
+    Environment = var.environment
+    Project     = "BerthCare"
+  }
 }
 
 # CloudWatch Dashboard - API Performance
 resource "aws_cloudwatch_dashboard" "api_performance" {
-  dashboard_name = "berthcare-${var.environment}-api-performance"
+  dashboard_name = "BerthCare-API-Performance-${var.environment}"
 
   dashboard_body = jsonencode({
     widgets = [
@@ -40,13 +44,13 @@ resource "aws_cloudwatch_dashboard" "api_performance" {
         type = "metric"
         properties = {
           metrics = [
-            ["AWS/ApplicationELB", "TargetResponseTime", { stat = "Average", label = "Avg Latency" }],
-            ["...", { stat = "p99", label = "P99 Latency" }]
+            ["AWS/ApplicationELB", "TargetResponseTime", { stat = "Average", label = "Avg Response Time" }],
+            ["...", { stat = "p99", label = "P99 Response Time" }]
           ]
           period = 300
           stat   = "Average"
           region = var.aws_region
-          title  = "API Latency (ms)"
+          title  = "API Response Time (ms)"
           yAxis = {
             left = {
               min = 0
@@ -59,9 +63,9 @@ resource "aws_cloudwatch_dashboard" "api_performance" {
         properties = {
           metrics = [
             ["AWS/ApplicationELB", "RequestCount", { stat = "Sum", label = "Total Requests" }],
-            [".", "HTTPCode_Target_2XX_Count", { stat = "Sum", label = "Success (2xx)" }],
-            [".", "HTTPCode_Target_4XX_Count", { stat = "Sum", label = "Client Errors (4xx)" }],
-            [".", "HTTPCode_Target_5XX_Count", { stat = "Sum", label = "Server Errors (5xx)" }]
+            [".", "HTTPCode_Target_2XX_Count", { stat = "Sum", label = "2XX Success" }],
+            [".", "HTTPCode_Target_4XX_Count", { stat = "Sum", label = "4XX Client Errors" }],
+            [".", "HTTPCode_Target_5XX_Count", { stat = "Sum", label = "5XX Server Errors" }]
           ]
           period = 300
           stat   = "Sum"
@@ -73,295 +77,227 @@ resource "aws_cloudwatch_dashboard" "api_performance" {
         type = "metric"
         properties = {
           metrics = [
-            ["AWS/ApplicationELB", "TargetConnectionErrorCount", { stat = "Sum" }],
-            [".", "UnHealthyHostCount", { stat = "Average" }]
+            ["AWS/ApplicationELB", "TargetConnectionErrorCount", { stat = "Sum" }]
           ]
           period = 300
+          stat   = "Sum"
           region = var.aws_region
-          title  = "Connection Errors & Unhealthy Hosts"
+          title  = "Connection Errors"
         }
       },
       {
         type = "metric"
         properties = {
           metrics = [
-            ["BerthCare/API", "SyncBatchSize", { stat = "Average", label = "Avg Batch Size" }],
-            [".", "SyncDuration", { stat = "Average", label = "Avg Sync Duration (ms)" }]
-          ]
-          period = 300
-          region = var.aws_region
-          title  = "Sync Performance"
-        }
-      }
-    ]
-  })
-}
-
-# CloudWatch Dashboard - Database Performance
-resource "aws_cloudwatch_dashboard" "database_performance" {
-  dashboard_name = "berthcare-${var.environment}-database"
-
-  dashboard_body = jsonencode({
-    widgets = [
-      {
-        type = "metric"
-        properties = {
-          metrics = [
-            ["AWS/RDS", "CPUUtilization", { stat = "Average", label = "CPU %" }]
+            ["AWS/RDS", "CPUUtilization", { stat = "Average", label = "Database CPU" }],
+            [".", "DatabaseConnections", { stat = "Average", label = "DB Connections" }]
           ]
           period = 300
           stat   = "Average"
           region = var.aws_region
-          title  = "Database CPU Utilization"
-          yAxis = {
-            left = {
-              min = 0
-              max = 100
-            }
-          }
+          title  = "Database Performance"
         }
       },
       {
         type = "metric"
         properties = {
           metrics = [
-            ["AWS/RDS", "DatabaseConnections", { stat = "Average", label = "Active Connections" }]
+            ["AWS/ElastiCache", "CPUUtilization", { stat = "Average", label = "Redis CPU" }],
+            [".", "CurrConnections", { stat = "Average", label = "Redis Connections" }]
           ]
           period = 300
           stat   = "Average"
           region = var.aws_region
-          title  = "Database Connections"
+          title  = "Cache Performance"
         }
       },
-      {
-        type = "metric"
-        properties = {
-          metrics = [
-            ["AWS/RDS", "ReadLatency", { stat = "Average", label = "Read Latency (ms)" }],
-            [".", "WriteLatency", { stat = "Average", label = "Write Latency (ms)" }]
-          ]
-          period = 300
-          stat   = "Average"
-          region = var.aws_region
-          title  = "Database Latency"
-        }
-      },
-      {
-        type = "metric"
-        properties = {
-          metrics = [
-            ["AWS/RDS", "FreeableMemory", { stat = "Average", label = "Free Memory (bytes)" }],
-            [".", "FreeStorageSpace", { stat = "Average", label = "Free Storage (bytes)" }]
-          ]
-          period = 300
-          stat   = "Average"
-          region = var.aws_region
-          title  = "Database Resources"
-        }
-      }
-    ]
-  })
-}
-
-# CloudWatch Dashboard - Error Tracking
-resource "aws_cloudwatch_dashboard" "error_tracking" {
-  dashboard_name = "berthcare-${var.environment}-errors"
-
-  dashboard_body = jsonencode({
-    widgets = [
       {
         type = "log"
         properties = {
-          query  = <<-EOT
-            SOURCE '${aws_cloudwatch_log_group.backend_errors.name}'
-            | fields @timestamp, level, message, error, stack
-            | filter level = "error"
-            | sort @timestamp desc
-            | limit 100
-          EOT
-          region = var.aws_region
-          title  = "Recent Errors (Last 100)"
-        }
-      },
-      {
-        type = "metric"
-        properties = {
-          metrics = [
-            ["BerthCare/API", "ErrorRate", { stat = "Average", label = "Error Rate %" }]
-          ]
-          period = 300
-          stat   = "Average"
-          region = var.aws_region
-          title  = "API Error Rate"
-          yAxis = {
-            left = {
-              min = 0
-            }
-          }
+          query   = "SOURCE '${aws_cloudwatch_log_group.api_logs.name}' | fields @timestamp, @message | filter @message like /ERROR/ | sort @timestamp desc | limit 20"
+          region  = var.aws_region
+          title   = "Recent API Errors"
         }
       }
     ]
   })
 }
 
-# CloudWatch Alarms - API Error Rate
-resource "aws_cloudwatch_metric_alarm" "api_error_rate_high" {
-  alarm_name          = "berthcare-${var.environment}-api-error-rate-high"
+# CloudWatch Alarm - API Error Rate
+resource "aws_cloudwatch_metric_alarm" "api_error_rate" {
+  alarm_name          = "berthcare-api-error-rate-${var.environment}"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
-  metric_name         = "ErrorRate"
-  namespace           = "BerthCare/API"
+  metric_name         = "HTTPCode_Target_5XX_Count"
+  namespace           = "AWS/ApplicationELB"
   period              = 300
-  statistic           = "Average"
-  threshold           = 5.0
-  alarm_description   = "API error rate exceeds 5%"
+  statistic           = "Sum"
+  threshold           = var.error_rate_threshold
+  alarm_description   = "API 5XX error rate exceeds ${var.error_rate_threshold}% over 10 minutes"
   treat_missing_data  = "notBreaching"
 
-  alarm_actions = var.alarm_sns_topic_arn != "" ? [var.alarm_sns_topic_arn] : []
+  alarm_actions = [aws_sns_topic.alerts.arn]
+  ok_actions    = [aws_sns_topic.alerts.arn]
 
-  tags = merge(var.tags, {
-    Name     = "berthcare-${var.environment}-api-error-rate"
-    Severity = "high"
-  })
+  tags = {
+    Name        = "api-error-rate-${var.environment}"
+    Environment = var.environment
+    Severity    = "high"
+  }
 }
 
-# CloudWatch Alarms - Database CPU
-resource "aws_cloudwatch_metric_alarm" "database_cpu_high" {
-  alarm_name          = "berthcare-${var.environment}-database-cpu-high"
+# CloudWatch Alarm - API Response Time
+resource "aws_cloudwatch_metric_alarm" "api_response_time" {
+  alarm_name          = "berthcare-api-response-time-${var.environment}"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  metric_name         = "TargetResponseTime"
+  namespace           = "AWS/ApplicationELB"
+  period              = 300
+  statistic           = "Average"
+  threshold           = var.response_time_threshold_ms / 1000 # Convert to seconds
+  alarm_description   = "API response time exceeds ${var.response_time_threshold_ms}ms"
+  treat_missing_data  = "notBreaching"
+
+  alarm_actions = [aws_sns_topic.alerts.arn]
+  ok_actions    = [aws_sns_topic.alerts.arn]
+
+  tags = {
+    Name        = "api-response-time-${var.environment}"
+    Environment = var.environment
+    Severity    = "medium"
+  }
+}
+
+# CloudWatch Alarm - Database CPU
+resource "aws_cloudwatch_metric_alarm" "database_cpu" {
+  alarm_name          = "berthcare-database-cpu-${var.environment}"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
   metric_name         = "CPUUtilization"
   namespace           = "AWS/RDS"
   period              = 300
   statistic           = "Average"
-  threshold           = 80.0
-  alarm_description   = "Database CPU utilization exceeds 80%"
+  threshold           = var.database_cpu_threshold
+  alarm_description   = "Database CPU utilization exceeds ${var.database_cpu_threshold}%"
   treat_missing_data  = "notBreaching"
 
   dimensions = {
-    DBInstanceIdentifier = var.db_instance_id
+    DBInstanceIdentifier = var.database_instance_id
   }
 
-  alarm_actions = var.alarm_sns_topic_arn != "" ? [var.alarm_sns_topic_arn] : []
+  alarm_actions = [aws_sns_topic.alerts.arn]
+  ok_actions    = [aws_sns_topic.alerts.arn]
 
-  tags = merge(var.tags, {
-    Name     = "berthcare-${var.environment}-database-cpu"
-    Severity = "high"
-  })
+  tags = {
+    Name        = "database-cpu-${var.environment}"
+    Environment = var.environment
+    Severity    = "high"
+  }
 }
 
-# CloudWatch Alarms - Database Connections
-resource "aws_cloudwatch_metric_alarm" "database_connections_high" {
-  alarm_name          = "berthcare-${var.environment}-database-connections-high"
+# CloudWatch Alarm - Database Connections
+resource "aws_cloudwatch_metric_alarm" "database_connections" {
+  alarm_name          = "berthcare-database-connections-${var.environment}"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
   metric_name         = "DatabaseConnections"
   namespace           = "AWS/RDS"
   period              = 300
   statistic           = "Average"
-  threshold           = var.db_max_connections * 0.8
-  alarm_description   = "Database connections exceed 80% of max"
+  threshold           = var.database_max_connections * 0.8 # 80% of max
+  alarm_description   = "Database connections exceed 80% of maximum"
   treat_missing_data  = "notBreaching"
 
   dimensions = {
-    DBInstanceIdentifier = var.db_instance_id
+    DBInstanceIdentifier = var.database_instance_id
   }
 
-  alarm_actions = var.alarm_sns_topic_arn != "" ? [var.alarm_sns_topic_arn] : []
+  alarm_actions = [aws_sns_topic.alerts.arn]
 
-  tags = merge(var.tags, {
-    Name     = "berthcare-${var.environment}-database-connections"
-    Severity = "medium"
-  })
+  tags = {
+    Name        = "database-connections-${var.environment}"
+    Environment = var.environment
+    Severity    = "medium"
+  }
 }
 
-# CloudWatch Alarms - API Latency
-resource "aws_cloudwatch_metric_alarm" "api_latency_high" {
-  alarm_name          = "berthcare-${var.environment}-api-latency-high"
+# CloudWatch Alarm - Redis CPU
+resource "aws_cloudwatch_metric_alarm" "redis_cpu" {
+  alarm_name          = "berthcare-redis-cpu-${var.environment}"
   comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = 3
-  metric_name         = "TargetResponseTime"
-  namespace           = "AWS/ApplicationELB"
+  evaluation_periods  = 2
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/ElastiCache"
   period              = 300
   statistic           = "Average"
-  threshold           = 1.0
-  alarm_description   = "API latency exceeds 1 second"
+  threshold           = 75
+  alarm_description   = "Redis CPU utilization exceeds 75%"
   treat_missing_data  = "notBreaching"
 
-  alarm_actions = var.alarm_sns_topic_arn != "" ? [var.alarm_sns_topic_arn] : []
+  dimensions = {
+    CacheClusterId = var.redis_cluster_id
+  }
 
-  tags = merge(var.tags, {
-    Name     = "berthcare-${var.environment}-api-latency"
-    Severity = "medium"
-  })
-}
+  alarm_actions = [aws_sns_topic.alerts.arn]
 
-# CloudWatch Alarms - Unhealthy Hosts
-resource "aws_cloudwatch_metric_alarm" "unhealthy_hosts" {
-  alarm_name          = "berthcare-${var.environment}-unhealthy-hosts"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = 1
-  metric_name         = "UnHealthyHostCount"
-  namespace           = "AWS/ApplicationELB"
-  period              = 60
-  statistic           = "Average"
-  threshold           = 0
-  alarm_description   = "One or more backend hosts are unhealthy"
-  treat_missing_data  = "notBreaching"
-
-  alarm_actions = var.alarm_sns_topic_arn != "" ? [var.alarm_sns_topic_arn] : []
-
-  tags = merge(var.tags, {
-    Name     = "berthcare-${var.environment}-unhealthy-hosts"
-    Severity = "critical"
-  })
-}
-
-# SNS Topic for Alarms (optional - can be created separately)
-resource "aws_sns_topic" "alarms" {
-  count = var.create_sns_topic ? 1 : 0
-
-  name              = "berthcare-${var.environment}-alarms"
-  display_name      = "BerthCare ${var.environment} Alarms"
-  kms_master_key_id = "alias/aws/sns"
-
-  tags = merge(var.tags, {
-    Name = "berthcare-${var.environment}-alarms"
-  })
-}
-
-resource "aws_sns_topic_subscription" "alarm_email" {
-  count = var.create_sns_topic && var.alarm_email != "" ? 1 : 0
-
-  topic_arn = aws_sns_topic.alarms[0].arn
-  protocol  = "email"
-  endpoint  = var.alarm_email
-}
-
-# CloudWatch Log Metric Filter - Error Rate
-resource "aws_cloudwatch_log_metric_filter" "error_rate" {
-  name           = "berthcare-${var.environment}-error-rate"
-  log_group_name = aws_cloudwatch_log_group.backend_errors.name
-  pattern        = "[time, request_id, level = ERROR*, ...]"
-
-  metric_transformation {
-    name      = "ErrorRate"
-    namespace = "BerthCare/API"
-    value     = "1"
-    unit      = "Count"
+  tags = {
+    Name        = "redis-cpu-${var.environment}"
+    Environment = var.environment
+    Severity    = "medium"
   }
 }
 
-# CloudWatch Log Metric Filter - Sync Operations
-resource "aws_cloudwatch_log_metric_filter" "sync_operations" {
-  name           = "berthcare-${var.environment}-sync-operations"
-  log_group_name = aws_cloudwatch_log_group.backend_api.name
-  pattern        = "[time, request_id, level, msg = \"*sync*\", batch_size, duration, ...]"
+# SNS Topic for Alerts
+resource "aws_sns_topic" "alerts" {
+  name = "berthcare-alerts-${var.environment}"
+
+  tags = {
+    Name        = "berthcare-alerts-${var.environment}"
+    Environment = var.environment
+    Project     = "BerthCare"
+  }
+}
+
+# SNS Topic Subscription - Email
+resource "aws_sns_topic_subscription" "alerts_email" {
+  count     = length(var.alert_email_addresses)
+  topic_arn = aws_sns_topic.alerts.arn
+  protocol  = "email"
+  endpoint  = var.alert_email_addresses[count.index]
+}
+
+# CloudWatch Metric Filter - Application Errors
+resource "aws_cloudwatch_log_metric_filter" "application_errors" {
+  name           = "application-errors-${var.environment}"
+  log_group_name = aws_cloudwatch_log_group.application_logs.name
+  pattern        = "[ERROR]"
 
   metric_transformation {
-    name      = "SyncOperations"
-    namespace = "BerthCare/API"
+    name      = "ApplicationErrors"
+    namespace = "BerthCare/${var.environment}"
     value     = "1"
-    unit      = "Count"
+  }
+}
+
+# CloudWatch Alarm - Application Error Count
+resource "aws_cloudwatch_metric_alarm" "application_errors" {
+  alarm_name          = "berthcare-application-errors-${var.environment}"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "ApplicationErrors"
+  namespace           = "BerthCare/${var.environment}"
+  period              = 300
+  statistic           = "Sum"
+  threshold           = 10
+  alarm_description   = "Application error count exceeds 10 in 5 minutes"
+  treat_missing_data  = "notBreaching"
+
+  alarm_actions = [aws_sns_topic.alerts.arn]
+
+  tags = {
+    Name        = "application-errors-${var.environment}"
+    Environment = var.environment
+    Severity    = "high"
   }
 }

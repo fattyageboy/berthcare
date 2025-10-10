@@ -1,0 +1,258 @@
+{
+  "graph": {
+    "nodes": {
+      "backend": {
+        "name": "backend",
+        "type": "app",
+        "data": {
+          "root": "apps/backend",
+          "name": "backend",
+          "targets": {
+            "dev": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "tsx watch src/main.ts",
+                "cwd": "apps/backend"
+              },
+              "configurations": {}
+            },
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "apps/backend/dist",
+                "main": "apps/backend/src/main.ts",
+                "tsConfig": "apps/backend/tsconfig.json",
+                "assets": []
+              },
+              "configurations": {}
+            },
+            "start": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "start"
+              },
+              "configurations": {}
+            },
+            "test": {
+              "executor": "nx:run-commands",
+              "inputs": [
+                "default",
+                "^production",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true,
+              "options": {
+                "command": "jest",
+                "cwd": "apps/backend"
+              },
+              "configurations": {}
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true,
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "options": {
+                "lintFilePatterns": [
+                  "apps/backend/**/*.ts"
+                ]
+              },
+              "configurations": {}
+            }
+          },
+          "sourceRoot": "apps/backend/src",
+          "projectType": "application",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "tags": [
+            "type:app",
+            "platform:backend"
+          ],
+          "implicitDependencies": []
+        }
+      },
+      "mobile": {
+        "name": "mobile",
+        "type": "app",
+        "data": {
+          "root": "apps/mobile",
+          "name": "mobile",
+          "targets": {
+            "start": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "start"
+              },
+              "configurations": {}
+            },
+            "android": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "android"
+              },
+              "configurations": {}
+            },
+            "ios": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "ios"
+              },
+              "configurations": {}
+            },
+            "web": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "web"
+              },
+              "configurations": {}
+            },
+            "build": {
+              "executor": "nx:run-commands",
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true,
+              "options": {
+                "commands": [
+                  "expo export --platform ios --output-dir dist/ios",
+                  "expo export --platform android --output-dir dist/android"
+                ],
+                "cwd": "apps/mobile",
+                "parallel": false
+              },
+              "configurations": {}
+            },
+            "test": {
+              "executor": "nx:run-commands",
+              "inputs": [
+                "default",
+                "^production",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true,
+              "options": {
+                "command": "jest",
+                "cwd": "apps/mobile"
+              },
+              "configurations": {}
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true,
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "options": {
+                "lintFilePatterns": [
+                  "apps/mobile/**/*.{ts,tsx,js,jsx}"
+                ]
+              },
+              "configurations": {}
+            },
+            "dev": {
+              "executor": "nx:run-commands",
+              "cache": false,
+              "options": {
+                "command": "expo start",
+                "cwd": "apps/mobile"
+              },
+              "configurations": {}
+            }
+          },
+          "sourceRoot": "apps/mobile/src",
+          "projectType": "application",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "tags": [
+            "type:app",
+            "platform:mobile"
+          ],
+          "implicitDependencies": []
+        }
+      },
+      "shared": {
+        "name": "shared",
+        "type": "lib",
+        "data": {
+          "root": "libs/shared",
+          "name": "shared",
+          "targets": {
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "libs/shared/dist",
+                "main": "libs/shared/src/index.ts",
+                "tsConfig": "libs/shared/tsconfig.json",
+                "assets": []
+              },
+              "configurations": {}
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true,
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "options": {
+                "lintFilePatterns": [
+                  "libs/shared/**/*.ts"
+                ]
+              },
+              "configurations": {}
+            },
+            "test": {
+              "executor": "nx:run-commands",
+              "inputs": [
+                "default",
+                "^production",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true,
+              "options": {
+                "command": "jest",
+                "cwd": "libs/shared"
+              },
+              "configurations": {}
+            }
+          },
+          "sourceRoot": "libs/shared/src",
+          "projectType": "library",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "tags": [
+            "type:lib",
+            "scope:shared"
+          ],
+          "implicitDependencies": []
+        }
+      }
+    },
+    "dependencies": {
+      "backend": [],
+      "mobile": [],
+      "shared": []
+    }
+  },
+  "affectedProjects": [],
+  "criticalPath": []
+}
