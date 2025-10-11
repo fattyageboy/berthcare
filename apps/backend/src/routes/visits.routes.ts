@@ -64,13 +64,18 @@ async function invalidateVisitListCache(
   redisClient: ReturnType<typeof createClient>
 ): Promise<void> {
   try {
-    // Find all keys matching the visits list cache pattern
-    const keys = await redisClient.keys('visits:list:*');
+    // Use SCAN instead of KEYS to avoid blocking Redis
+    const keysToDelete: string[] = [];
+    for await (const key of redisClient.scanIterator({
+      MATCH: 'visits:list:*',
+      COUNT: 100,
+    })) {
+      keysToDelete.push(key);
+    }
 
-    if (keys.length > 0) {
-      // Delete all matching keys
-      await redisClient.del(keys);
-      logInfo('Visit list cache invalidated', { keysDeleted: keys.length });
+    if (keysToDelete.length > 0) {
+      await redisClient.del(keysToDelete);
+      logInfo('Visit list cache invalidated', { keysDeleted: keysToDelete.length });
     }
   } catch (error) {
     // Log error but don't fail the request - cache invalidation is not critical
@@ -204,11 +209,20 @@ export function createVisitsRouter(
       // Try to get from cache AFTER building user-scoped cache key
       const cached = await redisClient.get(cacheKey);
       if (cached) {
-        logInfo('Visits list cache hit', { cacheKey, userId, principalScope });
-        return res.status(200).json({
-          ...JSON.parse(cached),
-          meta: { cached: true },
-        });
+        try {
+          const cachedData = JSON.parse(cached);
+          logInfo('Visits list cache hit', { cacheKey, userId, principalScope });
+          return res.status(200).json({
+            ...cachedData,
+            meta: { cached: true },
+          });
+        } catch (error) {
+          // Corrupted cache entry - log and continue to fetch fresh data
+          logError('Failed to parse cached visits list', error as Error, { cacheKey });
+          await redisClient.del(cacheKey).catch((err) => {
+            logError('Failed to delete corrupted cache entry', err as Error, { cacheKey });
+          });
+        }
       }
 
       // Build WHERE clause based on filters and authorization
