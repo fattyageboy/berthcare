@@ -13,6 +13,7 @@ module.exports = {
   coverageDirectory: '../../coverage/apps/backend',
   testMatch: ['**/tests/**/*.test.ts'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+  maxWorkers: 1, // Run tests serially to avoid database connection issues
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.test.ts',

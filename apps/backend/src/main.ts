@@ -8,6 +8,8 @@ import { createClient } from 'redis';
 
 import { logError, logInfo } from './config/logger';
 import { createAuthRoutes } from './routes/auth.routes';
+import { createCarePlanRoutes } from './routes/care-plans.routes';
+import { createClientRoutes } from './routes/clients.routes';
 
 // Load environment variables
 dotenv.config({ path: '../../.env' });
@@ -78,12 +80,16 @@ app.get('/api/v1', (_req, res) => {
       health: '/health',
       api: '/api/v1',
       auth: '/api/v1/auth',
+      clients: '/api/v1/clients',
+      carePlans: '/api/v1/care-plans',
     },
   });
 });
 
-// Mount authentication routes (will be initialized after Redis connection)
+// Mount routes (will be initialized after Redis connection)
 let authRoutes: Router | null = null;
+let clientRoutes: Router | null = null;
+let carePlanRoutes: Router | null = null;
 
 // Initialize connections and start server
 async function startServer() {
@@ -103,9 +109,18 @@ async function startServer() {
     const redisVersion = redisInfo.match(/redis_version:([^\r\n]+)/)?.[1] || 'unknown';
     logInfo('Connected to Redis', { version: redisVersion });
 
-    // Initialize authentication routes after Redis connection
-    authRoutes = createAuthRoutes(pgPool, redisClient);
+    // Initialize routes after Redis connection
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    authRoutes = createAuthRoutes(pgPool, redisClient as any);
     app.use('/api/v1/auth', authRoutes);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    clientRoutes = createClientRoutes(pgPool, redisClient as any);
+    app.use('/api/v1/clients', clientRoutes);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    carePlanRoutes = createCarePlanRoutes(pgPool, redisClient as any);
+    app.use('/api/v1/care-plans', carePlanRoutes);
 
     // Start Express server
     app.listen(PORT, () => {
@@ -140,3 +155,6 @@ process.on('SIGINT', async () => {
 
 // Start the server
 startServer();
+
+// Export for testing
+export { app, pgPool, redisClient };

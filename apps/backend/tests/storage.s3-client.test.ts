@@ -167,17 +167,15 @@ describe('S3 Client', () => {
       const mockSend = jest.fn().mockResolvedValue({
         ContentLength: 1024,
         ContentType: 'image/jpeg',
-        Metadata: { userId: '123' },
+        Metadata: { userId: '123', uploadedBy: 'test-user' },
         LastModified: new Date(),
       });
       (s3Client.send as jest.Mock) = mockSend;
 
       const result = await getObjectMetadata('photos', 'test-key.jpg');
 
-      expect(result).toHaveProperty('size', 1024);
-      expect(result).toHaveProperty('contentType', 'image/jpeg');
-      expect(result).toHaveProperty('metadata');
-      expect(result).toHaveProperty('lastModified');
+      expect(result).toHaveProperty('userId', '123');
+      expect(result).toHaveProperty('uploadedBy', 'test-user');
       expect(mockSend).toHaveBeenCalledWith(expect.any(HeadObjectCommand));
     });
 

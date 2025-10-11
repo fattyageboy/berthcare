@@ -65,11 +65,22 @@ async function migrateUp(migrationNumber?: string): Promise<void> {
 
   if (migrationNumber) {
     // Run specific migration
-    const filename = `${migrationNumber}_create_users_auth.sql`;
+    const migrationFiles: Record<string, string> = {
+      '001': '001_create_users_auth.sql',
+      '002': '002_create_clients.sql',
+      '003': '003_create_care_plans.sql',
+    };
+    
+    const filename = migrationFiles[migrationNumber];
+    if (!filename) {
+      throw new Error(`Migration ${migrationNumber} not found`);
+    }
     await executeMigration(filename);
   } else {
-    // Run all migrations (for now, just 001)
+    // Run all migrations in order
     await executeMigration('001_create_users_auth.sql');
+    await executeMigration('002_create_clients.sql');
+    await executeMigration('003_create_care_plans.sql');
   }
 
   console.log('\n✨ All migrations completed successfully!\n');
@@ -81,7 +92,16 @@ async function migrateUp(migrationNumber?: string): Promise<void> {
 async function migrateDown(migrationNumber: string): Promise<void> {
   console.log('\n⏪ Rolling back migration...\n');
 
-  const filename = `${migrationNumber}_create_users_auth_rollback.sql`;
+  const rollbackFiles: Record<string, string> = {
+    '001': '001_create_users_auth_rollback.sql',
+    '002': '002_create_clients_rollback.sql',
+    '003': '003_create_care_plans_rollback.sql',
+  };
+  
+  const filename = rollbackFiles[migrationNumber];
+  if (!filename) {
+    throw new Error(`Rollback for migration ${migrationNumber} not found`);
+  }
   await executeMigration(filename);
 
   console.log('\n✨ Rollback completed successfully!\n');

@@ -52,11 +52,12 @@ echo "✅ Redis cleared"
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🚀 Running tests..."
+echo "🚀 Running tests from /tests directory..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
 # Run tests with provided arguments
+# Tests are located in apps/backend/tests/*.test.ts
 npm test "$@"
 
 echo ""

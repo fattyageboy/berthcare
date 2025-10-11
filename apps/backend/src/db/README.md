@@ -14,9 +14,14 @@ We use plain SQL migration files as the source of truth. No complex migration fr
 db/
 ├── migrations/           # SQL migration files
 │   ├── 001_create_users_auth.sql
-│   └── 001_create_users_auth_rollback.sql
+│   ├── 001_create_users_auth_rollback.sql
+│   ├── 002_create_clients.sql
+│   ├── 002_create_clients_rollback.sql
+│   ├── 003_create_care_plans.sql
+│   └── 003_create_care_plans_rollback.sql
 ├── migrate.ts           # Migration runner
 ├── verify-schema.ts     # Schema verification tool
+├── seed.ts             # Database seeding tool
 └── README.md           # This file
 ```
 
@@ -33,7 +38,9 @@ npm run migrate:up
 Apply specific migration:
 
 ```bash
-npm run migrate:up 001
+npm run migrate:up 001  # Users and auth
+npm run migrate:up 002  # Clients
+npm run migrate:up 003  # Care plans
 ```
 
 ### 2. Verify Schema
@@ -49,7 +56,9 @@ npm run db:verify
 Rollback a specific migration:
 
 ```bash
-npm run migrate:down 001
+npm run migrate:down 001  # Rollback users and auth
+npm run migrate:down 002  # Rollback clients
+npm run migrate:down 003  # Rollback care plans
 ```
 
 ### 4. Reset Database
@@ -82,6 +91,52 @@ Creates the authentication system tables:
 - Fast email lookup for login
 - Efficient zone-based queries
 - Token validation performance
+
+### 002_create_clients.sql
+
+Creates the client management table:
+
+**clients table:**
+- Stores client (patient) information
+- Personal details (name, DOB, address)
+- Geographic coordinates for route optimization
+- Emergency contact information
+- Zone assignment for data isolation
+- Soft delete support
+
+**Indexes:**
+- Zone-based queries for caregiver assignment
+- Name search (last name, full name)
+- Geographic proximity searches
+- Composite zone + name sorting
+
+### 003_create_care_plans.sql
+
+Creates the care plan management table:
+
+**care_plans table:**
+- Stores care plan information for clients
+- Summary of care needs
+- Medications (JSONB array with name, dosage, frequency)
+- Allergies (JSONB array of strings)
+- Special instructions for caregivers
+- Version tracking for change history
+- Foreign key to clients with CASCADE delete
+
+**Indexes:**
+- Fast client lookup
+- GIN indexes for JSONB medication/allergy searches
+- Version tracking for conflict detection
+- Unique constraint: one active care plan per client
+
+**Triggers:**
+- Auto-increment version on content changes
+- Auto-update timestamps
+
+**Functions:**
+- `increment_care_plan_version()` - Version management
+- `validate_medication_structure()` - JSONB validation
+- `validate_allergies_structure()` - JSONB validation
 
 ## Database Connection
 
@@ -179,8 +234,40 @@ For production deployments:
 5. **Monitor application** for any issues
 6. **Keep rollback scripts** ready if needed
 
+## Current Schema
+
+### Tables
+
+1. **users** - User accounts and authentication
+2. **refresh_tokens** - JWT refresh token management
+3. **clients** - Client (patient) information
+4. **care_plans** - Care plan details with medications and allergies
+
+### Relationships
+
+```
+users
+  └─ (zone_id) → zones (future)
+
+clients
+  └─ (zone_id) → zones (future)
+
+care_plans
+  └─ (client_id) → clients (CASCADE delete)
+```
+
+### Migration History
+
+| Migration | Description | Status |
+|-----------|-------------|--------|
+| 001 | Users & Authentication | ✅ Applied |
+| 002 | Clients | ✅ Applied |
+| 003 | Care Plans | ✅ Applied |
+
 ## Reference
 
 - Architecture Blueprint: `project-documentation/architecture-output.md`
-- Task Plan: `project-documentation/task-plan.md` (Task A1)
+- Task Plan: `project-documentation/task-plan.md`
+- Migration 001 Docs: `docs/A1-users-auth-migration.md`
+- Migration 002 Docs: `docs/C1-clients-migration.md`
 - Database Setup: `docs/E4-local-setup.md`
