@@ -10,6 +10,7 @@ import { logError, logInfo } from './config/logger';
 import { createAuthRoutes } from './routes/auth.routes';
 import { createCarePlanRoutes } from './routes/care-plans.routes';
 import { createClientRoutes } from './routes/clients.routes';
+import { createVisitsRouter } from './routes/visits.routes';
 
 // Load environment variables
 dotenv.config({ path: '../../.env' });
@@ -82,6 +83,7 @@ app.get('/api/v1', (_req, res) => {
       auth: '/api/v1/auth',
       clients: '/api/v1/clients',
       carePlans: '/api/v1/care-plans',
+      visits: '/api/v1/visits',
     },
   });
 });
@@ -90,6 +92,7 @@ app.get('/api/v1', (_req, res) => {
 let authRoutes: Router | null = null;
 let clientRoutes: Router | null = null;
 let carePlanRoutes: Router | null = null;
+let visitsRoutes: Router | null = null;
 
 // Initialize connections and start server
 async function startServer() {
@@ -118,6 +121,9 @@ async function startServer() {
 
     carePlanRoutes = createCarePlanRoutes(pgPool, redisClient);
     app.use('/api/v1/care-plans', carePlanRoutes);
+
+    visitsRoutes = createVisitsRouter(pgPool);
+    app.use('/api/v1/visits', visitsRoutes);
 
     // Start Express server
     app.listen(PORT, () => {
