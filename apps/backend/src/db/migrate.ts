@@ -40,7 +40,7 @@ async function ensureMigrationsTable(): Promise<void> {
   try {
     await client.query(`
       CREATE TABLE IF NOT EXISTS schema_migrations (
-        version VARCHAR(255) PRIMARY KEY,
+        version VARCHAR(10) PRIMARY KEY,
         applied_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -181,6 +181,31 @@ async function migrateDown(migrationNumber: string): Promise<void> {
   if (!appliedMigrations.has(migrationNumber)) {
     console.log(`⏭️  Migration ${migrationNumber} was not applied, nothing to rollback.`);
     return;
+  }
+
+  // Define ordered list of all migrations
+  const orderedMigrations = ['001', '002', '003'];
+
+  // Check for dependent migrations (migrations applied after the target)
+  const targetIndex = orderedMigrations.indexOf(migrationNumber);
+  if (targetIndex === -1) {
+    throw new Error(`Migration ${migrationNumber} not found in migration list`);
+  }
+
+  const dependentMigrations = orderedMigrations
+    .slice(targetIndex + 1)
+    .filter((version) => appliedMigrations.has(version));
+
+  if (dependentMigrations.length > 0) {
+    console.error(`❌ Cannot rollback migration ${migrationNumber}`);
+    console.error(`   The following dependent migrations are still applied:`);
+    dependentMigrations.forEach((version) => {
+      console.error(`   - ${version}`);
+    });
+    console.error(`\n   Please rollback these migrations first, in reverse order.`);
+    throw new Error(
+      `Cannot rollback migration ${migrationNumber}: dependent migrations ${dependentMigrations.join(', ')} are still applied`
+    );
   }
 
   const rollbackFiles: Record<string, string> = {
