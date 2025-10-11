@@ -935,5 +935,301 @@ export function createVisitsRouter(
     }
   });
 
+  /**
+   * GET /v1/visits/:visitId
+   * Get visit details
+   *
+   * Returns complete visit information including documentation, photos, and client details.
+   * Supports Redis caching for performance.
+   *
+   * Authentication: Required
+   * Authorization: Caregiver must own the visit, or coordinator/admin in same zone
+   *
+   * Response: 200 OK
+   * - Complete visit object with all related data
+   * - Client information
+   * - Visit documentation (vital signs, activities, observations, concerns)
+   * - Photos with S3 URLs
+   *
+   * Errors:
+   * - 400: Invalid visitId format
+   * - 401: Unauthorized
+   * - 403: Forbidden (access denied)
+   * - 404: Visit not found
+   */
+  router.get('/:visitId', authenticateJWT, async (req: Request, res: Response) => {
+    const authReq = req as AuthenticatedRequest;
+    const userId = authReq.user?.userId;
+    const { visitId } = req.params;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Authentication required',
+      });
+    }
+
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(visitId)) {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'Invalid visitId format',
+      });
+    }
+
+    try {
+      // Build cache key
+      const cacheKey = `visit:detail:${visitId}`;
+
+      // Try to get from cache
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        try {
+          const cachedData = JSON.parse(cached);
+
+          // Still need to verify authorization even with cached data
+          const userResult = await pool.query('SELECT zone_id, role FROM users WHERE id = $1', [
+            userId,
+          ]);
+          if (userResult.rows.length === 0) {
+            return res.status(403).json({
+              error: 'Forbidden',
+              message: 'User not found',
+            });
+          }
+
+          const userZoneId = userResult.rows[0].zone_id;
+          const userRoleFromDb = userResult.rows[0].role;
+
+          // Authorization check
+          if (userRoleFromDb === 'caregiver' && cachedData.data.staffId !== userId) {
+            return res.status(403).json({
+              error: 'Forbidden',
+              message: 'You can only view your own visits',
+            });
+          }
+
+          if (
+            (userRoleFromDb === 'coordinator' || userRoleFromDb === 'admin') &&
+            cachedData.data.client.zoneId !== userZoneId
+          ) {
+            return res.status(403).json({
+              error: 'Forbidden',
+              message: 'You can only view visits in your zone',
+            });
+          }
+
+          logInfo('Visit detail cache hit', { visitId, userId });
+          return res.status(200).json({
+            ...cachedData,
+            meta: { cached: true },
+          });
+        } catch (error) {
+          // Corrupted cache entry - log and continue to fetch fresh data
+          logError('Failed to parse cached visit detail', error as Error, { visitId });
+          await redisClient.del(cacheKey).catch(() => {});
+        }
+      }
+
+      // Get user's zone and role for authorization
+      const userResult = await pool.query('SELECT zone_id, role FROM users WHERE id = $1', [
+        userId,
+      ]);
+
+      if (userResult.rows.length === 0) {
+        return res.status(403).json({
+          error: 'Forbidden',
+          message: 'User not found',
+        });
+      }
+
+      const userZoneId = userResult.rows[0].zone_id;
+      const userRoleFromDb = userResult.rows[0].role;
+
+      // Get visit with client and staff information
+      const visitQuery = `
+        SELECT 
+          v.id,
+          v.client_id,
+          v.staff_id,
+          v.scheduled_start_time,
+          v.check_in_time,
+          v.check_in_latitude,
+          v.check_in_longitude,
+          v.check_out_time,
+          v.check_out_latitude,
+          v.check_out_longitude,
+          v.status,
+          v.duration_minutes,
+          v.copied_from_visit_id,
+          v.created_at,
+          v.updated_at,
+          c.first_name as client_first_name,
+          c.last_name as client_last_name,
+          c.date_of_birth as client_date_of_birth,
+          c.address as client_address,
+          c.latitude as client_latitude,
+          c.longitude as client_longitude,
+          c.phone as client_phone,
+          c.emergency_contact_name,
+          c.emergency_contact_phone,
+          c.emergency_contact_relationship,
+          c.zone_id as client_zone_id,
+          u.first_name as staff_first_name,
+          u.last_name as staff_last_name,
+          u.email as staff_email
+        FROM visits v
+        INNER JOIN clients c ON v.client_id = c.id
+        INNER JOIN users u ON v.staff_id = u.id
+        WHERE v.id = $1
+      `;
+
+      const visitResult = await pool.query(visitQuery, [visitId]);
+
+      if (visitResult.rows.length === 0) {
+        return res.status(404).json({
+          error: 'Not Found',
+          message: 'Visit not found',
+        });
+      }
+
+      const visit = visitResult.rows[0];
+
+      // Authorization check: caregiver must own the visit
+      if (userRoleFromDb === 'caregiver' && visit.staff_id !== userId) {
+        return res.status(403).json({
+          error: 'Forbidden',
+          message: 'You can only view your own visits',
+        });
+      }
+
+      // Authorization check: coordinator/admin must be in same zone as client
+      if (
+        (userRoleFromDb === 'coordinator' || userRoleFromDb === 'admin') &&
+        visit.client_zone_id !== userZoneId
+      ) {
+        return res.status(403).json({
+          error: 'Forbidden',
+          message: 'You can only view visits in your zone',
+        });
+      }
+
+      // Get visit documentation
+      const docQuery = `
+        SELECT 
+          vital_signs,
+          activities,
+          observations,
+          concerns,
+          created_at,
+          updated_at
+        FROM visit_documentation
+        WHERE visit_id = $1
+      `;
+
+      const docResult = await pool.query(docQuery, [visitId]);
+      const documentation = docResult.rows.length > 0 ? docResult.rows[0] : null;
+
+      // Get visit photos
+      const photosQuery = `
+        SELECT 
+          id,
+          s3_key,
+          s3_url,
+          thumbnail_s3_key,
+          uploaded_at
+        FROM visit_photos
+        WHERE visit_id = $1
+        ORDER BY uploaded_at ASC
+      `;
+
+      const photosResult = await pool.query(photosQuery, [visitId]);
+
+      // Build response
+      const response = {
+        data: {
+          id: visit.id,
+          clientId: visit.client_id,
+          staffId: visit.staff_id,
+          scheduledStartTime: visit.scheduled_start_time,
+          checkInTime: visit.check_in_time,
+          checkInLatitude: visit.check_in_latitude,
+          checkInLongitude: visit.check_in_longitude,
+          checkOutTime: visit.check_out_time,
+          checkOutLatitude: visit.check_out_latitude,
+          checkOutLongitude: visit.check_out_longitude,
+          status: visit.status,
+          duration: visit.duration_minutes,
+          copiedFromVisitId: visit.copied_from_visit_id,
+          createdAt: visit.created_at,
+          updatedAt: visit.updated_at,
+          client: {
+            id: visit.client_id,
+            firstName: visit.client_first_name,
+            lastName: visit.client_last_name,
+            dateOfBirth: visit.client_date_of_birth,
+            address: visit.client_address,
+            latitude: visit.client_latitude,
+            longitude: visit.client_longitude,
+            phone: visit.client_phone,
+            emergencyContact: {
+              name: visit.emergency_contact_name,
+              phone: visit.emergency_contact_phone,
+              relationship: visit.emergency_contact_relationship,
+            },
+            zoneId: visit.client_zone_id,
+          },
+          staff: {
+            id: visit.staff_id,
+            firstName: visit.staff_first_name,
+            lastName: visit.staff_last_name,
+            email: visit.staff_email,
+          },
+          documentation: documentation
+            ? {
+                vitalSigns: documentation.vital_signs,
+                activities: documentation.activities,
+                observations: documentation.observations,
+                concerns: documentation.concerns,
+                createdAt: documentation.created_at,
+                updatedAt: documentation.updated_at,
+              }
+            : null,
+          photos: photosResult.rows.map((photo) => ({
+            id: photo.id,
+            s3Key: photo.s3_key,
+            s3Url: photo.s3_url,
+            thumbnailS3Key: photo.thumbnail_s3_key,
+            uploadedAt: photo.uploaded_at,
+          })),
+        },
+      };
+
+      // Cache the response for 5 minutes
+      await redisClient.setEx(cacheKey, 300, JSON.stringify(response));
+
+      logInfo('Visit detail fetched successfully', {
+        visitId,
+        userId,
+        userRole: userRoleFromDb,
+        hasDocumentation: !!documentation,
+        photoCount: photosResult.rows.length,
+      });
+
+      return res.status(200).json(response);
+    } catch (error) {
+      logError('Error fetching visit detail', error as Error, {
+        visitId,
+        userId,
+      });
+
+      return res.status(500).json({
+        error: 'Internal Server Error',
+        message: 'Failed to fetch visit details',
+      });
+    }
+  });
+
   return router;
 }
