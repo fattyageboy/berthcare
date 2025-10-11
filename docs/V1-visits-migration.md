@@ -169,9 +169,9 @@ CREATE INDEX idx_visits_status_scheduled ON visits(status, scheduled_start_time)
 3. **check_duration_matches**
    ```sql
    CHECK (duration_minutes IS NULL OR check_in_time IS NULL OR check_out_time IS NULL 
-          OR duration_minutes = EXTRACT(EPOCH FROM (check_out_time - check_in_time)) / 60)
+          OR duration_minutes = ROUND(EXTRACT(EPOCH FROM (check_out_time - check_in_time)) / 60)::INTEGER)
    ```
-   Ensures duration_minutes matches the actual time difference
+   Ensures duration_minutes matches the actual time difference (rounded to nearest minute to handle floating-point precision)
 
 4. **visits_check_in_latitude_check**
    ```sql
@@ -304,8 +304,9 @@ npm run migrate:down 004
 
 **Implementation:**
 - INTEGER field for minutes
-- Check constraint ensures it matches actual time difference
-- Application calculates on check-out
+- Check constraint ensures it matches actual time difference (rounded to nearest minute)
+- Uses ROUND() to handle floating-point precision issues
+- Application calculates on check-out and rounds to nearest minute
 
 ### 5. Status ENUM as VARCHAR with CHECK Constraint
 
