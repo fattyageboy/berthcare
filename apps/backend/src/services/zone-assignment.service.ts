@@ -18,7 +18,7 @@
  * - Graceful fallback for edge cases
  */
 
-import { RedisClientType } from 'redis';
+import { createClient } from 'redis';
 
 /**
  * Zone data
@@ -52,7 +52,7 @@ export class ZoneAssignmentError extends Error {
 export class ZoneAssignmentService {
   private cacheTTL: number = 3600; // 1 hour
 
-  constructor(private redisClient: RedisClientType) {}
+  constructor(private redisClient: ReturnType<typeof createClient>) {}
 
   /**
    * Assign a zone based on latitude/longitude
@@ -70,7 +70,11 @@ export class ZoneAssignmentService {
       typeof latitude !== 'number' ||
       typeof longitude !== 'number' ||
       isNaN(latitude) ||
-      isNaN(longitude)
+      isNaN(longitude) ||
+      latitude < -90 ||
+      latitude > 90 ||
+      longitude < -180 ||
+      longitude > 180
     ) {
       throw new ZoneAssignmentError('Invalid coordinates', 'INVALID_COORDINATES', {
         latitude,

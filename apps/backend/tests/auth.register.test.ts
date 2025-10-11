@@ -56,19 +56,28 @@ describe('POST /v1/auth/register', () => {
 
   // Clean database and Redis before each test
   beforeEach(async () => {
-    const client = await pgPool.connect();
-    try {
-      await client.query('BEGIN');
-      await client.query('DELETE FROM refresh_tokens');
-      await client.query("DELETE FROM users WHERE email LIKE '%@example.com'");
-      await client.query('COMMIT');
-      await redisClient.flushDb();
-    } catch (error) {
-      await client.query('ROLLBACK');
-      console.error('Error cleaning test database:', error);
-    } finally {
-      client.release();
-    }
+ beforeEach(async () => {
+   const client = await pgPool.connect();
+   try {
+     await client.query('BEGIN');
+     await client.query('DELETE FROM refresh_tokens');
+     await client.query("DELETE FROM users WHERE email LIKE '%@example.com'");
+     await client.query('COMMIT');
+-    await redisClient.flushDb();
+   } catch (error) {
+     await client.query('ROLLBACK');
+    throw new Error(`Failed to clean test database: ${error}`);
+   } finally {
+     client.release();
+   }
+
+  // Clean Redis separately after database transaction is complete
+  try {
+    await redisClient.flushDb();
+  } catch (error) {
+    throw new Error(`Failed to flush Redis: ${error}`);
+  }
+ });
   });
 
   describe('Successful Registration', () => {

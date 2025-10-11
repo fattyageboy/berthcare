@@ -16,13 +16,16 @@
 
 import { Request, Response, Router } from 'express';
 import { Pool } from 'pg';
-import { RedisClientType } from 'redis';
+import { createClient } from 'redis';
 
 import { logError, logInfo } from '../config/logger';
 import { authenticateJWT, AuthenticatedRequest, requireRole } from '../middleware/auth';
 import { validateCarePlan } from '../middleware/validation';
 
-export function createCarePlanRoutes(pgPool: Pool, redisClient: RedisClientType): Router {
+export function createCarePlanRoutes(
+  pgPool: Pool,
+  redisClient: ReturnType<typeof createClient>
+): Router {
   const router = Router();
 
   /**
@@ -250,7 +253,8 @@ export function createCarePlanRoutes(pgPool: Pool, redisClient: RedisClientType)
           error instanceof Error ? error : new Error(String(error)),
           {
             userId: (req as AuthenticatedRequest).user?.userId,
-            body: req.body,
+            clientId: req.body?.clientId,
+            requestId: req.headers['x-request-id'] || 'unknown',
           }
         );
         res.status(500).json({

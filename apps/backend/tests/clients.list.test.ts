@@ -31,11 +31,12 @@ import { generateAccessToken } from '../../../libs/shared/src/jwt-utils';
 import { createClientRoutes } from '../src/routes/clients.routes';
 
 // Test configuration
-const TEST_DATABASE_URL =
-  process.env.TEST_DATABASE_URL ||
-  'postgresql://berthcare:berthcare_dev_password@localhost:5432/berthcare_test';
-const TEST_REDIS_URL =
-  process.env.TEST_REDIS_URL || 'redis://:berthcare_redis_password@localhost:6379/1';
+const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
+const TEST_REDIS_URL = process.env.TEST_REDIS_URL;
+
+if (!TEST_DATABASE_URL || !TEST_REDIS_URL) {
+  throw new Error('TEST_DATABASE_URL and TEST_REDIS_URL must be set');
+}
 
 describe('GET /api/v1/clients', () => {
   let app: express.Application;
@@ -67,8 +68,7 @@ describe('GET /api/v1/clients', () => {
 
     // Create Express app with client routes
     app = express();
-    app.use(express.json());
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    app.use('/api/v1/clients', createClientRoutes(pgPool, redisClient));
     app.use('/api/v1/clients', createClientRoutes(pgPool, redisClient as any));
 
     // Ensure test database has required tables
@@ -595,4 +595,5 @@ describe('GET /api/v1/clients', () => {
       expect(response2.body.data.clients).toHaveLength(2);
     });
   });
+});
 });

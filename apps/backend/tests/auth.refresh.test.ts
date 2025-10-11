@@ -99,15 +99,19 @@ describe('POST /v1/auth/refresh', () => {
   // Clean database and Redis before each test
   beforeEach(async () => {
     const client = await pgPool.connect();
+    const client = await pgPool.connect();
     try {
       await client.query('BEGIN');
       await client.query('DELETE FROM refresh_tokens');
       await client.query('DELETE FROM users WHERE email LIKE \'%@example.com\'');
       await client.query('COMMIT');
-      await redisClient.flushDb();
     } catch (error) {
       await client.query('ROLLBACK');
-      console.error('Error cleaning test database:', error);
+      throw error;
+    } finally {
+      client.release();
+    }
+    await redisClient.flushDb();
     } finally {
       client.release();
     }

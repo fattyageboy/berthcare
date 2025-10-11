@@ -15,15 +15,18 @@ Successfully implemented the database schema for the BerthCare client management
 ### 1. Migration Files
 
 #### Forward Migration
+
 **File:** `apps/backend/src/db/migrations/002_create_clients.sql`
 
 **Creates:**
-- `clients` table with 14 columns
+
+- `clients` table with 15 columns
 - 5 optimized indexes for common query patterns
 - Automatic timestamp trigger (reuses existing function)
 - Comprehensive table and column comments
 
 **Key Features:**
+
 - UUID primary key for distributed systems
 - Geographic coordinates (latitude/longitude) for route optimization
 - Emergency contact information for safety
@@ -31,6 +34,7 @@ Successfully implemented the database schema for the BerthCare client management
 - Soft delete support for audit trail
 
 #### Rollback Migration
+
 **File:** `apps/backend/src/db/migrations/002_create_clients_rollback.sql`
 
 Safely removes all objects created by the forward migration with CASCADE support for foreign key dependencies.
@@ -40,12 +44,14 @@ Safely removes all objects created by the forward migration with CASCADE support
 **File:** `apps/backend/src/db/migrate.ts`
 
 **Updates:**
+
 - Added migration 002 to the migration registry
 - Updated `migrateUp()` to support running migration 002
 - Updated `migrateDown()` to support rollback of migration 002
 - Maintained backward compatibility with migration 001
 
 **Commands:**
+
 ```bash
 npm run migrate:up        # Run all migrations (001 + 002)
 npm run migrate:up 002    # Run only migration 002
@@ -58,51 +64,56 @@ npm run migrate:down 002  # Rollback migration 002
 
 **Purpose:** Store client (patient) information for home care services with geographic routing support
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | UUID | PRIMARY KEY | Unique client identifier |
-| first_name | VARCHAR(100) | NOT NULL | Client first name |
-| last_name | VARCHAR(100) | NOT NULL | Client last name |
-| date_of_birth | DATE | NOT NULL | Date of birth for age calculation |
-| address | TEXT | NOT NULL | Full street address for routing |
-| latitude | DECIMAL(10,8) | NOT NULL | GPS latitude for route optimization |
-| longitude | DECIMAL(11,8) | NOT NULL | GPS longitude for route optimization |
-| phone | VARCHAR(20) | NULL | Client phone (optional) |
-| emergency_contact_name | VARCHAR(200) | NOT NULL | Emergency contact full name |
-| emergency_contact_phone | VARCHAR(20) | NOT NULL | Emergency contact phone |
-| emergency_contact_relationship | VARCHAR(100) | NOT NULL | Relationship to client |
-| zone_id | UUID | NOT NULL | Zone assignment for data isolation |
-| created_at | TIMESTAMP | NOT NULL | Creation timestamp |
-| updated_at | TIMESTAMP | NOT NULL | Auto-updated timestamp |
-| deleted_at | TIMESTAMP | NULL | Soft delete support |
+| Column                         | Type          | Constraints | Description                          |
+| ------------------------------ | ------------- | ----------- | ------------------------------------ |
+| id                             | UUID          | PRIMARY KEY | Unique client identifier             |
+| first_name                     | VARCHAR(100)  | NOT NULL    | Client first name                    |
+| last_name                      | VARCHAR(100)  | NOT NULL    | Client last name                     |
+| date_of_birth                  | DATE          | NOT NULL    | Date of birth for age calculation    |
+| address                        | TEXT          | NOT NULL    | Full street address for routing      |
+| latitude                       | DECIMAL(10,8) | NOT NULL    | GPS latitude for route optimization  |
+| longitude                      | DECIMAL(11,8) | NOT NULL    | GPS longitude for route optimization |
+| phone                          | VARCHAR(20)   | NULL        | Client phone (optional)              |
+| emergency_contact_name         | VARCHAR(200)  | NOT NULL    | Emergency contact full name          |
+| emergency_contact_phone        | VARCHAR(20)   | NOT NULL    | Emergency contact phone              |
+| emergency_contact_relationship | VARCHAR(100)  | NOT NULL    | Relationship to client               |
+| zone_id                        | UUID          | NOT NULL    | Zone assignment for data isolation   |
+| created_at                     | TIMESTAMP     | NOT NULL    | Creation timestamp                   |
+| updated_at                     | TIMESTAMP     | NOT NULL    | Auto-updated timestamp               |
+| deleted_at                     | TIMESTAMP     | NULL        | Soft delete support                  |
 
 ### Indexes
 
 **1. Zone Index** (`idx_clients_zone_id`)
+
 - **Purpose:** Fast lookup by zone for data isolation
 - **Query Pattern:** "Get all clients in my zone"
 - **Partial Index:** WHERE deleted_at IS NULL
 - **Performance:** < 5ms for zone-based queries
 
 **2. Last Name Index** (`idx_clients_last_name`)
+
 - **Purpose:** Fast search by last name
 - **Query Pattern:** "Search clients by last name"
 - **Partial Index:** WHERE deleted_at IS NULL
 - **Performance:** < 10ms for name searches
 
 **3. Zone + Last Name Composite Index** (`idx_clients_zone_last_name`)
+
 - **Purpose:** Optimized zone filtering with name sorting
 - **Query Pattern:** "Get all clients in zone X, sorted by last name"
 - **Partial Index:** WHERE deleted_at IS NULL
 - **Performance:** < 5ms for sorted zone queries
 
 **4. Location Index** (`idx_clients_location`)
+
 - **Purpose:** Geographic queries for route optimization
 - **Query Pattern:** "Find clients near this location"
 - **Partial Index:** WHERE deleted_at IS NULL
 - **Performance:** < 20ms for proximity searches
 
 **5. Full Name Search Index** (`idx_clients_full_name`)
+
 - **Purpose:** Case-insensitive full name search
 - **Query Pattern:** "Search clients by first or last name"
 - **Partial Index:** WHERE deleted_at IS NULL
@@ -112,12 +123,14 @@ npm run migrate:down 002  # Rollback migration 002
 ## Design Philosophy Applied
 
 ### Simplicity is the Ultimate Sophistication
+
 - Clear, straightforward schema design
 - Plain SQL migrations (no complex ORM)
 - Minimal required fields, optional where appropriate
 - Reuses existing timestamp trigger function
 
 ### Obsess Over Details
+
 - Comprehensive indexes for all query patterns
 - Proper decimal precision for GPS coordinates (8 decimal places = ~1mm accuracy)
 - Automatic timestamp management
@@ -125,12 +138,14 @@ npm run migrate:down 002  # Rollback migration 002
 - Soft delete for audit trail
 
 ### Start with User Experience
+
 - Fast zone-based queries for caregiver assignment
 - Geographic indexing for route optimization
 - Emergency contact readily available
 - Name search optimized for quick lookups
 
 ### Uncompromising Security
+
 - Zone-based data isolation
 - Soft delete preserves audit trail
 - Foreign key support for referential integrity
@@ -142,24 +157,28 @@ npm run migrate:down 002  # Rollback migration 002
 
 **Partial Indexes:**
 All indexes use `WHERE deleted_at IS NULL` to:
+
 - Reduce index size (only active clients)
 - Improve query performance
 - Maintain smaller index footprint
 
 **Composite Index:**
 Zone + Last Name combination optimizes the most common query pattern:
+
 - Caregivers view clients in their zone
 - Results sorted alphabetically by last name
 - Single index scan instead of multiple lookups
 
 **Geographic Index:**
 Latitude + Longitude composite enables:
+
 - Proximity searches for route planning
 - Distance calculations for visit scheduling
 - Geographic clustering for zone optimization
 
 **Case-Insensitive Search:**
 LOWER() function indexes enable:
+
 - Case-insensitive name searches
 - Consistent search behavior
 - Better user experience
@@ -167,35 +186,39 @@ LOWER() function indexes enable:
 ### Query Optimization
 
 **Zone-Based Queries:**
+
 ```sql
 -- Uses idx_clients_zone_id
-SELECT * FROM clients 
+SELECT * FROM clients
 WHERE zone_id = $1 AND deleted_at IS NULL;
 -- Performance: < 5ms
 ```
 
 **Name Search:**
+
 ```sql
 -- Uses idx_clients_full_name
-SELECT * FROM clients 
-WHERE LOWER(last_name) LIKE LOWER($1 || '%') 
+SELECT * FROM clients
+WHERE LOWER(last_name) LIKE LOWER($1 || '%')
   AND deleted_at IS NULL;
 -- Performance: < 15ms
 ```
 
 **Zone + Name Sorted:**
+
 ```sql
 -- Uses idx_clients_zone_last_name
-SELECT * FROM clients 
+SELECT * FROM clients
 WHERE zone_id = $1 AND deleted_at IS NULL
 ORDER BY last_name, first_name;
 -- Performance: < 5ms
 ```
 
 **Proximity Search:**
+
 ```sql
 -- Uses idx_clients_location
-SELECT * FROM clients 
+SELECT * FROM clients
 WHERE deleted_at IS NULL
   AND latitude BETWEEN $1 AND $2
   AND longitude BETWEEN $3 AND $4;
@@ -209,12 +232,14 @@ WHERE deleted_at IS NULL
 This schema directly supports the following API endpoints from the architecture blueprint:
 
 **GET /v1/clients**
+
 - Zone-based filtering via `idx_clients_zone_id`
 - Name search via `idx_clients_full_name`
 - Pagination support
 - Last visit date (future join with visits table)
 
 **GET /v1/clients/:clientId**
+
 - Primary key lookup (< 1ms)
 - Full client details including emergency contact
 - Care plan information (future join with care_plans table)
@@ -223,14 +248,16 @@ This schema directly supports the following API endpoints from the architecture 
 ### Future Table Relationships
 
 **Zones Table (Future):**
+
 ```sql
 -- Will add foreign key constraint:
-ALTER TABLE clients 
-ADD CONSTRAINT fk_clients_zone_id 
+ALTER TABLE clients
+ADD CONSTRAINT fk_clients_zone_id
 FOREIGN KEY (zone_id) REFERENCES zones(id);
 ```
 
 **Care Plans Table (Future - Task C2):**
+
 ```sql
 -- Will reference clients:
 CREATE TABLE care_plans (
@@ -241,6 +268,7 @@ CREATE TABLE care_plans (
 ```
 
 **Visits Table (Future - Task V1):**
+
 ```sql
 -- Will reference clients:
 CREATE TABLE visits (
@@ -300,7 +328,7 @@ npm run db:verify
 After running the migration, verify:
 
 - ✅ Table `clients` exists
-- ✅ All 14 columns present with correct types
+- ✅ All 15 columns present with correct types
 - ✅ Primary key constraint on `id`
 - ✅ NOT NULL constraints on required fields
 - ✅ Index `idx_clients_zone_id` exists
@@ -316,12 +344,14 @@ After running the migration, verify:
 Future task (C5) will create a seed script for sample clients. Expected data:
 
 **Clients by Zone:**
+
 - 5-10 clients per zone
 - Mix of ages and care needs
 - Realistic addresses with GPS coordinates
 - Emergency contacts for all clients
 
 **Geographic Distribution:**
+
 - Clients clustered by zone
 - Realistic latitude/longitude for Canadian locations
 - Addresses in ca-central-1 region
@@ -359,6 +389,7 @@ With the clients table in place, the next implementation tasks are:
 **Error:** `relation "clients" already exists`
 
 **Solution:**
+
 ```bash
 # Check current state
 npm run db:verify
@@ -375,6 +406,7 @@ npm run migrate:up 002
 **Error:** `Cannot connect to the Docker daemon`
 
 **Solution:**
+
 ```bash
 # Start Docker Desktop
 # Then start services
@@ -389,6 +421,7 @@ make verify
 **Error:** `ECONNREFUSED ::1:5432`
 
 **Solution:**
+
 ```bash
 # Check PostgreSQL is running
 docker-compose ps postgres
@@ -406,6 +439,7 @@ docker-compose ps postgres
 **Error:** `function update_updated_at_column() does not exist`
 
 **Solution:**
+
 ```bash
 # Run migration 001 first
 npm run migrate:up 001
@@ -436,6 +470,7 @@ The database schema for clients is now complete and ready for use. The table str
 ---
 
 **Migration Files:**
+
 - ✅ `002_create_clients.sql` - Forward migration
 - ✅ `002_create_clients_rollback.sql` - Rollback migration
 - ✅ `migrate.ts` - Updated migration runner

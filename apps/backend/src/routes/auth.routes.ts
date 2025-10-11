@@ -19,10 +19,11 @@
  * - Multiple layers of token validation
  */
 
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 
 import { Request, Response, Router } from 'express';
 import { Pool } from 'pg';
+import { createClient } from 'redis';
 
 import {
   generateAccessToken,
@@ -41,7 +42,7 @@ import {
 
 export function createAuthRoutes(
   pgPool: Pool,
-  redisClient: ReturnType<typeof import('redis').createClient>
+  redisClient: ReturnType<typeof createClient>
 ): Router {
   const router = Router();
 

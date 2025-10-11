@@ -21,7 +21,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { RedisClientType } from 'redis';
+import { createClient } from 'redis';
 
 import { verifyToken, JWTPayload, UserRole } from '../../../../libs/shared/src';
 
@@ -59,7 +59,7 @@ export interface AuthenticatedRequest extends Request {
  *   res.json({ userId: req.user?.userId });
  * });
  */
-export function authenticateJWT(redisClient: RedisClientType) {
+export function authenticateJWT(redisClient: ReturnType<typeof createClient>) {
   return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       // Extract token from Authorization header
@@ -230,7 +230,7 @@ export function requireRole(allowedRoles: UserRole[]) {
  * });
  */
 export async function blacklistToken(
-  redisClient: RedisClientType,
+  redisClient: ReturnType<typeof createClient>,
   token: string,
   expirySeconds: number = 3600
 ): Promise<void> {

@@ -19,7 +19,7 @@
  */
 
 import { Client, GeocodeResult } from '@googlemaps/google-maps-services-js';
-import { RedisClientType } from 'redis';
+import { createClient } from 'redis';
 
 /**
  * Geocoding result
@@ -56,7 +56,7 @@ export class GeocodingService {
   private cacheTTL: number;
 
   constructor(
-    private redisClient: RedisClientType,
+    private redisClient: ReturnType<typeof createClient>,
     apiKey?: string,
     cacheTTL: number = 86400 // 24 hours default
   ) {

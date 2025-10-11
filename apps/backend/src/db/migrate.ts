@@ -18,7 +18,7 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-import { Pool } from 'pg';
+import { Pool, PoolClient } from 'pg';
 
 // Database connection configuration
 const pool = new Pool({
@@ -33,9 +33,57 @@ const pool = new Pool({
 const MIGRATIONS_DIR = join(__dirname, 'migrations');
 
 /**
+ * Ensure schema_migrations table exists
+ */
+async function ensureMigrationsTable(): Promise<void> {
+  const client = await pool.connect();
+  try {
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS schema_migrations (
+        version VARCHAR(255) PRIMARY KEY,
+        applied_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Get list of applied migrations
+ */
+async function getAppliedMigrations(): Promise<Set<string>> {
+  const client = await pool.connect();
+  try {
+    const result = await client.query('SELECT version FROM schema_migrations ORDER BY version');
+    return new Set(result.rows.map((row) => row.version));
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Record migration as applied
+ */
+async function recordMigration(version: string, client: PoolClient): Promise<void> {
+  await client.query('INSERT INTO schema_migrations (version) VALUES ($1)', [version]);
+}
+
+/**
+ * Remove migration record
+ */
+async function removeMigrationRecord(version: string, client: PoolClient): Promise<void> {
+  await client.query('DELETE FROM schema_migrations WHERE version = $1', [version]);
+}
+
+/**
  * Execute SQL migration file
  */
-async function executeMigration(filename: string): Promise<void> {
+async function executeMigration(
+  filename: string,
+  version: string,
+  isRollback = false
+): Promise<void> {
   const filePath = join(MIGRATIONS_DIR, filename);
   const sql = readFileSync(filePath, 'utf-8');
 
@@ -46,6 +94,14 @@ async function executeMigration(filename: string): Promise<void> {
   try {
     await client.query('BEGIN');
     await client.query(sql);
+
+    // Update migration state
+    if (isRollback) {
+      await removeMigrationRecord(version, client);
+    } else {
+      await recordMigration(version, client);
+    }
+
     await client.query('COMMIT');
     console.log('✅ Migration completed successfully');
   } catch (error) {
@@ -63,24 +119,47 @@ async function executeMigration(filename: string): Promise<void> {
 async function migrateUp(migrationNumber?: string): Promise<void> {
   console.log('\n🚀 Running migrations...\n');
 
+  // Ensure migrations tracking table exists
+  await ensureMigrationsTable();
+
+  // Get already applied migrations
+  const appliedMigrations = await getAppliedMigrations();
+
+  // Define all available migrations
+  const allMigrations = [
+    { version: '001', filename: '001_create_users_auth.sql' },
+    { version: '002', filename: '002_create_clients.sql' },
+    { version: '003', filename: '003_create_care_plans.sql' },
+  ];
+
   if (migrationNumber) {
     // Run specific migration
-    const migrationFiles: Record<string, string> = {
-      '001': '001_create_users_auth.sql',
-      '002': '002_create_clients.sql',
-      '003': '003_create_care_plans.sql',
-    };
-    
-    const filename = migrationFiles[migrationNumber];
-    if (!filename) {
+    const migration = allMigrations.find((m) => m.version === migrationNumber);
+    if (!migration) {
       throw new Error(`Migration ${migrationNumber} not found`);
     }
-    await executeMigration(filename);
+
+    if (appliedMigrations.has(migration.version)) {
+      console.log(`⏭️  Migration ${migration.version} already applied, skipping...`);
+    } else {
+      await executeMigration(migration.filename, migration.version);
+    }
   } else {
-    // Run all migrations in order
-    await executeMigration('001_create_users_auth.sql');
-    await executeMigration('002_create_clients.sql');
-    await executeMigration('003_create_care_plans.sql');
+    // Run all pending migrations in order
+    let appliedCount = 0;
+    for (const migration of allMigrations) {
+      if (appliedMigrations.has(migration.version)) {
+        console.log(`⏭️  Migration ${migration.version} already applied, skipping...`);
+      } else {
+        await executeMigration(migration.filename, migration.version);
+        appliedCount++;
+      }
+    }
+
+    if (appliedCount === 0) {
+      console.log('\n✨ No pending migrations to run. Database is up to date!\n');
+      return;
+    }
   }
 
   console.log('\n✨ All migrations completed successfully!\n');
@@ -92,17 +171,29 @@ async function migrateUp(migrationNumber?: string): Promise<void> {
 async function migrateDown(migrationNumber: string): Promise<void> {
   console.log('\n⏪ Rolling back migration...\n');
 
+  // Ensure migrations tracking table exists
+  await ensureMigrationsTable();
+
+  // Get already applied migrations
+  const appliedMigrations = await getAppliedMigrations();
+
+  // Check if migration was applied
+  if (!appliedMigrations.has(migrationNumber)) {
+    console.log(`⏭️  Migration ${migrationNumber} was not applied, nothing to rollback.`);
+    return;
+  }
+
   const rollbackFiles: Record<string, string> = {
     '001': '001_create_users_auth_rollback.sql',
     '002': '002_create_clients_rollback.sql',
     '003': '003_create_care_plans_rollback.sql',
   };
-  
+
   const filename = rollbackFiles[migrationNumber];
   if (!filename) {
     throw new Error(`Rollback for migration ${migrationNumber} not found`);
   }
-  await executeMigration(filename);
+  await executeMigration(filename, migrationNumber, true);
 
   console.log('\n✨ Rollback completed successfully!\n');
 }

@@ -15,9 +15,11 @@
  * - Pagination for scalability
  */
 
+import * as crypto from 'crypto';
+
 import { Request, Response, Router } from 'express';
 import { Pool } from 'pg';
-import { RedisClientType } from 'redis';
+import { createClient } from 'redis';
 
 import { logError, logInfo } from '../config/logger';
 import { authenticateJWT, AuthenticatedRequest, requireRole } from '../middleware/auth';
@@ -51,7 +53,10 @@ interface PaginationMeta {
   totalPages: number;
 }
 
-export function createClientRoutes(pgPool: Pool, redisClient: RedisClientType): Router {
+export function createClientRoutes(
+  pgPool: Pool,
+  redisClient: ReturnType<typeof createClient>
+): Router {
   const router = Router();
 
   // Initialize services

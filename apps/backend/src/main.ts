@@ -110,16 +110,13 @@ async function startServer() {
     logInfo('Connected to Redis', { version: redisVersion });
 
     // Initialize routes after Redis connection
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    authRoutes = createAuthRoutes(pgPool, redisClient as any);
+    authRoutes = createAuthRoutes(pgPool, redisClient);
     app.use('/api/v1/auth', authRoutes);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    clientRoutes = createClientRoutes(pgPool, redisClient as any);
+    clientRoutes = createClientRoutes(pgPool, redisClient);
     app.use('/api/v1/clients', clientRoutes);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    carePlanRoutes = createCarePlanRoutes(pgPool, redisClient as any);
+    carePlanRoutes = createCarePlanRoutes(pgPool, redisClient);
     app.use('/api/v1/care-plans', carePlanRoutes);
 
     // Start Express server

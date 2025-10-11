@@ -7,11 +7,11 @@
  */
 
 import { Router } from 'express';
-import { RedisClientType } from 'redis';
+import { createClient } from 'redis';
 
 import { authenticateJWT, requireRole, AuthenticatedRequest } from '../auth';
 
-export function createProtectedRoutes(redisClient: RedisClientType): Router {
+export function createProtectedRoutes(redisClient: ReturnType<typeof createClient>): Router {
   const router = Router();
 
   /**

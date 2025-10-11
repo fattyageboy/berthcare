@@ -4,37 +4,38 @@
  * Provides common utilities for integration tests
  */
 
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 
 import express, { Express } from 'express';
 import { Pool } from 'pg';
-import { createClient, RedisClientType } from 'redis';
+import { createClient } from 'redis';
 
 import { createAuthRoutes } from '../src/routes/auth.routes';
 import { createCarePlanRoutes } from '../src/routes/care-plans.routes';
 import { createClientRoutes } from '../src/routes/clients.routes';
 
 // Test configuration
-export const TEST_DATABASE_URL =
-  process.env.TEST_DATABASE_URL ||
-  'postgresql://berthcare:berthcare_dev_password@localhost:5432/berthcare_test';
-export const TEST_REDIS_URL =
-  process.env.TEST_REDIS_URL || 'redis://:berthcare_redis_password@localhost:6379/1';
+export const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
+export const TEST_REDIS_URL = process.env.TEST_REDIS_URL;
+
+if (!TEST_DATABASE_URL) {
+  throw new Error('TEST_DATABASE_URL environment variable is required');
+}
+if (!TEST_REDIS_URL) {
+  throw new Error('TEST_REDIS_URL environment variable is required');
+}
 
 /**
  * Create a test app with all routes mounted
  */
-export function createTestApp(pgPool: Pool, redisClient: RedisClientType): Express {
+export function createTestApp(pgPool: Pool, redisClient: ReturnType<typeof createClient>): Express {
   const app = express();
   app.use(express.json());
 
   // Mount routes
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  app.use('/api/v1/auth', createAuthRoutes(pgPool, redisClient as any));
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  app.use('/api/v1/clients', createClientRoutes(pgPool, redisClient as any));
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  app.use('/api/v1/care-plans', createCarePlanRoutes(pgPool, redisClient as any));
+  app.use('/api/v1/auth', createAuthRoutes(pgPool, redisClient));
+  app.use('/api/v1/clients', createClientRoutes(pgPool, redisClient));
+  app.use('/api/v1/care-plans', createCarePlanRoutes(pgPool, redisClient));
 
   return app;
 }
@@ -110,7 +111,10 @@ export async function cleanupTestData(pgPool: Pool, clientIds: string[]): Promis
  * Handles foreign key constraints in correct order
  * Uses DELETE instead of TRUNCATE to avoid deadlocks
  */
-export async function cleanAllTestData(pgPool: Pool, redisClient: RedisClientType): Promise<void> {
+export async function cleanAllTestData(
+  pgPool: Pool,
+  redisClient: ReturnType<typeof createClient>
+): Promise<void> {
   const client = await pgPool.connect();
   try {
     // Use a transaction to ensure atomicity
@@ -121,7 +125,7 @@ export async function cleanAllTestData(pgPool: Pool, redisClient: RedisClientTyp
     await client.query('DELETE FROM care_plans');
     await client.query('DELETE FROM clients');
     await client.query('DELETE FROM refresh_tokens');
-    await client.query("DELETE FROM users WHERE email LIKE '%@example.com'");
+    await client.query("DELETE FROM users WHERE email LIKE '%test-%@example.com'");
 
     await client.query('COMMIT');
 
@@ -150,8 +154,7 @@ export function generateTestEmail(prefix: string = 'test'): string {
  */
 export async function setupTestConnections(): Promise<{
   pgPool: Pool;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  redisClient: any;
+  redisClient: ReturnType<typeof createClient>;
 }> {
   const pgPool = new Pool({
     connectionString: TEST_DATABASE_URL,
@@ -170,8 +173,7 @@ export async function setupTestConnections(): Promise<{
  */
 export async function teardownTestConnections(
   pgPool: Pool,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  redisClient: any
+  redisClient: ReturnType<typeof createClient>
 ): Promise<void> {
   try {
     await pgPool.end();

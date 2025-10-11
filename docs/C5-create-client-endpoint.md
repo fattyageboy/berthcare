@@ -628,8 +628,7 @@ The POST /v1/clients endpoint is now fully implemented and ready for testing. Th
 - ✅ `apps/backend/src/middleware/validation.ts` - Extended validation
 - ✅ `apps/backend/src/routes/clients.routes.ts` - POST endpoint
 - ✅ `apps/backend/tests/clients.create.test.ts` - Integration tests
-- ✅ `docs/C5-create-client-endpoint.md` - API documentation
-- ✅ `docs/C5-create-client-implementation-summary.md` - This summary
+- ✅ `docs/C5-create-client-endpoint.md` - This implementation guide and API documentation
 
 **Next Task:** Testing and validation
 
