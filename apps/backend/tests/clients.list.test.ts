@@ -68,7 +68,6 @@ describe('GET /api/v1/clients', () => {
 
     // Create Express app with client routes
     app = express();
-    // Create Express app with client routes
     app = express();
     app.use('/api/v1/clients', createClientRoutes(pgPool, redisClient));
 
