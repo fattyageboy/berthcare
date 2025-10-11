@@ -251,10 +251,10 @@ export function createVisitsRouter(pool: Pool): Router {
           userId,
           scheduledStartTime,
           actualCheckInTime,
-          checkInLatitude || null,
-          checkInLongitude || null,
+          checkInLatitude ?? null,
+          checkInLongitude ?? null,
           'in_progress',
-          copiedFromVisitId || null,
+          copiedFromVisitId ?? null,
         ]
       );
 
@@ -319,7 +319,7 @@ export function createVisitsRouter(pool: Pool): Router {
         clientId,
         staffId: userId,
         checkInTime: actualCheckInTime,
-        hasGPS: !!(checkInLatitude && checkInLongitude),
+        hasGPS: checkInLatitude !== undefined && checkInLongitude !== undefined,
         copiedFromVisit: !!copiedFromVisitId,
       });
 

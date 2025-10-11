@@ -57,7 +57,7 @@ CREATE TABLE visit_photos (
 **S3 Key Format:** `visits/{visit_id}/{photo_id}.jpg`
 
 **Example:**
-```
+```text
 s3_key: visits/3edaf4f8-2120-4011-a59f-f6d8a47c622f/84c8ca84-3cb4-4d3a-8d3f-86d9ac468ae8.jpg
 s3_url: https://s3.amazonaws.com/berthcare-photos/visits/3edaf4f8-2120-4011-a59f-f6d8a47c622f/84c8ca84-3cb4-4d3a-8d3f-86d9ac468ae8.jpg
 ```

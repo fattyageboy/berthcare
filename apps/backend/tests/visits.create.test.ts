@@ -181,6 +181,25 @@ describe('POST /v1/visits', () => {
       // Clean up
       await pgPool.query('DELETE FROM visits WHERE id = $1', [response.body.id]);
     });
+
+    it('should preserve 0 as valid GPS coordinates (equator/prime meridian)', async () => {
+      const response = await request(app)
+        .post('/api/v1/visits')
+        .set('Authorization', `Bearer ${caregiverToken}`)
+        .send({
+          clientId,
+          scheduledStartTime: '2025-10-11T12:30:00Z',
+          checkInLatitude: 0, // Equator
+          checkInLongitude: 0, // Prime meridian
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.checkInLatitude).toBe(0);
+      expect(response.body.checkInLongitude).toBe(0);
+
+      // Clean up
+      await pgPool.query('DELETE FROM visits WHERE id = $1', [response.body.id]);
+    });
   });
 
   describe('Smart data reuse', () => {
