@@ -122,7 +122,7 @@ async function startServer() {
     carePlanRoutes = createCarePlanRoutes(pgPool, redisClient);
     app.use('/api/v1/care-plans', carePlanRoutes);
 
-    visitsRoutes = createVisitsRouter(pgPool);
+    visitsRoutes = createVisitsRouter(pgPool, redisClient);
     app.use('/api/v1/visits', visitsRoutes);
 
     // Start Express server

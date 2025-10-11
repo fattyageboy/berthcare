@@ -19,6 +19,7 @@
 
 import { Request, Response, Router } from 'express';
 import { Pool } from 'pg';
+import { createClient } from 'redis';
 
 import { logError, logInfo } from '../config/logger';
 import { authenticateJWT, AuthenticatedRequest } from '../middleware/auth';
@@ -53,8 +54,261 @@ interface VisitResponse {
 /**
  * Create visits router
  */
-export function createVisitsRouter(pool: Pool): Router {
+export function createVisitsRouter(
+  pool: Pool,
+  redisClient: ReturnType<typeof createClient>
+): Router {
   const router = Router();
+
+  /**
+   * GET /v1/visits
+   * List visits with filtering and pagination
+   *
+   * Returns a paginated list of visits with optional filtering by staff, client,
+   * date range, and status. Supports Redis caching for performance.
+   *
+   * Authentication: Required
+   * Authorization: Caregivers see only their visits, coordinators/admins see all in zone
+   *
+   * Query Parameters:
+   * - staffId: UUID (optional) - Filter by staff member
+   * - clientId: UUID (optional) - Filter by client
+   * - startDate: ISO 8601 (optional) - Filter visits from this date
+   * - endDate: ISO 8601 (optional) - Filter visits until this date
+   * - status: string (optional) - Filter by status (scheduled, in_progress, completed, cancelled)
+   * - page: number (optional, default: 1) - Page number
+   * - limit: number (optional, default: 50, max: 100) - Results per page
+   *
+   * Response: 200 OK
+   * - Array of visit summaries with client names
+   * - Pagination metadata
+   *
+   * Errors:
+   * - 400: Invalid query parameters
+   * - 401: Unauthorized
+   * - 403: Forbidden (access denied)
+   */
+  router.get('/', authenticateJWT, async (req: Request, res: Response) => {
+    const authReq = req as AuthenticatedRequest;
+    const userId = authReq.user?.userId;
+    const userRole = authReq.user?.role;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Authentication required',
+      });
+    }
+
+    // Parse query parameters
+    const { staffId, clientId, startDate, endDate, status, page = '1', limit = '50' } = req.query;
+
+    // Validate and parse pagination
+    const pageNum = Math.max(1, parseInt(page as string, 10) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit as string, 10) || 50));
+    const offset = (pageNum - 1) * limitNum;
+
+    // Validate UUID formats if provided
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    if (staffId && !uuidRegex.test(staffId as string)) {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'Invalid staffId format',
+      });
+    }
+
+    if (clientId && !uuidRegex.test(clientId as string)) {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'Invalid clientId format',
+      });
+    }
+
+    // Validate status if provided
+    const validStatuses = ['scheduled', 'in_progress', 'completed', 'cancelled'];
+    if (status && !validStatuses.includes(status as string)) {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'Invalid status. Must be one of: scheduled, in_progress, completed, cancelled',
+      });
+    }
+
+    // Validate dates if provided
+    if (startDate && isNaN(Date.parse(startDate as string))) {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'Invalid startDate format. Must be ISO 8601',
+      });
+    }
+
+    if (endDate && isNaN(Date.parse(endDate as string))) {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'Invalid endDate format. Must be ISO 8601',
+      });
+    }
+
+    // Build cache key
+    const cacheKey = `visits:list:staff=${staffId || 'all'}:client=${clientId || 'all'}:start=${startDate || 'all'}:end=${endDate || 'all'}:status=${status || 'all'}:page=${pageNum}:limit=${limitNum}`;
+
+    try {
+      // Try to get from cache
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        logInfo('Visits list cache hit', { cacheKey, userId });
+        return res.status(200).json({
+          ...JSON.parse(cached),
+          meta: { cached: true },
+        });
+      }
+
+      // Get user's zone for authorization
+      const userResult = await pool.query('SELECT zone_id FROM users WHERE id = $1', [userId]);
+
+      if (userResult.rows.length === 0) {
+        return res.status(403).json({
+          error: 'Forbidden',
+          message: 'User not found',
+        });
+      }
+
+      const userZoneId = userResult.rows[0].zone_id;
+
+      // Build WHERE clause based on filters and authorization
+      const conditions: string[] = [];
+      const values: (string | number)[] = [];
+      let paramCount = 1;
+
+      // Authorization: caregivers can only see their own visits
+      if (userRole === 'caregiver') {
+        conditions.push(`v.staff_id = $${paramCount}`);
+        values.push(userId);
+        paramCount++;
+      } else {
+        // Coordinators and admins see visits in their zone
+        conditions.push(`c.zone_id = $${paramCount}`);
+        values.push(userZoneId);
+        paramCount++;
+      }
+
+      // Apply filters
+      if (staffId) {
+        conditions.push(`v.staff_id = $${paramCount}`);
+        values.push(staffId as string);
+        paramCount++;
+      }
+
+      if (clientId) {
+        conditions.push(`v.client_id = $${paramCount}`);
+        values.push(clientId as string);
+        paramCount++;
+      }
+
+      if (startDate) {
+        conditions.push(`v.scheduled_start_time >= $${paramCount}`);
+        values.push(startDate as string);
+        paramCount++;
+      }
+
+      if (endDate) {
+        conditions.push(`v.scheduled_start_time <= $${paramCount}`);
+        values.push(endDate as string);
+        paramCount++;
+      }
+
+      if (status) {
+        conditions.push(`v.status = $${paramCount}`);
+        values.push(status as string);
+        paramCount++;
+      }
+
+      const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+      // Get total count
+      const countQuery = `
+        SELECT COUNT(*) as total
+        FROM visits v
+        INNER JOIN clients c ON v.client_id = c.id
+        ${whereClause}
+      `;
+
+      const countResult = await pool.query(countQuery, values);
+      const total = parseInt(countResult.rows[0].total, 10);
+      const totalPages = Math.ceil(total / limitNum);
+
+      // Get paginated visits
+      const visitsQuery = `
+        SELECT 
+          v.id,
+          v.client_id,
+          c.first_name || ' ' || c.last_name as client_name,
+          v.staff_id,
+          u.first_name || ' ' || u.last_name as staff_name,
+          v.scheduled_start_time,
+          v.check_in_time,
+          v.check_out_time,
+          v.duration_minutes,
+          v.status,
+          v.created_at
+        FROM visits v
+        INNER JOIN clients c ON v.client_id = c.id
+        INNER JOIN users u ON v.staff_id = u.id
+        ${whereClause}
+        ORDER BY v.scheduled_start_time DESC
+        LIMIT $${paramCount} OFFSET $${paramCount + 1}
+      `;
+
+      const visitsResult = await pool.query(visitsQuery, [...values, limitNum, offset]);
+
+      const response = {
+        data: {
+          visits: visitsResult.rows.map((row) => ({
+            id: row.id,
+            clientId: row.client_id,
+            clientName: row.client_name,
+            staffId: row.staff_id,
+            staffName: row.staff_name,
+            scheduledStartTime: row.scheduled_start_time,
+            checkInTime: row.check_in_time,
+            checkOutTime: row.check_out_time,
+            duration: row.duration_minutes,
+            status: row.status,
+            createdAt: row.created_at,
+          })),
+          pagination: {
+            page: pageNum,
+            limit: limitNum,
+            total,
+            totalPages,
+          },
+        },
+      };
+
+      // Cache the response for 5 minutes
+      await redisClient.setEx(cacheKey, 300, JSON.stringify(response));
+
+      logInfo('Visits list fetched successfully', {
+        userId,
+        userRole,
+        total,
+        page: pageNum,
+        filters: { staffId, clientId, startDate, endDate, status },
+      });
+
+      return res.status(200).json(response);
+    } catch (error) {
+      logError('Error fetching visits list', error as Error, {
+        userId,
+        filters: { staffId, clientId, startDate, endDate, status },
+      });
+
+      return res.status(500).json({
+        error: 'Internal Server Error',
+        message: 'Failed to fetch visits',
+      });
+    }
+  });
 
   /**
    * POST /v1/visits
@@ -400,13 +654,7 @@ export function createVisitsRouter(pool: Pool): Router {
       });
     }
 
-    const {
-      checkOutTime,
-      checkOutLatitude,
-      checkOutLongitude,
-      status,
-      documentation,
-    } = req.body;
+    const { checkOutTime, checkOutLatitude, checkOutLongitude, status, documentation } = req.body;
 
     // Validate GPS coordinates if provided
     if (checkOutLatitude !== undefined && (checkOutLatitude < -90 || checkOutLatitude > 90)) {
@@ -614,7 +862,6 @@ export function createVisitsRouter(pool: Pool): Router {
           );
         }
       }
-
     } catch (error) {
       await client.query('ROLLBACK');
       logError('Error updating visit', error as Error, {

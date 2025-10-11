@@ -13,6 +13,7 @@ import { createClient } from 'redis';
 import { createAuthRoutes } from '../src/routes/auth.routes';
 import { createCarePlanRoutes } from '../src/routes/care-plans.routes';
 import { createClientRoutes } from '../src/routes/clients.routes';
+import { createVisitsRouter } from '../src/routes/visits.routes';
 
 // Test configuration
 export const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
@@ -36,6 +37,7 @@ export function createTestApp(pgPool: Pool, redisClient: ReturnType<typeof creat
   app.use('/api/v1/auth', createAuthRoutes(pgPool, redisClient));
   app.use('/api/v1/clients', createClientRoutes(pgPool, redisClient));
   app.use('/api/v1/care-plans', createCarePlanRoutes(pgPool, redisClient));
+  app.use('/api/v1/visits', createVisitsRouter(pgPool, redisClient));
 
   return app;
 }
@@ -94,12 +96,58 @@ export async function createTestClient(
 }
 
 /**
+ * Create test visit in database
+ */
+export async function createTestVisit(
+  pgPool: Pool,
+  data: {
+    id?: string;
+    clientId: string;
+    staffId: string;
+    scheduledStartTime: string;
+    checkInTime?: string;
+    checkOutTime?: string;
+    status?: string;
+    durationMinutes?: number;
+  }
+): Promise<string> {
+  const visitId = data.id || crypto.randomUUID();
+
+  await pgPool.query(
+    `
+    INSERT INTO visits (
+      id, client_id, staff_id, scheduled_start_time,
+      check_in_time, check_out_time, status, duration_minutes,
+      created_at, updated_at
+    ) VALUES (
+      $1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW()
+    )
+  `,
+    [
+      visitId,
+      data.clientId,
+      data.staffId,
+      data.scheduledStartTime,
+      data.checkInTime || null,
+      data.checkOutTime || null,
+      data.status || 'scheduled',
+      data.durationMinutes || null,
+    ]
+  );
+
+  return visitId;
+}
+
+/**
  * Clean up test data
  */
 export async function cleanupTestData(pgPool: Pool, clientIds: string[]): Promise<void> {
   if (clientIds.length === 0) return;
 
-  // Delete care plans first (foreign key)
+  // Delete visits first (foreign key to clients)
+  await pgPool.query('DELETE FROM visits WHERE client_id = ANY($1)', [clientIds]);
+
+  // Delete care plans (foreign key to clients)
   await pgPool.query('DELETE FROM care_plans WHERE client_id = ANY($1)', [clientIds]);
 
   // Delete clients
@@ -122,6 +170,7 @@ export async function cleanAllTestData(
 
     // Delete in order to respect foreign key constraints
     // Note: refresh_tokens has ON DELETE CASCADE, so deleting users will cascade
+    await client.query('DELETE FROM visits');
     await client.query('DELETE FROM care_plans');
     await client.query('DELETE FROM clients');
     await client.query('DELETE FROM refresh_tokens');
