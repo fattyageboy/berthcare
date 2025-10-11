@@ -116,9 +116,7 @@ describe('Photo Storage Service', () => {
     it('should throw error if photo does not exist', async () => {
       (s3Client.objectExists as jest.Mock).mockResolvedValue(false);
 
-      await expect(
-        getPhotoDownloadUrl('photos/visit-123/photo.jpg')
-      ).rejects.toThrow();
+      await expect(getPhotoDownloadUrl('photos/visit-123/photo.jpg')).rejects.toThrow();
     });
 
     it('should use custom expiration time', async () => {
@@ -205,9 +203,7 @@ describe('Photo Storage Service', () => {
     it('should handle deletion errors', async () => {
       (s3Client.deleteObject as jest.Mock).mockRejectedValue(new Error('Delete failed'));
 
-      await expect(
-        deletePhoto('photos/visit-123/photo.jpg')
-      ).rejects.toThrow('Delete failed');
+      await expect(deletePhoto('photos/visit-123/photo.jpg')).rejects.toThrow('Delete failed');
     });
   });
 });

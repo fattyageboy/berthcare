@@ -10,7 +10,12 @@
  * - Metadata handling
  */
 
-import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  PutObjectCommand,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 // Mock AWS SDK
@@ -86,9 +91,9 @@ describe('S3 Client', () => {
     it('should handle errors gracefully', async () => {
       (getSignedUrl as jest.Mock).mockRejectedValue(new Error('S3 Error'));
 
-      await expect(
-        generateUploadUrl('photos', 'test-key.jpg')
-      ).rejects.toThrow('Failed to generate upload URL');
+      await expect(generateUploadUrl('photos', 'test-key.jpg')).rejects.toThrow(
+        'Failed to generate upload URL'
+      );
     });
   });
 
@@ -100,11 +105,9 @@ describe('S3 Client', () => {
       const result = await generateDownloadUrl('photos', 'test-key.jpg', 1800);
 
       expect(result).toBe(mockUrl);
-      expect(getSignedUrl).toHaveBeenCalledWith(
-        s3Client,
-        expect.any(GetObjectCommand),
-        { expiresIn: 1800 }
-      );
+      expect(getSignedUrl).toHaveBeenCalledWith(s3Client, expect.any(GetObjectCommand), {
+        expiresIn: 1800,
+      });
     });
 
     it('should use default expiration time', async () => {
@@ -113,11 +116,9 @@ describe('S3 Client', () => {
 
       await generateDownloadUrl('photos', 'test-key.jpg');
 
-      expect(getSignedUrl).toHaveBeenCalledWith(
-        s3Client,
-        expect.any(GetObjectCommand),
-        { expiresIn: 3600 }
-      );
+      expect(getSignedUrl).toHaveBeenCalledWith(s3Client, expect.any(GetObjectCommand), {
+        expiresIn: 3600,
+      });
     });
   });
 
@@ -156,9 +157,9 @@ describe('S3 Client', () => {
       const mockSend = jest.fn().mockRejectedValue(new Error('Delete failed'));
       (s3Client.send as jest.Mock) = mockSend;
 
-      await expect(
-        deleteObject('photos', 'test-key.jpg')
-      ).rejects.toThrow('Failed to delete object');
+      await expect(deleteObject('photos', 'test-key.jpg')).rejects.toThrow(
+        'Failed to delete object'
+      );
     });
   });
 
@@ -183,9 +184,7 @@ describe('S3 Client', () => {
       const mockSend = jest.fn().mockRejectedValue(new Error('Not found'));
       (s3Client.send as jest.Mock) = mockSend;
 
-      await expect(
-        getObjectMetadata('photos', 'test-key.jpg')
-      ).rejects.toThrow();
+      await expect(getObjectMetadata('photos', 'test-key.jpg')).rejects.toThrow();
     });
   });
 

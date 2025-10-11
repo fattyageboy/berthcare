@@ -68,8 +68,9 @@ describe('GET /api/v1/clients', () => {
 
     // Create Express app with client routes
     app = express();
+    // Create Express app with client routes
+    app = express();
     app.use('/api/v1/clients', createClientRoutes(pgPool, redisClient));
-    app.use('/api/v1/clients', createClientRoutes(pgPool, redisClient as any));
 
     // Ensure test database has required tables
     await pgPool.query(`
@@ -134,7 +135,9 @@ describe('GET /api/v1/clients', () => {
       // Clear database tables in correct order
       await client.query('DELETE FROM care_plans');
       await client.query('DELETE FROM clients');
-      await client.query('DELETE FROM users WHERE email LIKE \'%@test.com\' OR email LIKE \'%@example.com\'');
+      await client.query(
+        "DELETE FROM users WHERE email LIKE '%@test.com' OR email LIKE '%@example.com'"
+      );
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');
@@ -595,5 +598,4 @@ describe('GET /api/v1/clients', () => {
       expect(response2.body.data.clients).toHaveLength(2);
     });
   });
-});
 });

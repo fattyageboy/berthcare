@@ -134,7 +134,9 @@ describe('GET /api/v1/clients/:clientId', () => {
       // Clear database tables in correct order
       await client.query('DELETE FROM care_plans');
       await client.query('DELETE FROM clients');
-      await client.query('DELETE FROM users WHERE email LIKE \'%@test.com\' OR email LIKE \'%@example.com\'');
+      await client.query(
+        "DELETE FROM users WHERE email LIKE '%@test.com' OR email LIKE '%@example.com'"
+      );
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');

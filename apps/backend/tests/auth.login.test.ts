@@ -58,29 +58,29 @@ describe('POST /v1/auth/login', () => {
 
   // Clean database and Redis before each test
   beforeEach(async () => {
-  beforeEach(async () => {
-    const client = await pgPool.connect();
-    try {
-      await client.query('BEGIN');
-      await client.query('DELETE FROM refresh_tokens');
-      await client.query("DELETE FROM users WHERE email LIKE '%@example.com'");
-      await client.query('COMMIT');
-    } catch (error) {
-      await client.query('ROLLBACK');
-      console.error('Error cleaning test database:', error);
-      throw error;
-    } finally {
-      client.release();
-    }
+    beforeEach(async () => {
+      const client = await pgPool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query('DELETE FROM refresh_tokens');
+        await client.query("DELETE FROM users WHERE email LIKE '%@example.com'");
+        await client.query('COMMIT');
+      } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error cleaning test database:', error);
+        throw error;
+      } finally {
+        client.release();
+      }
 
-    // Redis cleanup outside PostgreSQL transaction
-    try {
-      await redisClient.flushDb();
-    } catch (error) {
-      console.error('Error cleaning Redis:', error);
-      throw error;
-    }
-  });
+      // Redis cleanup outside PostgreSQL transaction
+      try {
+        await redisClient.flushDb();
+      } catch (error) {
+        console.error('Error cleaning Redis:', error);
+        throw error;
+      }
+    });
   });
 
   // Helper function to create a test user
