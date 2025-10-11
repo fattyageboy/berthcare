@@ -52,6 +52,33 @@ interface VisitResponse {
 }
 
 /**
+ * Invalidate all cached visit list queries
+ *
+ * Deletes all Redis keys matching the visits:list:* pattern to ensure
+ * subsequent list requests fetch fresh data from the database after
+ * visits are created or updated.
+ *
+ * @param redisClient - Redis client instance
+ */
+async function invalidateVisitListCache(
+  redisClient: ReturnType<typeof createClient>
+): Promise<void> {
+  try {
+    // Find all keys matching the visits list cache pattern
+    const keys = await redisClient.keys('visits:list:*');
+
+    if (keys.length > 0) {
+      // Delete all matching keys
+      await redisClient.del(keys);
+      logInfo('Visit list cache invalidated', { keysDeleted: keys.length });
+    }
+  } catch (error) {
+    // Log error but don't fail the request - cache invalidation is not critical
+    logError('Failed to invalidate visit list cache', error as Error);
+  }
+}
+
+/**
  * Create visits router
  */
 export function createVisitsRouter(
@@ -69,6 +96,9 @@ export function createVisitsRouter(
    *
    * Authentication: Required
    * Authorization: Caregivers see only their visits, coordinators/admins see all in zone
+   *
+   * Security: Cache keys are scoped per user/zone to prevent cross-user data leakage.
+   * User validation occurs BEFORE cache lookup to ensure proper authorization.
    *
    * Query Parameters:
    * - staffId: UUID (optional) - Filter by staff member
@@ -91,7 +121,6 @@ export function createVisitsRouter(
   router.get('/', authenticateJWT, async (req: Request, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const userId = authReq.user?.userId;
-    const userRole = authReq.user?.role;
 
     if (!userId) {
       return res.status(401).json({
@@ -149,22 +178,11 @@ export function createVisitsRouter(
       });
     }
 
-    // Build cache key
-    const cacheKey = `visits:list:staff=${staffId || 'all'}:client=${clientId || 'all'}:start=${startDate || 'all'}:end=${endDate || 'all'}:status=${status || 'all'}:page=${pageNum}:limit=${limitNum}`;
-
     try {
-      // Try to get from cache
-      const cached = await redisClient.get(cacheKey);
-      if (cached) {
-        logInfo('Visits list cache hit', { cacheKey, userId });
-        return res.status(200).json({
-          ...JSON.parse(cached),
-          meta: { cached: true },
-        });
-      }
-
-      // Get user's zone for authorization
-      const userResult = await pool.query('SELECT zone_id FROM users WHERE id = $1', [userId]);
+      // Get user's zone and role for authorization BEFORE checking cache
+      const userResult = await pool.query('SELECT zone_id, role FROM users WHERE id = $1', [
+        userId,
+      ]);
 
       if (userResult.rows.length === 0) {
         return res.status(403).json({
@@ -174,6 +192,24 @@ export function createVisitsRouter(
       }
 
       const userZoneId = userResult.rows[0].zone_id;
+      const userRoleFromDb = userResult.rows[0].role;
+
+      // Build cache key with user-specific scope to prevent cross-user data leakage
+      // For caregivers: include userId (they only see their own visits)
+      // For coordinators/admins: include zoneId (they see all visits in their zone)
+      const principalScope =
+        userRoleFromDb === 'caregiver' ? `user:${userId}` : `zone:${userZoneId}`;
+      const cacheKey = `visits:list:${principalScope}:staff=${staffId || 'all'}:client=${clientId || 'all'}:start=${startDate || 'all'}:end=${endDate || 'all'}:status=${status || 'all'}:page=${pageNum}:limit=${limitNum}`;
+
+      // Try to get from cache AFTER building user-scoped cache key
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        logInfo('Visits list cache hit', { cacheKey, userId, principalScope });
+        return res.status(200).json({
+          ...JSON.parse(cached),
+          meta: { cached: true },
+        });
+      }
 
       // Build WHERE clause based on filters and authorization
       const conditions: string[] = [];
@@ -181,7 +217,7 @@ export function createVisitsRouter(
       let paramCount = 1;
 
       // Authorization: caregivers can only see their own visits
-      if (userRole === 'caregiver') {
+      if (userRoleFromDb === 'caregiver') {
         conditions.push(`v.staff_id = $${paramCount}`);
         values.push(userId);
         paramCount++;
@@ -290,7 +326,8 @@ export function createVisitsRouter(
 
       logInfo('Visits list fetched successfully', {
         userId,
-        userRole,
+        userRole: userRoleFromDb,
+        principalScope,
         total,
         page: pageNum,
         filters: { staffId, clientId, startDate, endDate, status },
@@ -568,6 +605,9 @@ export function createVisitsRouter(
 
       await client.query('COMMIT');
 
+      // Invalidate cached visit lists after successful creation
+      await invalidateVisitListCache(redisClient);
+
       logInfo('Visit created successfully', {
         visitId: visit.id,
         clientId,
@@ -767,6 +807,9 @@ export function createVisitsRouter(
         const updatedVisit = updatedVisitResult.rows[0];
 
         await client.query('COMMIT');
+
+        // Invalidate cached visit lists after successful update
+        await invalidateVisitListCache(redisClient);
 
         logInfo('Visit updated successfully', {
           visitId,
