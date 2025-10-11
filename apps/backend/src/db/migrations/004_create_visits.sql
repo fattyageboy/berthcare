@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS visits (
         duration_minutes IS NULL OR 
         check_in_time IS NULL OR 
         check_out_time IS NULL OR
-        duration_minutes = EXTRACT(EPOCH FROM (check_out_time - check_in_time)) / 60
+        duration_minutes = ROUND(EXTRACT(EPOCH FROM (check_out_time - check_in_time)) / 60)::INTEGER
     )
 );
 
