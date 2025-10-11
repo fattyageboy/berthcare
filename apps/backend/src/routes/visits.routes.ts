@@ -353,5 +353,283 @@ export function createVisitsRouter(pool: Pool): Router {
     }
   });
 
+  /**
+   * PATCH /v1/visits/:visitId
+   * Update a visit (including check-out/completion)
+   *
+   * Updates visit details, records check-out time and GPS, calculates duration,
+   * and changes status to 'completed'. Supports partial updates to documentation.
+   *
+   * Authentication: Required (caregiver role)
+   * Authorization: Caregiver must own the visit (or be coordinator/admin)
+   *
+   * Request Body:
+   * - checkOutTime: ISO 8601 timestamp (optional)
+   * - checkOutLatitude: GPS latitude (optional)
+   * - checkOutLongitude: GPS longitude (optional)
+   * - status: 'completed' | 'cancelled' (optional)
+   * - documentation: Partial documentation updates (optional)
+   *
+   * Response: 200 OK
+   * - Updated visit object with calculated duration
+   *
+   * Errors:
+   * - 400: Invalid request data
+   * - 404: Visit not found
+   * - 403: Not authorized to update this visit
+   */
+  router.patch('/:visitId', authenticateJWT, async (req: Request, res: Response) => {
+    const authReq = req as AuthenticatedRequest;
+    const userId = authReq.user?.userId;
+    const userRole = authReq.user?.role;
+    const { visitId } = req.params;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Authentication required',
+      });
+    }
+
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(visitId)) {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'Invalid visitId format',
+      });
+    }
+
+    const {
+      checkOutTime,
+      checkOutLatitude,
+      checkOutLongitude,
+      status,
+      documentation,
+    } = req.body;
+
+    // Validate GPS coordinates if provided
+    if (checkOutLatitude !== undefined && (checkOutLatitude < -90 || checkOutLatitude > 90)) {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'checkOutLatitude must be between -90 and 90',
+      });
+    }
+
+    if (checkOutLongitude !== undefined && (checkOutLongitude < -180 || checkOutLongitude > 180)) {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'checkOutLongitude must be between -180 and 180',
+      });
+    }
+
+    // Validate status if provided
+    if (status && !['completed', 'cancelled', 'in_progress'].includes(status)) {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'status must be one of: completed, cancelled, in_progress',
+      });
+    }
+
+    const client = await pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      // Get visit and verify ownership
+      const visitResult = await client.query(
+        `SELECT id, staff_id, client_id, check_in_time, check_out_time, status
+         FROM visits 
+         WHERE id = $1`,
+        [visitId]
+      );
+
+      if (visitResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({
+          error: 'Not Found',
+          message: 'Visit not found',
+        });
+      }
+
+      const visit = visitResult.rows[0];
+
+      // Authorization check: caregiver must own the visit, or be coordinator/admin
+      if (userRole === 'caregiver' && visit.staff_id !== userId) {
+        await client.query('ROLLBACK');
+        return res.status(403).json({
+          error: 'Forbidden',
+          message: 'You can only update your own visits',
+        });
+      }
+
+      // Build update query dynamically based on provided fields
+      const updates: string[] = [];
+      const values: (string | number | null)[] = [];
+      let paramCount = 1;
+
+      if (checkOutTime !== undefined) {
+        updates.push(`check_out_time = $${paramCount}`);
+        values.push(checkOutTime);
+        paramCount++;
+      }
+
+      if (checkOutLatitude !== undefined) {
+        updates.push(`check_out_latitude = $${paramCount}`);
+        values.push(checkOutLatitude ?? null);
+        paramCount++;
+      }
+
+      if (checkOutLongitude !== undefined) {
+        updates.push(`check_out_longitude = $${paramCount}`);
+        values.push(checkOutLongitude ?? null);
+        paramCount++;
+      }
+
+      if (status !== undefined) {
+        updates.push(`status = $${paramCount}`);
+        values.push(status);
+        paramCount++;
+      }
+
+      // Calculate duration if check-out time is provided
+      if (checkOutTime && visit.check_in_time) {
+        const checkInTime = new Date(visit.check_in_time);
+        const checkOutTimeDate = new Date(checkOutTime);
+        const durationMinutes = Math.round(
+          (checkOutTimeDate.getTime() - checkInTime.getTime()) / (1000 * 60)
+        );
+
+        updates.push(`duration_minutes = $${paramCount}`);
+        values.push(durationMinutes);
+        paramCount++;
+      }
+
+      // Update visit if there are changes
+      if (updates.length > 0) {
+        values.push(visitId);
+        const updateQuery = `
+          UPDATE visits 
+          SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP
+          WHERE id = $${paramCount}
+          RETURNING *
+        `;
+
+        const updatedVisitResult = await client.query(updateQuery, values);
+        const updatedVisit = updatedVisitResult.rows[0];
+
+        await client.query('COMMIT');
+
+        logInfo('Visit updated successfully', {
+          visitId,
+          userId,
+          status: updatedVisit.status,
+          duration: updatedVisit.duration_minutes,
+          hasCheckOut: !!checkOutTime,
+          hasDocumentation: !!documentation,
+        });
+
+        // Return updated visit data
+        const response: VisitResponse = {
+          id: updatedVisit.id,
+          clientId: updatedVisit.client_id,
+          staffId: updatedVisit.staff_id,
+          scheduledStartTime: updatedVisit.scheduled_start_time,
+          checkInTime: updatedVisit.check_in_time,
+          checkInLatitude: updatedVisit.check_in_latitude,
+          checkInLongitude: updatedVisit.check_in_longitude,
+          status: updatedVisit.status,
+          createdAt: updatedVisit.created_at,
+        };
+
+        return res.status(200).json(response);
+      } else {
+        await client.query('ROLLBACK');
+        return res.status(400).json({
+          error: 'Bad Request',
+          message: 'No updates provided',
+        });
+      }
+
+      // Update documentation if provided
+      if (documentation) {
+        // Check if documentation exists
+        const docResult = await client.query(
+          'SELECT id FROM visit_documentation WHERE visit_id = $1',
+          [visitId]
+        );
+
+        if (docResult.rows.length > 0) {
+          // Update existing documentation
+          const docUpdates: string[] = [];
+          const docValues: (string | null)[] = [];
+          let docParamCount = 1;
+
+          if (documentation.vitalSigns !== undefined) {
+            docUpdates.push(`vital_signs = $${docParamCount}`);
+            docValues.push(JSON.stringify(documentation.vitalSigns));
+            docParamCount++;
+          }
+
+          if (documentation.activities !== undefined) {
+            docUpdates.push(`activities = $${docParamCount}`);
+            docValues.push(JSON.stringify(documentation.activities));
+            docParamCount++;
+          }
+
+          if (documentation.observations !== undefined) {
+            docUpdates.push(`observations = $${docParamCount}`);
+            docValues.push(documentation.observations);
+            docParamCount++;
+          }
+
+          if (documentation.concerns !== undefined) {
+            docUpdates.push(`concerns = $${docParamCount}`);
+            docValues.push(documentation.concerns);
+            docParamCount++;
+          }
+
+          if (docUpdates.length > 0) {
+            docValues.push(visitId);
+            await client.query(
+              `UPDATE visit_documentation 
+               SET ${docUpdates.join(', ')}, updated_at = CURRENT_TIMESTAMP
+               WHERE visit_id = $${docParamCount}`,
+              docValues as (string | null)[]
+            );
+          }
+        } else {
+          // Create new documentation
+          await client.query(
+            `INSERT INTO visit_documentation (
+              visit_id, vital_signs, activities, observations, concerns
+            ) VALUES ($1, $2, $3, $4, $5)`,
+            [
+              visitId,
+              documentation.vitalSigns ? JSON.stringify(documentation.vitalSigns) : null,
+              documentation.activities ? JSON.stringify(documentation.activities) : null,
+              documentation.observations || null,
+              documentation.concerns || null,
+            ]
+          );
+        }
+      }
+
+    } catch (error) {
+      await client.query('ROLLBACK');
+      logError('Error updating visit', error as Error, {
+        visitId,
+        userId,
+      });
+
+      return res.status(500).json({
+        error: 'Internal Server Error',
+        message: 'Failed to update visit',
+      });
+    } finally {
+      client.release();
+    }
+  });
+
   return router;
 }

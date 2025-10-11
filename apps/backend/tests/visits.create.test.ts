@@ -17,9 +17,8 @@
 
 import request from 'supertest';
 
+import { generateAccessToken } from '../../../libs/shared/src/jwt-utils';
 import { app, pgPool, redisClient } from '../src/main';
-
-import { generateAccessToken } from './test-helpers';
 
 describe('POST /v1/visits', () => {
   let caregiverToken: string;
@@ -45,7 +44,12 @@ describe('POST /v1/visits', () => {
     caregiverId = caregiverResult.rows[0].id;
 
     // Generate token
-    caregiverToken = generateAccessToken(caregiverId, 'caregiver@test.com', 'caregiver');
+    caregiverToken = generateAccessToken({
+      userId: caregiverId,
+      email: 'caregiver@test.com',
+      role: 'caregiver',
+      zoneId,
+    });
 
     // Create test client
     const clientResult = await pgPool.query(
@@ -276,7 +280,12 @@ describe('POST /v1/visits', () => {
         ['admin@test.com', '$2b$10$test', 'Test', 'Admin', 'admin', zoneId, true]
       );
       const adminId = adminResult.rows[0].id;
-      const adminToken = generateAccessToken(adminId, 'admin@test.com', 'admin');
+      const adminToken = generateAccessToken({
+        userId: adminId,
+        email: 'admin@test.com',
+        role: 'admin',
+        zoneId,
+      });
 
       const response = await request(app)
         .post('/api/v1/visits')
@@ -304,7 +313,12 @@ describe('POST /v1/visits', () => {
         ['other@test.com', '$2b$10$test', 'Other', 'Caregiver', 'caregiver', otherZoneId, true]
       );
       const otherCaregiverId = otherCaregiverResult.rows[0].id;
-      const otherToken = generateAccessToken(otherCaregiverId, 'other@test.com', 'caregiver');
+      const otherToken = generateAccessToken({
+        userId: otherCaregiverId,
+        email: 'other@test.com',
+        role: 'caregiver',
+        zoneId: otherZoneId,
+      });
 
       const response = await request(app)
         .post('/api/v1/visits')
