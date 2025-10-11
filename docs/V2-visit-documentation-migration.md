@@ -432,7 +432,7 @@ WHERE id = (SELECT id FROM visit_documentation LIMIT 1);
 
 ```
 visits (1) ----< (many) visit_documentation
-```
+```text
 
 - One visit can have one documentation record
 - Documentation is created when visit is completed
