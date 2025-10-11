@@ -176,10 +176,9 @@ export function createVisitsRouter(pool: Pool): Router {
       const clientZoneId = clientData.zone_id;
 
       // Check if caregiver is in the same zone as the client
-      const caregiverResult = await client.query(
-        `SELECT zone_id FROM users WHERE id = $1`,
-        [userId]
-      );
+      const caregiverResult = await client.query(`SELECT zone_id FROM users WHERE id = $1`, [
+        userId,
+      ]);
 
       if (caregiverResult.rows.length === 0) {
         await client.query('ROLLBACK');

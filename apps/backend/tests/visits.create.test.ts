@@ -18,6 +18,7 @@
 import request from 'supertest';
 
 import { app, pgPool, redisClient } from '../src/main';
+
 import { generateAccessToken } from './test-helpers';
 
 describe('POST /v1/visits', () => {
@@ -39,15 +40,7 @@ describe('POST /v1/visits', () => {
       `INSERT INTO users (email, password_hash, first_name, last_name, role, zone_id, is_active)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id`,
-      [
-        'caregiver@test.com',
-        '$2b$10$test',
-        'Test',
-        'Caregiver',
-        'caregiver',
-        zoneId,
-        true,
-      ]
+      ['caregiver@test.com', '$2b$10$test', 'Test', 'Caregiver', 'caregiver', zoneId, true]
     );
     caregiverId = caregiverResult.rows[0].id;
 
@@ -215,9 +208,7 @@ describe('POST /v1/visits', () => {
       expect(docResult.rows[0].observations).toBe('Client doing well');
 
       // Clean up
-      await pgPool.query('DELETE FROM visit_documentation WHERE visit_id = $1', [
-        response.body.id,
-      ]);
+      await pgPool.query('DELETE FROM visit_documentation WHERE visit_id = $1', [response.body.id]);
       await pgPool.query('DELETE FROM visits WHERE id = $1', [response.body.id]);
     });
 
@@ -291,15 +282,7 @@ describe('POST /v1/visits', () => {
         `INSERT INTO users (email, password_hash, first_name, last_name, role, zone_id, is_active)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING id`,
-        [
-          'other@test.com',
-          '$2b$10$test',
-          'Other',
-          'Caregiver',
-          'caregiver',
-          otherZoneId,
-          true,
-        ]
+        ['other@test.com', '$2b$10$test', 'Other', 'Caregiver', 'caregiver', otherZoneId, true]
       );
       const otherCaregiverId = otherCaregiverResult.rows[0].id;
       const otherToken = generateAccessToken(otherCaregiverId, 'other@test.com', 'caregiver');

@@ -18,10 +18,10 @@ CREATE TABLE IF NOT EXISTS visit_photos (
     -- Relationship to visit
     visit_id UUID NOT NULL REFERENCES visits(id) ON DELETE CASCADE,
     
-    -- S3 storage keys
-    s3_key VARCHAR(500) NOT NULL,
-    s3_url VARCHAR(1000) NOT NULL,
-    thumbnail_s3_key VARCHAR(500),
+    -- S3 storage keys and URLs
+    s3_key TEXT NOT NULL,
+    s3_url TEXT NOT NULL,
+    thumbnail_s3_key TEXT,
     
     -- File metadata
     file_name VARCHAR(255),

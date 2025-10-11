@@ -23,9 +23,9 @@ Created the `visit_photos` table to store metadata for photos uploaded during vi
 CREATE TABLE visit_photos (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   visit_id UUID NOT NULL REFERENCES visits(id) ON DELETE CASCADE,
-  s3_key VARCHAR(500) NOT NULL,
-  s3_url VARCHAR(1000) NOT NULL,
-  thumbnail_s3_key VARCHAR(500),
+  s3_key TEXT NOT NULL,
+  s3_url TEXT NOT NULL,
+  thumbnail_s3_key TEXT,
   file_name VARCHAR(255),
   file_size INTEGER CHECK (file_size > 0),
   mime_type VARCHAR(100),
@@ -40,9 +40,9 @@ CREATE TABLE visit_photos (
 |-------|------|----------|-------------|
 | `id` | UUID | NOT NULL | Unique photo identifier |
 | `visit_id` | UUID | NOT NULL | Reference to visit (foreign key) |
-| `s3_key` | VARCHAR(500) | NOT NULL | S3 object key for full-size photo |
-| `s3_url` | VARCHAR(1000) | NOT NULL | Full S3 URL for accessing photo |
-| `thumbnail_s3_key` | VARCHAR(500) | NULL | S3 object key for thumbnail (320px) |
+| `s3_key` | TEXT | NOT NULL | S3 object key for full-size photo |
+| `s3_url` | TEXT | NOT NULL | Full S3 URL for accessing photo |
+| `thumbnail_s3_key` | TEXT | NULL | S3 object key for thumbnail (320px) |
 | `file_name` | VARCHAR(255) | NULL | Original filename from upload |
 | `file_size` | INTEGER | NULL | File size in bytes |
 | `mime_type` | VARCHAR(100) | NULL | MIME type (e.g., image/jpeg) |
@@ -266,7 +266,24 @@ VALUES (?, ?, ?, ...);
 -- Application should catch unique violation and handle appropriately
 ```
 
-### 5. Optional Metadata Fields
+### 5. TEXT Type for S3 Keys and URLs
+
+**Decision:** Use TEXT instead of VARCHAR for s3_key, s3_url, and thumbnail_s3_key
+
+**Rationale:**
+- **Pre-signed URLs**: Can exceed 1000 characters with query parameters
+- **S3 Key Length**: AWS allows up to 1024 characters for object keys
+- **CloudFront URLs**: Can be very long with custom domains and parameters
+- **Future-proof**: No risk of truncation or insert failures
+- **Performance**: TEXT has no length overhead in PostgreSQL (same as VARCHAR)
+
+**Example Long URL:**
+```
+https://berthcare-photos.s3.amazonaws.com/visits/3edaf4f8-2120-4011-a59f-f6d8a47c622f/84c8ca84-3cb4-4d3a-8d3f-86d9ac468ae8.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIOSFODNN7EXAMPLE%2F20251011%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251011T170500Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=...
+```
+(This can easily exceed 500-1000 characters)
+
+### 6. Optional Metadata Fields
 
 **Decision:** Make file_name, file_size, mime_type optional (NULL)
 
