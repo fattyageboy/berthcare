@@ -24,7 +24,7 @@ import crypto from 'crypto';
 
 import express from 'express';
 import { Pool } from 'pg';
-import { RedisClientType } from 'redis';
+import { createClient } from 'redis';
 import request from 'supertest';
 
 import { verifyToken } from '../../../libs/shared/src/jwt-utils';
@@ -35,7 +35,7 @@ import { setupTestConnections, teardownTestConnections } from './test-helpers';
 describe('POST /v1/auth/login', () => {
   let app: express.Application;
   let pgPool: Pool;
-  let redisClient: RedisClientType;
+  let redisClient: ReturnType<typeof createClient>;
 
   // Setup: Create app and database connections
   beforeAll(async () => {

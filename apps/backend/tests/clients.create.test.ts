@@ -19,7 +19,7 @@
 
 import { Express } from 'express';
 import { Pool } from 'pg';
-import { RedisClientType } from 'redis';
+import { createClient } from 'redis';
 import request from 'supertest';
 
 import { generateAccessToken } from '../../../libs/shared/src';
@@ -72,7 +72,7 @@ jest.mock('../src/services/geocoding.service', () => {
 describe('POST /api/v1/clients - Create Client', () => {
   let app: Express;
   let pgPool: Pool;
-  let redisClient: RedisClientType;
+  let redisClient: ReturnType<typeof createClient>;
   let adminToken: string;
   let caregiverToken: string;
   let testClientIds: string[] = [];

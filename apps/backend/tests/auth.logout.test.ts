@@ -14,7 +14,7 @@ import crypto from 'crypto';
 
 import express, { Express } from 'express';
 import { Pool } from 'pg';
-import { createClient, RedisClientType } from 'redis';
+import { createClient } from 'redis';
 import request from 'supertest';
 
 import { generateAccessToken, generateRefreshToken } from '../../../libs/shared/src';
@@ -23,7 +23,7 @@ import { createAuthRoutes } from '../src/routes/auth.routes';
 describe('POST /v1/auth/logout', () => {
   let app: Express;
   let pgPool: Pool;
-  let redisClient: RedisClientType;
+  let redisClient: ReturnType<typeof createClient>;
 
   beforeAll(async () => {
     // Initialize PostgreSQL connection

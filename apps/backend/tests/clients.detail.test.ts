@@ -25,7 +25,7 @@
 
 import express from 'express';
 import { Pool } from 'pg';
-import { createClient, RedisClientType } from 'redis';
+import { createClient } from 'redis';
 import request from 'supertest';
 
 import { generateAccessToken } from '../../../libs/shared/src/jwt-utils';
@@ -41,7 +41,7 @@ const TEST_REDIS_URL =
 describe('GET /api/v1/clients/:clientId', () => {
   let app: express.Application;
   let pgPool: Pool;
-  let redisClient: RedisClientType;
+  let redisClient: ReturnType<typeof createClient>;
 
   // Test data
   let testZoneId1: string;

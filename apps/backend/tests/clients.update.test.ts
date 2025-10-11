@@ -27,7 +27,7 @@ import crypto from 'crypto';
 
 import { Express } from 'express';
 import { Pool } from 'pg';
-import { RedisClientType } from 'redis';
+import { createClient } from 'redis';
 import request from 'supertest';
 
 import { generateAccessToken } from '../../../libs/shared/src';
@@ -36,7 +36,7 @@ import { createTestApp, setupTestConnections, teardownTestConnections } from './
 
 let app: Express;
 let pgPool: Pool;
-let redisClient: RedisClientType;
+let redisClient: ReturnType<typeof createClient>;
 
 describe('PATCH /api/v1/clients/:clientId - Update Client', () => {
   let adminToken: string;

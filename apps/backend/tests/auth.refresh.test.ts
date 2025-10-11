@@ -20,7 +20,7 @@ import crypto from 'crypto';
 
 import express from 'express';
 import { Pool } from 'pg';
-import { createClient, RedisClientType } from 'redis';
+import { createClient } from 'redis';
 import request from 'supertest';
 
 import { generateRefreshToken } from '../../../libs/shared/src/jwt-utils';
@@ -36,7 +36,7 @@ const TEST_REDIS_URL =
 describe('POST /v1/auth/refresh', () => {
   let app: express.Application;
   let pgPool: Pool;
-  let redisClient: RedisClientType;
+  let redisClient: ReturnType<typeof createClient>;
   let testUserId: string;
   let validRefreshToken: string;
   let validTokenHash: string;

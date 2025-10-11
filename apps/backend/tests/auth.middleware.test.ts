@@ -12,7 +12,7 @@
  */
 
 import { Response } from 'express';
-import { createClient, RedisClientType } from 'redis';
+import { createClient } from 'redis';
 
 import { generateAccessToken } from '../../../libs/shared/src';
 import {
@@ -23,7 +23,7 @@ import {
 } from '../src/middleware/auth';
 
 describe('JWT Authentication Middleware', () => {
-  let redisClient: RedisClientType;
+  let redisClient: ReturnType<typeof createClient>;
   let mockRequest: Partial<AuthenticatedRequest>;
   let mockResponse: Partial<Response>;
   let nextFunction: jest.Mock;
