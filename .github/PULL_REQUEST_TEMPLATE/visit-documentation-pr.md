@@ -20,19 +20,36 @@ This PR implements the Visit Documentation API as specified in the BerthCare Tec
 - [ ] **Visits Table Migration**
   - [ ] Create migration file `004_create_visits.sql`
   - [ ] Define `visits` table with all required fields:
-    - id, client_id, caregiver_id
-    - scheduled_start_time, scheduled_end_time
-    - actual_start_time, actual_end_time
-    - status (scheduled, in_progress, completed, cancelled)
-    - notes, tasks_completed (JSONB)
-    - photos (JSONB array of S3 URLs)
-    - signature_url, created_at, updated_at
-  - [ ] Add foreign key constraint to `clients` table
-  - [ ] Add foreign key constraint to `users` table (caregiver)
+    - id (UUID PRIMARY KEY)
+    - client_id (UUID, foreign key to clients)
+    - staff_id (UUID, foreign key to users)
+    - scheduled_start_time (TIMESTAMP WITH TIME ZONE)
+    - check_in_time (TIMESTAMP WITH TIME ZONE)
+    - check_in_latitude (DECIMAL 10,8)
+    - check_in_longitude (DECIMAL 11,8)
+    - check_out_time (TIMESTAMP WITH TIME ZONE)
+    - check_out_latitude (DECIMAL 10,8)
+    - check_out_longitude (DECIMAL 11,8)
+    - status (VARCHAR 50 with CHECK constraint: scheduled, in_progress, completed, cancelled)
+    - duration_minutes (INTEGER)
+    - copied_from_visit_id (UUID, self-referencing foreign key)
+    - created_at, updated_at, synced_at (TIMESTAMP WITH TIME ZONE)
+  - [ ] Add foreign key constraint to `clients` table (ON DELETE RESTRICT)
+  - [ ] Add foreign key constraint to `users` table for staff_id (ON DELETE RESTRICT)
+  - [ ] Add self-referencing foreign key for `copied_from_visit_id` (ON DELETE SET NULL)
   - [ ] Add index on `client_id`
-  - [ ] Add index on `caregiver_id`
+  - [ ] Add index on `staff_id`
   - [ ] Add index on `scheduled_start_time`
   - [ ] Add index on `status`
+  - [ ] Add composite index on `staff_id, scheduled_start_time`
+  - [ ] Add composite index on `client_id, scheduled_start_time DESC`
+  - [ ] Add composite index on `status, scheduled_start_time`
+  - [ ] Add partial index on `synced_at` WHERE synced_at IS NULL
+  - [ ] Add CHECK constraints for GPS coordinates (-90 to 90 lat, -180 to 180 long)
+  - [ ] Add CHECK constraint for status ENUM values
+  - [ ] Add CHECK constraint for logical time ordering (check_out >= check_in)
+  - [ ] Add CHECK constraint for duration calculation accuracy
+  - [ ] Add trigger for automatic `updated_at` timestamp
   - [ ] Create rollback migration `004_create_visits_rollback.sql`
   - [ ] Run migration successfully on local database
   - [ ] Verify foreign key relationships work
@@ -267,7 +284,7 @@ If issues are discovered after merge:
 ## Merge Strategy
 
 **Squash and merge** with commit message:
-```
+```text
 feat: implement visit documentation API
 
 - Add visits database schema
