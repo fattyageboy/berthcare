@@ -556,64 +556,377 @@ Multi-AZ Redis automatically fails over to replica in case of:
 
 ### Complete Region Failure
 
-In case of complete ca-central-1 region failure:
+In case of complete ca-central-1 region failure, the Terraform state backend (S3 bucket and DynamoDB lock table) will also be unavailable. You **must** have a cross-region state replication strategy in place before attempting failover.
 
-1. **Restore from backups:**
+#### Prerequisites: Cross-Region Terraform State Strategy
 
-   ```bash
-   # Restore RDS from snapshot in another region
-   aws rds restore-db-instance-from-db-snapshot \
-     --db-instance-identifier berthcare-staging-postgres-dr \
-     --db-snapshot-identifier <snapshot-id> \
-     --region us-east-1
-   ```
+**CRITICAL:** The following setup must be completed **before** a regional outage occurs. Without this, you cannot manage infrastructure in a secondary region.
 
-2. **Replicate S3 data:**
-   - Enable cross-region replication for critical buckets
-   - Restore from versioned objects
+##### Option 1: S3 Cross-Region Replication + Secondary DynamoDB Table (Recommended)
 
-3. **Prepare Terraform remote state backend for the secondary region:**
-   - **Pre-checks:**
-     - Confirm you have IAM permissions in both regions to manage S3, DynamoDB, and Terraform state resources.
-     - Record the primary backend settings from `backend "s3"` (bucket, key, region, DynamoDB table).
-     - Ensure no pending Terraform operations remain in the primary region (run `terraform plan` to verify clean state).
-   - **S3 backend strategy options:**
-     - *Option A — Replicated bucket:* Enable versioning and Cross-Region Replication (CRR) on the primary S3 state bucket in `ca-central-1`, targeting a pre-provisioned bucket (for example, `berthcare-terraform-state-us-east-1`). Verify replication by checking the `terraform.tfstate` object version in the secondary bucket (`aws s3api list-object-versions --bucket <secondary-bucket>`).
-     - *Option B — Standalone bucket:* Create a dedicated S3 bucket in the secondary region, enable versioning, and copy the current state file (`aws s3 cp s3://<primary-bucket>/path/to/terraform.tfstate s3://<secondary-bucket>/path/to/terraform.tfstate --acl bucket-owner-full-control`).
-   - **DynamoDB lock strategy options:**
-     - *Option A — Global Tables:* Convert the lock table to a DynamoDB Global Table spanning `ca-central-1` and the target region so lock items replicate automatically.
-     - *Option B — Secondary table:* Provision a DynamoDB table in the secondary region with the same schema. Document a manual lock procedure: before migration ensure the primary table has no lingering `LockID` item (`aws dynamodb scan --table-name <primary-table>`), and if necessary use `terraform force-unlock <lock-id>` or delete the stale item. After failover, rely on the secondary table for locking.
-   - **Execution sequence:**
-     1. Create/replicate the S3 bucket and enable versioning + CRR (or copy the state file into a standalone secondary bucket).
-     2. Confirm the `terraform.tfstate` object exists in the secondary bucket and new versions replicate as expected.
-     3. Enable the DynamoDB Global Table or provision the secondary lock table and record its ARN.
-     4. Update `backend.tf` (or equivalent) with the secondary bucket, region, and DynamoDB table, then run:
+**Step 1: Enable S3 Bucket Versioning and Cross-Region Replication**
 
-        ```bash
-        terraform init \
-          -backend-config="bucket=<secondary-bucket>" \
-          -backend-config="key=<state-key>" \
-          -backend-config="region=<secondary-region>" \
-          -backend-config="dynamodb_table=<secondary-lock-table>" \
-          -migrate-state
-        ```
+```bash
+# 1. Enable versioning on primary state bucket (if not already enabled)
+aws s3api put-bucket-versioning \
+  --bucket berthcare-terraform-state \
+  --versioning-configuration Status=Enabled \
+  --region ca-central-1
 
-        If `terraform init -migrate-state` cannot be used (for example, when copying objects manually), sync the state file via `aws s3 cp`, clear any existing lock item in the primary table, and re-create it in the secondary table before continuing.
-     5. Verify remote state access from the secondary region by running `terraform state list` and `terraform plan`; confirm a lock record appears in the new DynamoDB table during the plan.
-   - **Rollback note:** If any migration step fails, revert the backend configuration to the original bucket/table and re-run `terraform init -migrate-state` pointing back to `ca-central-1` before retrying.
+# 2. Create secondary state bucket in us-east-1
+aws s3api create-bucket \
+  --bucket berthcare-terraform-state-dr \
+  --region us-east-1
 
-4. **Redeploy infrastructure:**
+aws s3api put-bucket-versioning \
+  --bucket berthcare-terraform-state-dr \
+  --versioning-configuration Status=Enabled \
+  --region us-east-1
 
-   ```bash
-   # Update region in terraform.tfvars
-   aws_region = "us-east-1"
+# 3. Enable encryption on secondary bucket
+aws s3api put-bucket-encryption \
+  --bucket berthcare-terraform-state-dr \
+  --server-side-encryption-configuration '{
+    "Rules": [{
+      "ApplyServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "AES256"
+      }
+    }]
+  }' \
+  --region us-east-1
 
-   # Re-initialize to make sure backend config is aligned
-   terraform init
+# 4. Create IAM role for replication
+cat > replication-role-trust-policy.json <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": {"Service": "s3.amazonaws.com"},
+    "Action": "sts:AssumeRole"
+  }]
+}
+EOF
 
-   # Apply in new region
-   terraform apply
-   ```
+aws iam create-role \
+  --role-name S3TerraformStateReplicationRole \
+  --assume-role-policy-document file://replication-role-trust-policy.json
+
+# 5. Attach replication permissions
+cat > replication-policy.json <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetReplicationConfiguration",
+        "s3:ListBucket"
+      ],
+      "Resource": "arn:aws:s3:::berthcare-terraform-state"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObjectVersionForReplication",
+        "s3:GetObjectVersionAcl"
+      ],
+      "Resource": "arn:aws:s3:::berthcare-terraform-state/*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:ReplicateObject",
+        "s3:ReplicateDelete"
+      ],
+      "Resource": "arn:aws:s3:::berthcare-terraform-state-dr/*"
+    }
+  ]
+}
+EOF
+
+aws iam put-role-policy \
+  --role-name S3TerraformStateReplicationRole \
+  --policy-name ReplicationPolicy \
+  --policy-document file://replication-policy.json
+
+# 6. Configure replication on primary bucket
+REPLICATION_ROLE_ARN=$(aws iam get-role --role-name S3TerraformStateReplicationRole --query 'Role.Arn' --output text)
+
+cat > replication-config.json <<EOF
+{
+  "Role": "$REPLICATION_ROLE_ARN",
+  "Rules": [{
+    "Status": "Enabled",
+    "Priority": 1,
+    "DeleteMarkerReplication": {"Status": "Enabled"},
+    "Filter": {},
+    "Destination": {
+      "Bucket": "arn:aws:s3:::berthcare-terraform-state-dr",
+      "ReplicationTime": {
+        "Status": "Enabled",
+        "Time": {"Minutes": 15}
+      },
+      "Metrics": {
+        "Status": "Enabled",
+        "EventThreshold": {"Minutes": 15}
+      }
+    }
+  }]
+}
+EOF
+
+aws s3api put-bucket-replication \
+  --bucket berthcare-terraform-state \
+  --replication-configuration file://replication-config.json \
+  --region ca-central-1
+
+# 7. Verify replication is working
+aws s3api get-bucket-replication \
+  --bucket berthcare-terraform-state \
+  --region ca-central-1
+
+# 8. Test replication by uploading a test file
+echo "test" > test-replication.txt
+aws s3 cp test-replication.txt s3://berthcare-terraform-state/test-replication.txt --region ca-central-1
+
+# Wait 2-3 minutes, then verify in secondary bucket
+aws s3 ls s3://berthcare-terraform-state-dr/ --region us-east-1
+```
+
+**Step 2: Provision Secondary DynamoDB Lock Table**
+
+```bash
+# Create DynamoDB table in us-east-1 for state locking
+aws dynamodb create-table \
+  --table-name berthcare-terraform-locks-dr \
+  --attribute-definitions AttributeName=LockID,AttributeType=S \
+  --key-schema AttributeName=LockID,KeyType=HASH \
+  --billing-mode PAY_PER_REQUEST \
+  --region us-east-1
+
+# Verify table is active
+aws dynamodb describe-table \
+  --table-name berthcare-terraform-locks-dr \
+  --region us-east-1 \
+  --query 'Table.TableStatus'
+```
+
+**Step 3: Verify Replication Status**
+
+```bash
+# Check replication metrics
+aws cloudwatch get-metric-statistics \
+  --namespace AWS/S3 \
+  --metric-name ReplicationLatency \
+  --dimensions Name=SourceBucket,Value=berthcare-terraform-state Name=DestinationBucket,Value=berthcare-terraform-state-dr Name=RuleId,Value=Rule-1 \
+  --start-time $(date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%S) \
+  --end-time $(date -u +%Y-%m-%dT%H:%M:%S) \
+  --period 3600 \
+  --statistics Average \
+  --region ca-central-1
+
+# Verify state file exists in both buckets
+aws s3 ls s3://berthcare-terraform-state/staging/ --region ca-central-1
+aws s3 ls s3://berthcare-terraform-state-dr/staging/ --region us-east-1
+```
+
+##### Option 2: DynamoDB Global Tables (Alternative)
+
+```bash
+# Convert existing DynamoDB table to global table
+aws dynamodb update-table \
+  --table-name berthcare-terraform-locks \
+  --stream-specification StreamEnabled=true,StreamViewType=NEW_AND_OLD_IMAGES \
+  --region ca-central-1
+
+# Create replica in us-east-1
+aws dynamodb create-global-table \
+  --global-table-name berthcare-terraform-locks \
+  --replication-group RegionName=ca-central-1 RegionName=us-east-1 \
+  --region ca-central-1
+
+# Note: Global Tables require the table to be empty or use DynamoDB Streams
+# For existing tables with data, Option 1 (separate table) is simpler
+```
+
+#### Failover Procedure
+
+**Pre-Checks (Run these first):**
+
+```bash
+# 1. Verify ca-central-1 is truly unavailable
+aws ec2 describe-availability-zones --region ca-central-1 2>&1 | grep -q "error" && echo "Region unavailable" || echo "Region still accessible"
+
+# 2. Verify secondary state bucket has latest state
+aws s3api head-object \
+  --bucket berthcare-terraform-state-dr \
+  --key staging/terraform.tfstate \
+  --region us-east-1 \
+  --query 'LastModified'
+
+# 3. Verify secondary DynamoDB table is accessible
+aws dynamodb describe-table \
+  --table-name berthcare-terraform-locks-dr \
+  --region us-east-1 \
+  --query 'Table.TableStatus'
+
+# 4. Check for any active locks (should be none if primary region is down)
+aws dynamodb scan \
+  --table-name berthcare-terraform-locks-dr \
+  --region us-east-1
+```
+
+**Step 1: Migrate Terraform State to Secondary Backend**
+
+```bash
+# Navigate to staging environment
+cd terraform/environments/staging
+
+# Backup current backend configuration
+cp main.tf main.tf.backup
+
+# Update backend configuration in main.tf to point to secondary region
+# Edit the backend block:
+```
+
+```hcl
+backend "s3" {
+  bucket         = "berthcare-terraform-state-dr"
+  key            = "staging/terraform.tfstate"
+  region         = "us-east-1"
+  encrypt        = true
+  dynamodb_table = "berthcare-terraform-locks-dr"
+}
+```
+
+```bash
+# Initialize Terraform with new backend and migrate state
+terraform init -migrate-state
+
+# Terraform will prompt: "Do you want to copy existing state to the new backend?"
+# Type: yes
+
+# Verify state migration
+terraform state list
+```
+
+**Step 2: Verify State Read/Write and Locking**
+
+```bash
+# Test state locking in new region
+terraform plan
+
+# Verify lock was created and released in DynamoDB
+aws dynamodb scan \
+  --table-name berthcare-terraform-locks-dr \
+  --region us-east-1
+
+# Verify state file is readable
+terraform show
+
+# Test state write operation (safe, no changes)
+terraform refresh
+```
+
+**Step 3: Update Region and Redeploy Infrastructure**
+
+```bash
+# Update terraform.tfvars with new region
+sed -i.bak 's/aws_region = "ca-central-1"/aws_region = "us-east-1"/' terraform.tfvars
+
+# Review changes
+terraform plan
+
+# Expected changes:
+# - All resources will be recreated in us-east-1
+# - Data will need to be restored from backups
+
+# Apply infrastructure in new region
+terraform apply
+
+# This will take 15-20 minutes
+```
+
+**Step 4: Restore Data from Backups**
+
+```bash
+# 1. Restore RDS from latest snapshot
+LATEST_SNAPSHOT=$(aws rds describe-db-snapshots \
+  --db-instance-identifier berthcare-staging-postgres \
+  --query 'DBSnapshots | sort_by(@, &SnapshotCreateTime) | [-1].DBSnapshotIdentifier' \
+  --output text \
+  --region ca-central-1)
+
+aws rds restore-db-instance-from-db-snapshot \
+  --db-instance-identifier berthcare-staging-postgres \
+  --db-snapshot-identifier $LATEST_SNAPSHOT \
+  --region us-east-1
+
+# 2. Restore S3 data from replicated buckets or backups
+# If cross-region replication was enabled:
+aws s3 sync s3://berthcare-photos-staging-replica s3://berthcare-photos-staging --region us-east-1
+
+# 3. Redis data will be lost (cache can be rebuilt)
+# Application will repopulate cache on first requests
+```
+
+**Step 5: Update Application Configuration**
+
+```bash
+# Update backend application environment variables with new endpoints
+# Get new infrastructure outputs
+terraform output
+
+# Update .env or ECS task definition with:
+# - New RDS endpoint (us-east-1)
+# - New Redis endpoint (us-east-1)
+# - New S3 bucket names (us-east-1)
+# - New CloudFront distribution (if recreated)
+```
+
+**Step 6: Verify Application Functionality**
+
+```bash
+# Test database connectivity
+psql -h $(terraform output -raw db_endpoint) -U berthcare_admin -d berthcare
+
+# Test Redis connectivity
+redis-cli -h $(terraform output -raw redis_endpoint) -a $(aws secretsmanager get-secret-value --secret-id $(terraform output -raw redis_credentials_secret_arn) --region us-east-1 --query SecretString --output text | jq -r .auth_token) PING
+
+# Test S3 access
+aws s3 ls s3://berthcare-photos-staging --region us-east-1
+
+# Test application endpoints
+curl https://$(terraform output -raw cloudfront_domain_name)/health
+```
+
+#### Rollback Procedure
+
+If ca-central-1 becomes available again and you need to fail back:
+
+```bash
+# 1. Ensure all data is synchronized
+# 2. Update backend configuration back to ca-central-1
+# 3. Run terraform init -migrate-state
+# 4. Update aws_region in terraform.tfvars
+# 5. Run terraform apply to recreate resources in ca-central-1
+# 6. Restore data from us-east-1 backups
+# 7. Update application configuration
+# 8. Verify functionality
+# 9. Destroy us-east-1 resources to avoid duplicate costs
+```
+
+#### Important Notes
+
+- **RTO (Recovery Time Objective):** 30-45 minutes (assuming pre-configured secondary backend)
+- **RPO (Recovery Point Objective):**
+  - RDS: Last automated backup (up to 24 hours)
+  - S3: Near real-time (if CRR enabled, < 15 minutes)
+  - Redis: Full data loss (cache only)
+- **Cost Impact:** Running duplicate infrastructure in two regions doubles costs
+- **Testing:** Perform disaster recovery drills quarterly to validate procedures
+- **Automation:** Consider creating scripts to automate failover steps
+- **Monitoring:** Set up CloudWatch alarms for replication lag and failures
 
 ---
 

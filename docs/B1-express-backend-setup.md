@@ -392,19 +392,19 @@ CLOUDWATCH_LOG_GROUP=/aws/ecs/berthcare-api
 
 ## Acceptance Criteria Status
 
-| Criteria                                 | Status | Evidence                                            |
-| ---------------------------------------- | ------ | --------------------------------------------------- |
-| Express.js 4.x with TypeScript           | ✅     | package.json shows express@4.18.2                   |
-| Helmet middleware configured             | ✅     | app.use(helmet()) in main.ts                        |
-| CORS middleware configured               | ✅     | app.use(cors()) in main.ts                          |
-| Compression middleware configured        | ✅     | app.use(compression()) in main.ts                   |
-| Rate limiting ready                      | ✅     | Middleware exists at src/middleware/rate-limiter.ts |
-| Health check endpoint exists             | ✅     | GET /health returns 200                             |
-| Winston logging configured               | ✅     | Logger at src/config/logger.ts                      |
-| Error handling middleware                | ✅     | Graceful shutdown handlers implemented              |
-| Port 3000 for local dev                  | ✅     | Server starts on port 3000                          |
-| `curl localhost:3000/health` returns 200 | ✅     | Verified in testing                                 |
-| Logs to console                          | ✅     | Structured logs visible on startup                  |
+| Criteria                                 | Status | Evidence                                                |
+| ---------------------------------------- | ------ | ------------------------------------------------------- |
+| Express.js 4.x with TypeScript           | ✅     | package.json shows express@4.18.2                       |
+| Helmet middleware configured             | ✅     | app.use(helmet()) in main.ts                            |
+| CORS middleware configured               | ✅     | app.use(cors()) in main.ts                              |
+| Compression middleware configured        | ✅     | app.use(compression()) in main.ts                       |
+| Rate limiting ready                      | ✅     | Middleware exists at src/middleware/rate-limiter.ts     |
+| Health check endpoint exists             | ✅     | GET /health returns 200                                 |
+| Winston logging configured               | ✅     | Logger at src/config/logger.ts                          |
+| Error handling middleware                | ✅     | Global error handler in main-with-monitoring.ts:150-165 |
+| Port 3000 for local dev                  | ✅     | Server starts on port 3000                              |
+| `curl localhost:3000/health` returns 200 | ✅     | Verified in testing                                     |
+| Logs to console                          | ✅     | Structured logs visible on startup                      |
 
 **All acceptance criteria met. B1 is complete and production-ready.**
 

@@ -18,7 +18,13 @@ db/
 │   ├── 002_create_clients.sql
 │   ├── 002_create_clients_rollback.sql
 │   ├── 003_create_care_plans.sql
-│   └── 003_create_care_plans_rollback.sql
+│   ├── 003_create_care_plans_rollback.sql
+│   ├── 004_create_visits.sql
+│   ├── 004_create_visits_rollback.sql
+│   ├── 005_create_visit_documentation.sql
+│   ├── 005_create_visit_documentation_rollback.sql
+│   ├── 006_create_visit_photos.sql
+│   └── 006_create_visit_photos_rollback.sql
 ├── migrate.ts           # Migration runner
 ├── verify-schema.ts     # Schema verification tool
 ├── seed.ts             # Database seeding tool
@@ -274,6 +280,9 @@ care_plans
 | 001       | Users & Authentication | ✅ Applied |
 | 002       | Clients                | ✅ Applied |
 | 003       | Care Plans             | ✅ Applied |
+| 004       | Visits                 | ✅ Applied |
+| 005       | Visit Documentation    | ✅ Applied |
+| 006       | Visit Photos           | ✅ Applied |
 
 ## Reference
 

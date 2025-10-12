@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS visit_documentation (
     -- Primary identifier
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
-    -- Relationship to visit
-    visit_id UUID NOT NULL REFERENCES visits(id) ON DELETE CASCADE,
+    -- Relationship to visit (one-to-one: each visit has exactly one documentation)
+    visit_id UUID NOT NULL UNIQUE REFERENCES visits(id) ON DELETE CASCADE,
     
     -- Vital signs data (structured JSON)
     -- Example: {"blood_pressure": "120/80", "heart_rate": 72, "temperature": 98.6}
@@ -48,9 +48,8 @@ CREATE TABLE IF NOT EXISTS visit_documentation (
 -- ============================================================================
 -- Optimized for common query patterns in visit documentation
 
--- Fast lookup by visit_id (most common query)
--- Query pattern: "Get documentation for this visit"
-CREATE INDEX IF NOT EXISTS idx_visit_documentation_visit_id ON visit_documentation(visit_id);
+-- Note: visit_id has a UNIQUE constraint which automatically creates an index,
+-- so no separate index is needed for visit_id lookups
 
 -- GIN index for JSONB vital_signs queries
 -- Query pattern: "Find visits where blood_pressure was recorded" or "Search by specific vital sign"

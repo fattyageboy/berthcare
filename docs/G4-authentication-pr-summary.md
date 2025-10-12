@@ -211,7 +211,7 @@ Logout user and invalidate tokens.
 
 **Headers:**
 
-```
+```text
 Authorization: Bearer <access-token>
 ```
 

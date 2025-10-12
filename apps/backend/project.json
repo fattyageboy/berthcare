@@ -15,11 +15,13 @@
     "build": {
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
+      "dependsOn": ["^build"],
       "options": {
         "outputPath": "apps/backend/dist",
         "main": "apps/backend/src/main.ts",
         "tsConfig": "apps/backend/tsconfig.json",
-        "assets": []
+        "assets": [],
+        "external": ["@berthcare/shared"]
       }
     },
     "lint": {

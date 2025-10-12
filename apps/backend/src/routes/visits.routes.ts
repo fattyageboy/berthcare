@@ -1757,6 +1757,15 @@ export function createVisitsRouter(
         });
       }
 
+      // Validate signature type
+      const validTypes = ['caregiver', 'client', 'family'];
+      if (!validTypes.includes(signatureType)) {
+        return res.status(400).json({
+          error: 'Bad Request',
+          message: `Invalid signatureType. Allowed types: ${validTypes.join(', ')}`,
+        });
+      }
+
       // Validate signatureKey format (should start with visits/{visitId}/signatures/)
       const expectedPrefix = `visits/${visitId}/signatures/`;
       if (!signatureKey.startsWith(expectedPrefix)) {

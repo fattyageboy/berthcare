@@ -59,6 +59,25 @@ CREATE TABLE IF NOT EXISTS visits (
         check_in_time IS NULL OR 
         check_out_time IS NULL OR
         duration_minutes = ROUND(EXTRACT(EPOCH FROM (check_out_time - check_in_time)) / 60)::INTEGER
+    ),
+    -- Disallow check-out without a prior check-in
+    CONSTRAINT check_out_requires_check_in CHECK (
+        check_out_time IS NULL OR check_in_time IS NOT NULL
+    ),
+    -- Check-out coordinates require both check-in and check-out times
+    CONSTRAINT check_out_latitude_requires_times CHECK (
+        check_out_latitude IS NULL OR (check_in_time IS NOT NULL AND check_out_time IS NOT NULL)
+    ),
+    CONSTRAINT check_out_longitude_requires_times CHECK (
+        check_out_longitude IS NULL OR (check_in_time IS NOT NULL AND check_out_time IS NOT NULL)
+    ),
+    -- Duration requires both times and must match calculation
+    CONSTRAINT duration_requires_both_times CHECK (
+        duration_minutes IS NULL OR (
+            check_in_time IS NOT NULL AND 
+            check_out_time IS NOT NULL AND 
+            duration_minutes = ROUND(EXTRACT(EPOCH FROM (check_out_time - check_in_time)) / 60)::INTEGER
+        )
     )
 );
 

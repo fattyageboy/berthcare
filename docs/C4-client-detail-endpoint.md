@@ -231,7 +231,7 @@ Authorization: Bearer <access_token>
 
 **Cache Key Format:**
 
-```
+```text
 client:detail:{clientId}
 ```
 
