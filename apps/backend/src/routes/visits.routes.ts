@@ -79,7 +79,7 @@ async function invalidateVisitListCache(
     }
 
     if (keysToDelete.length > 0) {
-      await redisClient.del(keysToDelete);
+      await redisClient.del(...keysToDelete);
       logInfo('Visit list cache invalidated', { keysDeleted: keysToDelete.length });
     }
   } catch (error) {
@@ -907,6 +907,13 @@ export function createVisitsRouter(
 
       // Invalidate cached visit lists after successful update
       await invalidateVisitListCache(redisClient);
+
+      // Invalidate cached visit detail after successful update
+      try {
+        await redisClient.del(`visit:detail:${visitId}`);
+      } catch (error) {
+        logError('Failed to invalidate visit detail cache', error as Error);
+      }
 
       logInfo('Visit updated successfully', {
         visitId,
