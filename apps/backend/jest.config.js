@@ -15,6 +15,10 @@ module.exports = {
     ],
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
+  moduleNameMapper: {
+    '^@berthcare/shared$': '<rootDir>/../../libs/shared/src/index.ts',
+    '^@berthcare/shared/(.*)$': '<rootDir>/../../libs/shared/src/$1',
+  },
   coverageDirectory: '../../coverage/apps/backend',
   testMatch: ['**/tests/**/*.test.ts'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],

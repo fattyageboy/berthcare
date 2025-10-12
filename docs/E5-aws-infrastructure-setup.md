@@ -572,11 +572,44 @@ In case of complete ca-central-1 region failure:
    - Enable cross-region replication for critical buckets
    - Restore from versioned objects
 
-3. **Redeploy infrastructure:**
+3. **Prepare Terraform remote state backend for the secondary region:**
+   - **Pre-checks:**
+     - Confirm you have IAM permissions in both regions to manage S3, DynamoDB, and Terraform state resources.
+     - Record the primary backend settings from `backend "s3"` (bucket, key, region, DynamoDB table).
+     - Ensure no pending Terraform operations remain in the primary region (run `terraform plan` to verify clean state).
+   - **S3 backend strategy options:**
+     - *Option A — Replicated bucket:* Enable versioning and Cross-Region Replication (CRR) on the primary S3 state bucket in `ca-central-1`, targeting a pre-provisioned bucket (for example, `berthcare-terraform-state-us-east-1`). Verify replication by checking the `terraform.tfstate` object version in the secondary bucket (`aws s3api list-object-versions --bucket <secondary-bucket>`).
+     - *Option B — Standalone bucket:* Create a dedicated S3 bucket in the secondary region, enable versioning, and copy the current state file (`aws s3 cp s3://<primary-bucket>/path/to/terraform.tfstate s3://<secondary-bucket>/path/to/terraform.tfstate --acl bucket-owner-full-control`).
+   - **DynamoDB lock strategy options:**
+     - *Option A — Global Tables:* Convert the lock table to a DynamoDB Global Table spanning `ca-central-1` and the target region so lock items replicate automatically.
+     - *Option B — Secondary table:* Provision a DynamoDB table in the secondary region with the same schema. Document a manual lock procedure: before migration ensure the primary table has no lingering `LockID` item (`aws dynamodb scan --table-name <primary-table>`), and if necessary use `terraform force-unlock <lock-id>` or delete the stale item. After failover, rely on the secondary table for locking.
+   - **Execution sequence:**
+     1. Create/replicate the S3 bucket and enable versioning + CRR (or copy the state file into a standalone secondary bucket).
+     2. Confirm the `terraform.tfstate` object exists in the secondary bucket and new versions replicate as expected.
+     3. Enable the DynamoDB Global Table or provision the secondary lock table and record its ARN.
+     4. Update `backend.tf` (or equivalent) with the secondary bucket, region, and DynamoDB table, then run:
+
+        ```bash
+        terraform init \
+          -backend-config="bucket=<secondary-bucket>" \
+          -backend-config="key=<state-key>" \
+          -backend-config="region=<secondary-region>" \
+          -backend-config="dynamodb_table=<secondary-lock-table>" \
+          -migrate-state
+        ```
+
+        If `terraform init -migrate-state` cannot be used (for example, when copying objects manually), sync the state file via `aws s3 cp`, clear any existing lock item in the primary table, and re-create it in the secondary table before continuing.
+     5. Verify remote state access from the secondary region by running `terraform state list` and `terraform plan`; confirm a lock record appears in the new DynamoDB table during the plan.
+   - **Rollback note:** If any migration step fails, revert the backend configuration to the original bucket/table and re-run `terraform init -migrate-state` pointing back to `ca-central-1` before retrying.
+
+4. **Redeploy infrastructure:**
 
    ```bash
    # Update region in terraform.tfvars
    aws_region = "us-east-1"
+
+   # Re-initialize to make sure backend config is aligned
+   terraform init
 
    # Apply in new region
    terraform apply
