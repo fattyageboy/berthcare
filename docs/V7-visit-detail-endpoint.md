@@ -1,9 +1,9 @@
-# V7: GET /v1/visits/:visitId Endpoint
+# V7: GET /api/v1/visits/:visitId Endpoint
 
 **Task ID:** V7  
 **Status:** ✅ Complete  
 **Date:** October 11, 2025  
-**Endpoint:** GET /v1/visits/:visitId  
+**Endpoint:** GET /api/v1/visits/:visitId  
 **Estimated Effort:** 1 day  
 **Actual Effort:** 1 day
 
@@ -11,13 +11,13 @@
 
 ## Overview
 
-Implemented the GET /v1/visits/:visitId endpoint to retrieve complete visit details including documentation, photos, and client information. This endpoint supports the mobile app's need to display full visit information with proper authorization and caching.
+Implemented the GET /api/v1/visits/:visitId endpoint to retrieve complete visit details including documentation, photos, and client information. This endpoint supports the mobile app's need to display full visit information with proper authorization and caching.
 
 ---
 
 ## Endpoint Specification
 
-### GET /v1/visits/:visitId
+### GET /api/v1/visits/:visitId
 
 **Purpose:** Retrieve complete visit details with all related data
 
@@ -407,19 +407,19 @@ npm run test -- visits.detail.test.ts
 
 ### Related Endpoints
 
-**GET /v1/visits**
+**GET /api/v1/visits**
 
 - List endpoint provides visit summaries
 - Detail endpoint provides complete information
 - Consistent authorization logic
 
-**PATCH /v1/visits/:visitId**
+**PATCH /api/v1/visits/:visitId**
 
 - Update endpoint invalidates detail cache
 - Ensures data consistency
 - Maintains audit trail
 
-**POST /v1/visits/:visitId/photos**
+**POST /api/v1/visits/:visitId/photos**
 
 - Photo upload updates photos array
 - Cache invalidation ensures fresh data
