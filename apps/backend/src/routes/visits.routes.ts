@@ -23,7 +23,11 @@ import { createClient } from 'redis';
 
 import { logError, logInfo } from '../config/logger';
 import { authenticateJWT, AuthenticatedRequest } from '../middleware/auth';
-import { generatePhotoUploadUrl, S3_BUCKETS } from '../storage/s3-client';
+import {
+  generatePhotoUploadUrl,
+  generateSignatureUploadUrl,
+  S3_BUCKETS,
+} from '../storage/s3-client';
 
 /**
  * Create visit request body
@@ -1123,6 +1127,7 @@ export function createVisitsRouter(
           activities,
           observations,
           concerns,
+          signature_url,
           created_at,
           updated_at
         FROM visit_documentation
@@ -1193,6 +1198,7 @@ export function createVisitsRouter(
                 activities: documentation.activities,
                 observations: documentation.observations,
                 concerns: documentation.concerns,
+                signatureUrl: documentation.signature_url,
                 createdAt: documentation.created_at,
                 updatedAt: documentation.updated_at,
               }
@@ -1543,6 +1549,308 @@ export function createVisitsRouter(
         return res.status(500).json({
           error: 'Internal Server Error',
           message: 'Failed to record photo metadata',
+        });
+      } finally {
+        client.release();
+      }
+    }
+  );
+
+  /**
+   * POST /v1/visits/:visitId/signature/upload-url
+   * Generate pre-signed S3 URL for signature upload
+   *
+   * Generates a pre-signed URL that allows the mobile app to upload signatures
+   * directly to S3. Signatures are PNG images captured from signature pad.
+   *
+   * Authentication: Required (caregiver role)
+   * Authorization: Caregiver must own the visit
+   *
+   * Request Body:
+   * - signatureType: string - Type of signature ('caregiver', 'client', 'family')
+   * - fileSize: number - File size in bytes (max 1MB)
+   *
+   * Response: 200 OK
+   * - uploadUrl: Pre-signed S3 URL (expires in 10 minutes)
+   * - signatureKey: S3 object key for later reference
+   * - expiresAt: ISO 8601 timestamp when URL expires
+   *
+   * Errors:
+   * - 400: Invalid request data or file too large
+   * - 403: Not authorized to upload signature for this visit
+   * - 404: Visit not found
+   */
+  router.post(
+    '/:visitId/signature/upload-url',
+    authenticateJWT(redisClient),
+    async (req: Request, res: Response) => {
+      const authReq = req as AuthenticatedRequest;
+      const userId = authReq.user?.userId;
+      const userRole = authReq.user?.role;
+      const { visitId } = req.params;
+      const { signatureType, fileSize } = req.body;
+
+      if (!userId) {
+        return res.status(401).json({
+          error: 'Unauthorized',
+          message: 'Authentication required',
+        });
+      }
+
+      // Validate UUID format
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(visitId)) {
+        return res.status(400).json({
+          error: 'Bad Request',
+          message: 'Invalid visitId format',
+        });
+      }
+
+      // Validate required fields
+      if (!signatureType || !fileSize) {
+        return res.status(400).json({
+          error: 'Bad Request',
+          message: 'signatureType and fileSize are required',
+        });
+      }
+
+      // Validate signature type
+      const validTypes = ['caregiver', 'client', 'family'];
+      if (!validTypes.includes(signatureType)) {
+        return res.status(400).json({
+          error: 'Bad Request',
+          message: `Invalid signatureType. Allowed types: ${validTypes.join(', ')}`,
+        });
+      }
+
+      // Validate file size (max 1MB)
+      const maxSize = 1 * 1024 * 1024; // 1MB
+      if (fileSize > maxSize) {
+        return res.status(400).json({
+          error: 'Bad Request',
+          message: 'File size exceeds maximum of 1MB.',
+        });
+      }
+
+      try {
+        // Get visit and verify ownership
+        const visitResult = await pool.query(
+          `SELECT id, staff_id, client_id, status
+           FROM visits 
+           WHERE id = $1`,
+          [visitId]
+        );
+
+        if (visitResult.rows.length === 0) {
+          return res.status(404).json({
+            error: 'Not Found',
+            message: 'Visit not found',
+          });
+        }
+
+        const visit = visitResult.rows[0];
+
+        // Authorization check: caregiver must own the visit, or be coordinator/admin
+        if (userRole === 'caregiver' && visit.staff_id !== userId) {
+          return res.status(403).json({
+            error: 'Forbidden',
+            message: 'You can only upload signatures for your own visits',
+          });
+        }
+
+        // Generate pre-signed URL
+        const { url, key } = await generateSignatureUploadUrl(visitId, signatureType, userId);
+
+        const expiresAt = new Date(Date.now() + 600 * 1000); // 10 minutes
+
+        logInfo('Signature upload URL generated', {
+          visitId,
+          signatureKey: key,
+          userId,
+          signatureType,
+          fileSize,
+        });
+
+        return res.status(200).json({
+          uploadUrl: url,
+          signatureKey: key,
+          expiresAt: expiresAt.toISOString(),
+        });
+      } catch (error) {
+        logError('Error generating signature upload URL', error as Error, {
+          visitId,
+          userId,
+          signatureType,
+        });
+
+        return res.status(500).json({
+          error: 'Internal Server Error',
+          message: 'Failed to generate upload URL',
+        });
+      }
+    }
+  );
+
+  /**
+   * POST /v1/visits/:visitId/signature
+   * Record signature metadata after successful upload
+   *
+   * After the mobile app successfully uploads a signature to S3 using the
+   * pre-signed URL, it calls this endpoint to record the signature URL
+   * in the visit documentation.
+   *
+   * Authentication: Required (caregiver role)
+   * Authorization: Caregiver must own the visit
+   *
+   * Request Body:
+   * - signatureKey: string - S3 object key returned from upload-url endpoint
+   * - signatureType: string - Type of signature ('caregiver', 'client', 'family')
+   *
+   * Response: 200 OK
+   * - signatureUrl: Full S3 URL
+   * - signatureType: Type of signature
+   * - uploadedAt: ISO 8601 timestamp
+   *
+   * Errors:
+   * - 400: Invalid request data
+   * - 403: Not authorized to add signature to this visit
+   * - 404: Visit not found
+   */
+  router.post(
+    '/:visitId/signature',
+    authenticateJWT(redisClient),
+    async (req: Request, res: Response) => {
+      const authReq = req as AuthenticatedRequest;
+      const userId = authReq.user?.userId;
+      const userRole = authReq.user?.role;
+      const { visitId } = req.params;
+      const { signatureKey, signatureType } = req.body;
+
+      if (!userId) {
+        return res.status(401).json({
+          error: 'Unauthorized',
+          message: 'Authentication required',
+        });
+      }
+
+      // Validate UUID format
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(visitId)) {
+        return res.status(400).json({
+          error: 'Bad Request',
+          message: 'Invalid visitId format',
+        });
+      }
+
+      // Validate required fields
+      if (!signatureKey || !signatureType) {
+        return res.status(400).json({
+          error: 'Bad Request',
+          message: 'signatureKey and signatureType are required',
+        });
+      }
+
+      // Validate signatureKey format (should start with visits/{visitId}/signatures/)
+      const expectedPrefix = `visits/${visitId}/signatures/`;
+      if (!signatureKey.startsWith(expectedPrefix)) {
+        return res.status(400).json({
+          error: 'Bad Request',
+          message: 'Invalid signatureKey format',
+        });
+      }
+
+      const client = await pool.connect();
+
+      try {
+        await client.query('BEGIN');
+
+        // Get visit and verify ownership
+        const visitResult = await client.query(
+          `SELECT id, staff_id, status
+           FROM visits 
+           WHERE id = $1`,
+          [visitId]
+        );
+
+        if (visitResult.rows.length === 0) {
+          await client.query('ROLLBACK');
+          return res.status(404).json({
+            error: 'Not Found',
+            message: 'Visit not found',
+          });
+        }
+
+        const visit = visitResult.rows[0];
+
+        // Authorization check: caregiver must own the visit, or be coordinator/admin
+        if (userRole === 'caregiver' && visit.staff_id !== userId) {
+          await client.query('ROLLBACK');
+          return res.status(403).json({
+            error: 'Forbidden',
+            message: 'You can only add signatures to your own visits',
+          });
+        }
+
+        // Construct S3 URL
+        const signatureUrl = `https://${S3_BUCKETS.SIGNATURES}.s3.${process.env.AWS_REGION || 'ca-central-1'}.amazonaws.com/${signatureKey}`;
+
+        // Check if documentation exists
+        const docResult = await client.query(
+          'SELECT id FROM visit_documentation WHERE visit_id = $1',
+          [visitId]
+        );
+
+        if (docResult.rows.length > 0) {
+          // Update existing documentation
+          await client.query(
+            `UPDATE visit_documentation 
+             SET signature_url = $1, updated_at = CURRENT_TIMESTAMP
+             WHERE visit_id = $2`,
+            [signatureUrl, visitId]
+          );
+        } else {
+          // Create new documentation with signature
+          await client.query(
+            `INSERT INTO visit_documentation (visit_id, signature_url)
+             VALUES ($1, $2)`,
+            [visitId, signatureUrl]
+          );
+        }
+
+        await client.query('COMMIT');
+
+        // Invalidate cached visit details
+        const cacheKeyPattern = `visit:detail:${visitId}`;
+        try {
+          await redisClient.del(cacheKeyPattern);
+        } catch (cacheError) {
+          // Log but don't fail the request
+          logError('Failed to invalidate visit cache', cacheError as Error, { visitId });
+        }
+
+        logInfo('Signature metadata recorded', {
+          visitId,
+          signatureKey,
+          signatureType,
+          userId,
+        });
+
+        return res.status(200).json({
+          signatureUrl,
+          signatureType,
+          uploadedAt: new Date().toISOString(),
+        });
+      } catch (error) {
+        await client.query('ROLLBACK');
+        logError('Error recording signature metadata', error as Error, {
+          visitId,
+          userId,
+          signatureKey,
+        });
+
+        return res.status(500).json({
+          error: 'Internal Server Error',
+          message: 'Failed to record signature metadata',
         });
       } finally {
         client.release();
