@@ -76,7 +76,7 @@ s3_url: https://s3.amazonaws.com/berthcare-photos/visits/3edaf4f8-2120-4011-a59f
 
 **Example:**
 
-```
+```text
 thumbnail_s3_key: visits/3edaf4f8-2120-4011-a59f-f6d8a47c622f/photos/1728662400000-client_photo_thumb.jpg
 ```
 
@@ -539,7 +539,7 @@ VALUES (
 
 ### Relationship Diagram
 
-```
+```text
 visits (1) ----< (many) visit_photos
 ```
 
