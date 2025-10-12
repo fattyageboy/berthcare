@@ -373,7 +373,7 @@ describe('Photo Upload Endpoints', () => {
         expect(response.body.error).toHaveProperty('message');
       });
 
-      it('should reject caregiver uploading to another caregiver\'s visit', async () => {
+      it("should reject caregiver uploading to another caregiver's visit", async () => {
         const response = await request(app)
           .post(`/api/v1/visits/${visitId}/photos/upload-url`)
           .set('Authorization', `Bearer ${otherCaregiverToken}`)
@@ -435,10 +435,9 @@ describe('Photo Upload Endpoints', () => {
         expect(response.body).toHaveProperty('uploadedAt');
 
         // Verify photo was saved to database
-        const photoResult = await pgPool.query(
-          'SELECT * FROM visit_photos WHERE s3_key = $1',
-          [photoKey]
-        );
+        const photoResult = await pgPool.query('SELECT * FROM visit_photos WHERE s3_key = $1', [
+          photoKey,
+        ]);
 
         expect(photoResult.rows.length).toBe(1);
         expect(photoResult.rows[0].visit_id).toBe(visitId);
@@ -622,7 +621,7 @@ describe('Photo Upload Endpoints', () => {
         expect(response.body.error).toHaveProperty('message');
       });
 
-      it('should reject caregiver adding photo to another caregiver\'s visit', async () => {
+      it("should reject caregiver adding photo to another caregiver's visit", async () => {
         const response = await request(app)
           .post(`/api/v1/visits/${visitId}/photos`)
           .set('Authorization', `Bearer ${otherCaregiverToken}`)
