@@ -77,5 +77,13 @@
     "*.config.js",
     "*.config.ts",
     ".nx/"
+  ],
+  "overrides": [
+    {
+      "files": ["**/db/migrate.ts", "**/db/seed.ts", "**/db/verify-schema.ts"],
+      "rules": {
+        "no-console": "off"
+      }
+    }
   ]
 }

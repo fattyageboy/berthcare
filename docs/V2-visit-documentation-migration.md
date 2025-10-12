@@ -457,7 +457,7 @@ WHERE id = (SELECT id FROM visit_documentation LIMIT 1);
 
 ### Relationship
 
-````
+````text
 visits (1) ----< (many) visit_documentation
 ```text
 

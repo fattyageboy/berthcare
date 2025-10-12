@@ -1,28 +1,12 @@
-name: Backend CI
+name: CI Pipeline
 
 on:
   pull_request:
     branches:
       - main
-    paths:
-      - 'apps/backend/**'
-      - 'libs/shared/**'
-      - '.github/workflows/backend-ci.yml'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'tsconfig.base.json'
-      - '.eslintrc.json'
   push:
     branches:
       - main
-    paths:
-      - 'apps/backend/**'
-      - 'libs/shared/**'
-      - '.github/workflows/backend-ci.yml'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'tsconfig.base.json'
-      - '.eslintrc.json'
 
 # Cancel in-progress runs when a new workflow with the same group name is triggered
 concurrency:
@@ -137,17 +121,8 @@ jobs:
           # Clean up key files
           rm /tmp/jwt_private.pem /tmp/jwt_public.pem
 
-      - name: Run database migrations
-        run: npx tsx apps/backend/src/db/migrate.ts up
-        env:
-          POSTGRES_HOST: localhost
-          POSTGRES_PORT: 5432
-          POSTGRES_DB: berthcare_test
-          POSTGRES_USER: berthcare
-          POSTGRES_PASSWORD: berthcare_test_password
-
       - name: Run tests with coverage (backend only)
-        run: timeout 10m npx nx run backend:test --ci --coverage --maxWorkers=1
+        run: npx nx run backend:test --ci --coverage --maxWorkers=1
         continue-on-error: false
         env:
           TEST_DATABASE_URL: postgresql://berthcare:berthcare_test_password@localhost:5432/berthcare_test
@@ -204,9 +179,9 @@ jobs:
         with:
           category: '/language:javascript-typescript'
 
-  # Job 5: Dependency Audit (Backend Only)
+  # Job 5: Dependency Audit
   dependency-audit:
-    name: Dependency Audit (Backend)
+    name: Dependency Audit
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -220,17 +195,12 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Audit backend production dependencies
-        run: |
-          # Audit only production dependencies used by backend
-          npm audit --audit-level=high --omit=dev --workspace=@berthcare/backend
+      - name: Run npm audit
+        run: npm audit --audit-level=high
         continue-on-error: false
 
-      - name: Check for outdated backend dependencies
-        run: npm outdated --workspace=@berthcare/backend || true
+      - name: Check for outdated dependencies
+        run: npm outdated || true
 
   # Job 6: Build Verification
   build:

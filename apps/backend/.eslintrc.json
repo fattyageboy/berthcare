@@ -11,7 +11,7 @@
       }
     },
     {
-      "files": ["src/test-connection.ts", "src/db/verify-schema.ts"],
+      "files": ["src/test-connection.ts", "src/db/verify-schema.ts", "src/db/migrate.ts", "src/db/seed.ts", "src/storage/test-s3.ts"],
       "rules": {
         "no-console": "off"
       }

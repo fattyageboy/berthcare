@@ -79,7 +79,7 @@ async function invalidateVisitListCache(
     }
 
     if (keysToDelete.length > 0) {
-      await redisClient.del(...keysToDelete);
+      await redisClient.del(keysToDelete);
       logInfo('Visit list cache invalidated', { keysDeleted: keysToDelete.length });
     }
   } catch (error) {

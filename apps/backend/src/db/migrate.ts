@@ -13,8 +13,6 @@
  * Philosophy: Keep it simple. SQL files are the source of truth.
  */
 
-/* eslint-disable no-console */
-
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
@@ -127,6 +125,7 @@ async function migrateUp(migrationNumber?: string): Promise<void> {
 
   // Define all available migrations
   const allMigrations = [
+    { version: '000', filename: '000_create_zones.sql' },
     { version: '001', filename: '001_create_users_auth.sql' },
     { version: '002', filename: '002_create_clients.sql' },
     { version: '003', filename: '003_create_care_plans.sql' },
@@ -187,7 +186,7 @@ async function migrateDown(migrationNumber: string): Promise<void> {
   }
 
   // Define ordered list of all migrations
-  const orderedMigrations = ['001', '002', '003', '004', '005', '006'];
+  const orderedMigrations = ['000', '001', '002', '003', '004', '005', '006'];
 
   // Check for dependent migrations (migrations applied after the target)
   const targetIndex = orderedMigrations.indexOf(migrationNumber);
