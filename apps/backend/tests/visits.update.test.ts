@@ -32,6 +32,7 @@ import {
   createTestClient,
   createTestVisit,
   generateTestEmail,
+  registerCleanup,
   setupTestConnections,
   teardownTestConnections,
 } from './test-helpers';
@@ -163,6 +164,11 @@ describe('PATCH /v1/visits/:visitId', () => {
         status: 'in_progress',
       });
 
+      // Register cleanup to ensure visit is deleted even if test fails
+      registerCleanup(async () => {
+        await pgPool.query('DELETE FROM visits WHERE id = $1', [testVisitId]);
+      });
+
       const response = await request(app)
         .patch(`/api/v1/visits/${testVisitId}`)
         .set('Authorization', `Bearer ${caregiverToken}`)
@@ -180,9 +186,6 @@ describe('PATCH /v1/visits/:visitId', () => {
         [testVisitId]
       );
       expect(visitCheck.rows[0].status).toBe('completed');
-
-      // Clean up
-      await pgPool.query('DELETE FROM visits WHERE id = $1', [testVisitId]);
     });
   });
 
