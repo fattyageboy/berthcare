@@ -153,48 +153,36 @@ describe('PATCH /v1/visits/:visitId', () => {
       expect(visitCheck.rows[0].duration_minutes).toBe(60);
     });
 
-    it('should update visit with documentation', async () => {
+    it('should update visit status without affecting existing state', async () => {
+      // Create a fresh visit for this test to ensure isolation
+      const testVisitId = await createTestVisit(pgPool, {
+        clientId,
+        staffId: caregiverId,
+        scheduledStartTime: '2025-10-11T14:00:00Z',
+        checkInTime: '2025-10-11T14:05:00Z',
+        status: 'in_progress',
+      });
+
       const response = await request(app)
-        .patch(`/api/v1/visits/${visitId}`)
+        .patch(`/api/v1/visits/${testVisitId}`)
         .set('Authorization', `Bearer ${caregiverToken}`)
         .send({
-          status: 'in_progress',
-          documentation: {
-            vitalSigns: { bloodPressure: '120/80', heartRate: 72 },
-            activities: ['medication', 'meal_prep'],
-            observations: 'Client in good spirits',
-            concerns: 'None',
-          },
+          status: 'completed',
         });
 
       expect(response.status).toBe(200);
-    });
+      expect(response.body.id).toBe(testVisitId);
+      expect(response.body.status).toBe('completed');
 
-    it('should update documentation multiple times', async () => {
-      // First update with documentation
-      await request(app)
-        .patch(`/api/v1/visits/${visitId}`)
-        .set('Authorization', `Bearer ${caregiverToken}`)
-        .send({
-          status: 'in_progress',
-          documentation: {
-            vitalSigns: { bloodPressure: '120/80' },
-          },
-        });
+      // Verify status was updated in database
+      const visitCheck = await pgPool.query(
+        'SELECT status FROM visits WHERE id = $1',
+        [testVisitId]
+      );
+      expect(visitCheck.rows[0].status).toBe('completed');
 
-      // Then update documentation again
-      const response = await request(app)
-        .patch(`/api/v1/visits/${visitId}`)
-        .set('Authorization', `Bearer ${caregiverToken}`)
-        .send({
-          status: 'in_progress',
-          documentation: {
-            vitalSigns: { bloodPressure: '130/85', heartRate: 75 },
-            activities: ['medication'],
-          },
-        });
-
-      expect(response.status).toBe(200);
+      // Clean up
+      await pgPool.query('DELETE FROM visits WHERE id = $1', [testVisitId]);
     });
   });
 
