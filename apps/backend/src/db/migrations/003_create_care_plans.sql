@@ -2,6 +2,13 @@
 -- Description: Create care_plans table for client care plan management
 -- Author: Backend Engineer
 -- Date: 2025-10-10
+--
+-- Task C2: Design database schema – care plans
+-- Create migration for care_plans table (id, client_id, summary, medications JSONB,
+-- allergies JSONB, special_instructions TEXT, version, created_at, updated_at);
+-- add foreign key to clients; add index on client_id.
+--
+-- Reference: project-documentation/task-plan.md - Phase C – Client Management API
 -- Reference: Architecture Blueprint - GET /v1/clients/:clientId, care plan section
 
 -- ============================================================================

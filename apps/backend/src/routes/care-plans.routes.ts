@@ -4,8 +4,13 @@
  * Handles care plan management endpoints:
  * - POST /v1/care-plans - Create or update care plan
  *
+ * Task C7: Implement POST /v1/care-plans endpoint
+ * Create endpoint to create/update care plan for client; support versioning
+ * (increment version on each update); validate medications and allergies format;
+ * require coordinator or admin role.
+ *
+ * Reference: project-documentation/task-plan.md - Phase C – Client Management API
  * Reference: Architecture Blueprint - Care Plan Management
- * Task: C7 - Implement POST /v1/care-plans endpoint
  *
  * Philosophy: "Start with the user experience, work backwards to the technology"
  * - Simple upsert pattern (create or update)

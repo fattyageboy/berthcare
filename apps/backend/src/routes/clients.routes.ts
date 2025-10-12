@@ -2,11 +2,18 @@
  * Client Management Routes
  *
  * Handles client (patient) management endpoints:
- * - GET /v1/clients - List clients with pagination and filtering
- * - GET /v1/clients/:clientId - Get client details (future)
+ * - GET /v1/clients - List clients with pagination and filtering (Task C3)
+ * - GET /v1/clients/:clientId - Get client details (Task C4)
+ * - POST /v1/clients - Create new client (Task C5)
+ * - PATCH /v1/clients/:clientId - Update client details (Task C6)
  *
+ * Task C3: Implement GET /v1/clients endpoint
+ * Task C4: Implement GET /v1/clients/:clientId endpoint
+ * Task C5: Implement POST /v1/clients endpoint
+ * Task C6: Implement PATCH /v1/clients/:clientId endpoint
+ *
+ * Reference: project-documentation/task-plan.md - Phase C – Client Management API
  * Reference: Architecture Blueprint - Client Management Endpoints
- * Task: C3 - Implement GET /v1/clients endpoint
  *
  * Philosophy: "Start with the user experience, work backwards to the technology"
  * - Fast queries via optimized indexes

@@ -60,13 +60,13 @@ export interface TokenOptions {
  * Access token expiry: 1 hour
  * Short-lived for security - forces regular re-authentication
  */
-const ACCESS_TOKEN_EXPIRY = '1h';
+export const ACCESS_TOKEN_EXPIRY = '1h';
 
 /**
  * Refresh token expiry: 30 days
  * Long-lived for user convenience - allows staying logged in
  */
-const REFRESH_TOKEN_EXPIRY = '30d';
+export const REFRESH_TOKEN_EXPIRY = '30d';
 
 /**
  * JWT algorithm: RS256 (RSA Signature with SHA-256)
@@ -75,62 +75,85 @@ const REFRESH_TOKEN_EXPIRY = '30d';
  * - Public key for verification (can be distributed)
  * - Key rotation without service disruption
  */
-const JWT_ALGORITHM = 'RS256';
+export const JWT_ALGORITHM = 'RS256';
+
+// Cache for decoded keys to avoid repeated decoding
+let cachedPrivateKey: string | null = null;
+let cachedPublicKey: string | null = null;
 
 /**
- * Get JWT private key from environment or AWS Secrets Manager
+ * Get JWT private key from environment
+ *
+ * Private key is used for signing tokens and must be kept secure.
+ * The key is cached after first retrieval to avoid repeated decoding.
  *
  * Key Management Strategy:
  * - Development: Use environment variable (JWT_PRIVATE_KEY)
- * - Production: Fetch from AWS Secrets Manager
+ * - Production: Use environment variable with base64 encoding
+ * - Future: Can be extended to fetch from AWS Secrets Manager
  * - Support key rotation via versioned secrets
  *
  * @returns Private key for JWT signing
  * @throws Error if private key is not configured
  */
 function getPrivateKey(): string {
-  // For development, use environment variable
+  // Return cached key if available
+  if (cachedPrivateKey) {
+    return cachedPrivateKey;
+  }
+
+  // For development and production, use environment variable
   const privateKey = process.env.JWT_PRIVATE_KEY;
 
   if (!privateKey) {
     throw new Error(
       'JWT_PRIVATE_KEY not configured. ' +
-        'Set JWT_PRIVATE_KEY environment variable or configure AWS Secrets Manager.'
+        'Set JWT_PRIVATE_KEY environment variable (optionally base64-encoded with "base64:" prefix).'
     );
   }
 
   // Handle base64-encoded keys (common in environment variables)
   if (privateKey.startsWith('base64:')) {
-    return Buffer.from(privateKey.substring(7), 'base64').toString('utf-8');
+    cachedPrivateKey = Buffer.from(privateKey.substring(7), 'base64').toString('utf-8');
+  } else {
+    cachedPrivateKey = privateKey;
   }
 
-  return privateKey;
+  return cachedPrivateKey;
 }
 
 /**
- * Get JWT public key from environment or AWS Secrets Manager
+ * Get JWT public key from environment
  *
  * Public key is used for token verification and can be safely distributed.
+ * The key is cached after first retrieval to avoid repeated decoding.
  *
  * @returns Public key for JWT verification
  * @throws Error if public key is not configured
  */
 function getPublicKey(): string {
+  // Return cached key if available
+  if (cachedPublicKey) {
+    return cachedPublicKey;
+  }
+
   const publicKey = process.env.JWT_PUBLIC_KEY;
 
   if (!publicKey) {
     throw new Error(
       'JWT_PUBLIC_KEY not configured. ' +
-        'Set JWT_PUBLIC_KEY environment variable or configure AWS Secrets Manager.'
+        'Set JWT_PUBLIC_KEY environment variable (optionally base64-encoded with "base64:" prefix).'
     );
   }
 
   // Handle base64-encoded keys
   if (publicKey.startsWith('base64:')) {
-    return Buffer.from(publicKey.substring(7), 'base64').toString('utf-8');
+    cachedPublicKey = Buffer.from(publicKey.substring(7), 'base64').toString('utf-8');
+  } else {
+    cachedPublicKey = publicKey;
   }
 
-  return publicKey;
+  return cachedPublicKey;
 }
 
 /**
