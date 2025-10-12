@@ -183,10 +183,9 @@ describe('PATCH /v1/visits/:visitId', () => {
       expect(response.body.status).toBe('completed');
 
       // Verify status was updated in database
-      const visitCheck = await pgPool.query(
-        'SELECT status FROM visits WHERE id = $1',
-        [testVisitId]
-      );
+      const visitCheck = await pgPool.query('SELECT status FROM visits WHERE id = $1', [
+        testVisitId,
+      ]);
       expect(visitCheck.rows[0].status).toBe('completed');
     });
   });
