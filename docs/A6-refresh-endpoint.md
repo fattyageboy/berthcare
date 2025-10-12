@@ -293,6 +293,7 @@ async function apiRequest(url, options) {
   let response = await fetch(url, {
     ...options,
     headers: {
+      ...options.headers,
       Authorization: `Bearer ${accessToken}`,
     },
   });
@@ -306,6 +307,7 @@ async function apiRequest(url, options) {
       response = await fetch(url, {
         ...options,
         headers: {
+          ...options.headers,
           Authorization: `Bearer ${newAccessToken}`,
         },
       });
@@ -322,6 +324,9 @@ async function refreshAccessToken() {
   try {
     const response = await fetch('/v1/auth/refresh', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ refreshToken }),
     });
 
