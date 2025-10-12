@@ -35,6 +35,13 @@
         "command": "jest",
         "cwd": "apps/backend"
       }
+    },
+    "type-check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc --noEmit",
+        "cwd": "apps/backend"
+      }
     }
   }
 }

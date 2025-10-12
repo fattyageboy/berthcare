@@ -32,7 +32,10 @@ CREATE TABLE IF NOT EXISTS visit_documentation (
     -- Any concerns noted during the visit
     concerns TEXT,
     
-    -- Digital signature URL (S3 path)
+    -- Digital signature S3 key (object key only, not full URL)
+    -- Full URLs are constructed at runtime using CloudFront/S3 base URL
+    -- Storing only the key allows URL changes without database updates
+    -- Format: signatures/{visit_id}/{timestamp}.png
     signature_url VARCHAR(500),
     
     -- Audit timestamps

@@ -35,15 +35,6 @@ module.exports = {
     '!src/config/**',
     '!src/middleware/examples/**',
     '!src/storage/test-s3.ts',
-    '!src/services/geocoding.service.ts', // Exclude geocoding service (external API dependency)
-    '!src/storage/**', // Exclude storage utilities (S3 integration, tested separately)
-    '!src/routes/care-plans.routes.ts', // Exclude care-plans (not part of visit documentation PR)
-    '!src/routes/auth.routes.ts', // Exclude auth routes (covered in auth PR)
-    '!src/routes/clients.routes.ts', // Exclude clients routes (covered in client management PR)
-    '!src/middleware/validation.ts', // Exclude validation middleware (shared across all routes, tested in respective PRs)
-    '!src/middleware/auth.ts', // Exclude auth middleware (covered in auth PR)
-    '!src/middleware/rate-limiter.ts', // Exclude rate limiter (shared middleware, not specific to visits)
-    '!src/services/zone-assignment.service.ts', // Exclude zone assignment service (not part of visit documentation PR)
   ],
   coverageThreshold: {
     global: {

@@ -54,13 +54,13 @@ CREATE TABLE visit_photos (
 
 ### Full-Size Photos
 
-**S3 Key Format:** `visits/{visit_id}/{photo_id}.jpg`
+**S3 Key Format:** `visits/{visitId}/photos/{timestamp}-{sanitizedFileName}.jpg`
 
 **Example:**
 
 ```text
-s3_key: visits/3edaf4f8-2120-4011-a59f-f6d8a47c622f/84c8ca84-3cb4-4d3a-8d3f-86d9ac468ae8.jpg
-s3_url: https://s3.amazonaws.com/berthcare-photos/visits/3edaf4f8-2120-4011-a59f-f6d8a47c622f/84c8ca84-3cb4-4d3a-8d3f-86d9ac468ae8.jpg
+s3_key: visits/3edaf4f8-2120-4011-a59f-f6d8a47c622f/photos/1728662400000-client_photo.jpg
+s3_url: https://s3.amazonaws.com/berthcare-photos/visits/3edaf4f8-2120-4011-a59f-f6d8a47c622f/photos/1728662400000-client_photo.jpg
 ```
 
 **Specifications:**
@@ -72,12 +72,12 @@ s3_url: https://s3.amazonaws.com/berthcare-photos/visits/3edaf4f8-2120-4011-a59f
 
 ### Thumbnails
 
-**S3 Key Format:** `visits/{visit_id}/{photo_id}_thumb.jpg`
+**S3 Key Format:** `visits/{visitId}/photos/{timestamp}-{sanitizedFileName}_thumb.jpg`
 
 **Example:**
 
 ```
-thumbnail_s3_key: visits/3edaf4f8-2120-4011-a59f-f6d8a47c622f/84c8ca84-3cb4-4d3a-8d3f-86d9ac468ae8_thumb.jpg
+thumbnail_s3_key: visits/3edaf4f8-2120-4011-a59f-f6d8a47c622f/photos/1728662400000-client_photo_thumb.jpg
 ```
 
 **Specifications:**

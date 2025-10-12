@@ -35,7 +35,8 @@ import {
   hashPassword,
   verifyPassword,
   verifyToken,
-} from '../../../../libs/shared/src';
+} from '@berthcare/shared';
+
 import { logAuth, logError } from '../config/logger';
 import { createLoginRateLimiter, createRegistrationRateLimiter } from '../middleware/rate-limiter';
 import {

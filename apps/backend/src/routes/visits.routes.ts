@@ -812,6 +812,18 @@ export function createVisitsRouter(
         paramCount++;
       }
 
+      // Validate that at least one update is provided
+      if (updates.length === 0 && !documentation) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({
+          error: 'Bad Request',
+          message: 'No updates provided',
+        });
+      }
+
+      // Variable to store updated visit data
+      let updatedVisit = visit;
+
       // Update visit if there are changes
       if (updates.length > 0) {
         values.push(visitId);
@@ -823,42 +835,7 @@ export function createVisitsRouter(
         `;
 
         const updatedVisitResult = await client.query(updateQuery, values);
-        const updatedVisit = updatedVisitResult.rows[0];
-
-        await client.query('COMMIT');
-
-        // Invalidate cached visit lists after successful update
-        await invalidateVisitListCache(redisClient);
-
-        logInfo('Visit updated successfully', {
-          visitId,
-          userId,
-          status: updatedVisit.status,
-          duration: updatedVisit.duration_minutes,
-          hasCheckOut: !!checkOutTime,
-          hasDocumentation: !!documentation,
-        });
-
-        // Return updated visit data
-        const response: VisitResponse = {
-          id: updatedVisit.id,
-          clientId: updatedVisit.client_id,
-          staffId: updatedVisit.staff_id,
-          scheduledStartTime: updatedVisit.scheduled_start_time,
-          checkInTime: updatedVisit.check_in_time,
-          checkInLatitude: updatedVisit.check_in_latitude,
-          checkInLongitude: updatedVisit.check_in_longitude,
-          status: updatedVisit.status,
-          createdAt: updatedVisit.created_at,
-        };
-
-        return res.status(200).json(response);
-      } else {
-        await client.query('ROLLBACK');
-        return res.status(400).json({
-          error: 'Bad Request',
-          message: 'No updates provided',
-        });
+        updatedVisit = updatedVisitResult.rows[0];
       }
 
       // Update documentation if provided
@@ -905,7 +882,7 @@ export function createVisitsRouter(
               `UPDATE visit_documentation 
                SET ${docUpdates.join(', ')}, updated_at = CURRENT_TIMESTAMP
                WHERE visit_id = $${docParamCount}`,
-              docValues as (string | null)[]
+              docValues
             );
           }
         } else {
@@ -924,6 +901,36 @@ export function createVisitsRouter(
           );
         }
       }
+
+      // Commit transaction after all updates succeed
+      await client.query('COMMIT');
+
+      // Invalidate cached visit lists after successful update
+      await invalidateVisitListCache(redisClient);
+
+      logInfo('Visit updated successfully', {
+        visitId,
+        userId,
+        status: updatedVisit.status,
+        duration: updatedVisit.duration_minutes,
+        hasCheckOut: !!checkOutTime,
+        hasDocumentation: !!documentation,
+      });
+
+      // Return updated visit data
+      const response: VisitResponse = {
+        id: updatedVisit.id,
+        clientId: updatedVisit.client_id,
+        staffId: updatedVisit.staff_id,
+        scheduledStartTime: updatedVisit.scheduled_start_time,
+        checkInTime: updatedVisit.check_in_time,
+        checkInLatitude: updatedVisit.check_in_latitude,
+        checkInLongitude: updatedVisit.check_in_longitude,
+        status: updatedVisit.status,
+        createdAt: updatedVisit.created_at,
+      };
+
+      return res.status(200).json(response);
     } catch (error) {
       await client.query('ROLLBACK');
       logError('Error updating visit', error as Error, {
