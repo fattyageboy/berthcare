@@ -85,7 +85,8 @@ curl http://localhost:3000/health
 
 ### Related Issues
 
-Closes #<issue-number>
+<!-- Uncomment and add issue number when applicable -->
+<!-- Closes #123 -->
 
 ### Deployment Notes
 
