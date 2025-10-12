@@ -23,6 +23,7 @@ import { createClient } from 'redis';
 
 import { logError, logInfo } from '../config/logger';
 import { authenticateJWT, AuthenticatedRequest } from '../middleware/auth';
+import { generatePhotoUploadUrl, S3_BUCKETS } from '../storage/s3-client';
 
 /**
  * Create visit request body
@@ -1230,6 +1231,324 @@ export function createVisitsRouter(
       });
     }
   });
+
+  /**
+   * POST /v1/visits/:visitId/photos/upload-url
+   * Generate pre-signed S3 URL for photo upload
+   *
+   * Generates a pre-signed URL that allows the mobile app to upload photos
+   * directly to S3, bypassing the backend server for better performance.
+   *
+   * Authentication: Required (caregiver role)
+   * Authorization: Caregiver must own the visit
+   *
+   * Request Body:
+   * - fileName: string - Original file name
+   * - mimeType: string - MIME type (image/jpeg, image/png, image/webp)
+   * - fileSize: number - File size in bytes (max 2MB after compression)
+   *
+   * Response: 200 OK
+   * - uploadUrl: Pre-signed S3 URL (expires in 1 hour)
+   * - photoKey: S3 object key for later reference
+   * - expiresAt: ISO 8601 timestamp when URL expires
+   *
+   * Errors:
+   * - 400: Invalid request data or file too large
+   * - 403: Not authorized to upload photos for this visit
+   * - 404: Visit not found
+   */
+  router.post(
+    '/:visitId/photos/upload-url',
+    authenticateJWT(redisClient),
+    async (req: Request, res: Response) => {
+      const authReq = req as AuthenticatedRequest;
+      const userId = authReq.user?.userId;
+      const userRole = authReq.user?.role;
+      const { visitId } = req.params;
+      const { fileName, mimeType, fileSize } = req.body;
+
+      if (!userId) {
+        return res.status(401).json({
+          error: 'Unauthorized',
+          message: 'Authentication required',
+        });
+      }
+
+      // Validate UUID format
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(visitId)) {
+        return res.status(400).json({
+          error: 'Bad Request',
+          message: 'Invalid visitId format',
+        });
+      }
+
+      // Validate required fields
+      if (!fileName || !mimeType || !fileSize) {
+        return res.status(400).json({
+          error: 'Bad Request',
+          message: 'fileName, mimeType, and fileSize are required',
+        });
+      }
+
+      // Validate MIME type
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
+      if (!allowedTypes.includes(mimeType)) {
+        return res.status(400).json({
+          error: 'Bad Request',
+          message: `Invalid MIME type. Allowed types: ${allowedTypes.join(', ')}`,
+        });
+      }
+
+      // Validate file size (max 2MB after compression)
+      const maxSize = 2 * 1024 * 1024; // 2MB
+      if (fileSize > maxSize) {
+        return res.status(400).json({
+          error: 'Bad Request',
+          message: `File size exceeds maximum of 2MB. Please compress the image before upload.`,
+        });
+      }
+
+      try {
+        // Get visit and verify ownership
+        const visitResult = await pool.query(
+          `SELECT id, staff_id, client_id, status
+           FROM visits 
+           WHERE id = $1`,
+          [visitId]
+        );
+
+        if (visitResult.rows.length === 0) {
+          return res.status(404).json({
+            error: 'Not Found',
+            message: 'Visit not found',
+          });
+        }
+
+        const visit = visitResult.rows[0];
+
+        // Authorization check: caregiver must own the visit, or be coordinator/admin
+        if (userRole === 'caregiver' && visit.staff_id !== userId) {
+          return res.status(403).json({
+            error: 'Forbidden',
+            message: 'You can only upload photos for your own visits',
+          });
+        }
+
+        // Generate pre-signed URL
+        const timestamp = Date.now();
+        const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const photoKey = `visits/${visitId}/photos/${timestamp}-${sanitizedFileName}`;
+
+        const metadata = {
+          originalName: fileName,
+          mimeType,
+          size: fileSize,
+          uploadedBy: userId,
+          uploadedAt: new Date().toISOString(),
+          visitId,
+          clientId: visit.client_id,
+        };
+
+        const { url } = await generatePhotoUploadUrl(visitId, fileName, metadata);
+
+        const expiresAt = new Date(Date.now() + 3600 * 1000); // 1 hour
+
+        logInfo('Photo upload URL generated', {
+          visitId,
+          photoKey,
+          userId,
+          fileName,
+          fileSize,
+        });
+
+        return res.status(200).json({
+          uploadUrl: url,
+          photoKey,
+          expiresAt: expiresAt.toISOString(),
+        });
+      } catch (error) {
+        logError('Error generating photo upload URL', error as Error, {
+          visitId,
+          userId,
+          fileName,
+        });
+
+        return res.status(500).json({
+          error: 'Internal Server Error',
+          message: 'Failed to generate upload URL',
+        });
+      }
+    }
+  );
+
+  /**
+   * POST /v1/visits/:visitId/photos
+   * Record photo metadata after successful upload
+   *
+   * After the mobile app successfully uploads a photo to S3 using the
+   * pre-signed URL, it calls this endpoint to record the photo metadata
+   * in the database for later retrieval.
+   *
+   * Authentication: Required (caregiver role)
+   * Authorization: Caregiver must own the visit
+   *
+   * Request Body:
+   * - photoKey: string - S3 object key returned from upload-url endpoint
+   * - fileName: string - Original file name
+   * - fileSize: number - File size in bytes
+   * - mimeType: string - MIME type
+   * - thumbnailKey: string (optional) - S3 key for thumbnail (320px width)
+   *
+   * Response: 201 Created
+   * - id: Photo record ID
+   * - photoKey: S3 object key
+   * - uploadedAt: ISO 8601 timestamp
+   *
+   * Errors:
+   * - 400: Invalid request data
+   * - 403: Not authorized to add photos to this visit
+   * - 404: Visit not found
+   */
+  router.post(
+    '/:visitId/photos',
+    authenticateJWT(redisClient),
+    async (req: Request, res: Response) => {
+      const authReq = req as AuthenticatedRequest;
+      const userId = authReq.user?.userId;
+      const userRole = authReq.user?.role;
+      const { visitId } = req.params;
+      const { photoKey, fileName, fileSize, mimeType, thumbnailKey } = req.body;
+
+      if (!userId) {
+        return res.status(401).json({
+          error: 'Unauthorized',
+          message: 'Authentication required',
+        });
+      }
+
+      // Validate UUID format
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(visitId)) {
+        return res.status(400).json({
+          error: 'Bad Request',
+          message: 'Invalid visitId format',
+        });
+      }
+
+      // Validate required fields
+      if (!photoKey || !fileName || !fileSize || !mimeType) {
+        return res.status(400).json({
+          error: 'Bad Request',
+          message: 'photoKey, fileName, fileSize, and mimeType are required',
+        });
+      }
+
+      // Validate photoKey format (should start with visits/{visitId}/photos/)
+      const expectedPrefix = `visits/${visitId}/photos/`;
+      if (!photoKey.startsWith(expectedPrefix)) {
+        return res.status(400).json({
+          error: 'Bad Request',
+          message: 'Invalid photoKey format',
+        });
+      }
+
+      const client = await pool.connect();
+
+      try {
+        await client.query('BEGIN');
+
+        // Get visit and verify ownership
+        const visitResult = await client.query(
+          `SELECT id, staff_id, status
+           FROM visits 
+           WHERE id = $1`,
+          [visitId]
+        );
+
+        if (visitResult.rows.length === 0) {
+          await client.query('ROLLBACK');
+          return res.status(404).json({
+            error: 'Not Found',
+            message: 'Visit not found',
+          });
+        }
+
+        const visit = visitResult.rows[0];
+
+        // Authorization check: caregiver must own the visit, or be coordinator/admin
+        if (userRole === 'caregiver' && visit.staff_id !== userId) {
+          await client.query('ROLLBACK');
+          return res.status(403).json({
+            error: 'Forbidden',
+            message: 'You can only add photos to your own visits',
+          });
+        }
+
+        // Construct S3 URL
+        const s3Url = `https://${S3_BUCKETS.PHOTOS}.s3.${process.env.AWS_REGION || 'ca-central-1'}.amazonaws.com/${photoKey}`;
+
+        // Insert photo metadata
+        const photoResult = await client.query(
+          `INSERT INTO visit_photos (
+            visit_id,
+            s3_key,
+            s3_url,
+            thumbnail_s3_key,
+            file_name,
+            file_size,
+            mime_type,
+            uploaded_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
+          RETURNING id, s3_key, s3_url, thumbnail_s3_key, uploaded_at`,
+          [visitId, photoKey, s3Url, thumbnailKey || null, fileName, fileSize, mimeType]
+        );
+
+        const photo = photoResult.rows[0];
+
+        await client.query('COMMIT');
+
+        // Invalidate cached visit details
+        const cacheKeyPattern = `visit:detail:${visitId}`;
+        try {
+          await redisClient.del(cacheKeyPattern);
+        } catch (cacheError) {
+          // Log but don't fail the request
+          logError('Failed to invalidate visit cache', cacheError as Error, { visitId });
+        }
+
+        logInfo('Photo metadata recorded', {
+          visitId,
+          photoId: photo.id,
+          photoKey,
+          userId,
+          fileSize,
+        });
+
+        return res.status(201).json({
+          id: photo.id,
+          photoKey: photo.s3_key,
+          photoUrl: photo.s3_url,
+          thumbnailKey: photo.thumbnail_s3_key,
+          uploadedAt: photo.uploaded_at,
+        });
+      } catch (error) {
+        await client.query('ROLLBACK');
+        logError('Error recording photo metadata', error as Error, {
+          visitId,
+          userId,
+          photoKey,
+        });
+
+        return res.status(500).json({
+          error: 'Internal Server Error',
+          message: 'Failed to record photo metadata',
+        });
+      } finally {
+        client.release();
+      }
+    }
+  );
 
   return router;
 }
