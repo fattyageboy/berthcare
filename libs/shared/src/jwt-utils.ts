@@ -1,6 +1,11 @@
 /**
  * JWT Token Generation Utilities
  *
+ * Task A3: Implement JWT token generation
+ * Create JWT utility module using jsonwebtoken; implement generateAccessToken() (1 hour expiry)
+ * and generateRefreshToken() (30 days expiry); include user id, role, zone_id in payload;
+ * use RS256 algorithm with key rotation support.
+ *
  * Provides secure JWT token generation for authentication and authorization.
  *
  * Security Features:
@@ -10,8 +15,8 @@
  * - Long-lived refresh tokens (30 days)
  * - Comprehensive payload with user context
  *
+ * Reference: project-documentation/task-plan.md - Phase A – Authentication & Authorization
  * Reference: Architecture Blueprint - JWT Authentication section
- * Task: A3 - Implement JWT token generation
  *
  * Philosophy: "Uncompromising Security"
  * - Stateless authentication for horizontal scalability

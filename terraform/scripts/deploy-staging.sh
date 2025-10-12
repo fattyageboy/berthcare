@@ -17,7 +17,7 @@ if ! command -v terraform &> /dev/null; then
 fi
 
 echo "✅ Terraform installed: $(terraform version | head -n 1)"
-
+ 
 # Navigate to staging directory
 cd "${STAGING_DIR}"
 

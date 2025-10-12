@@ -2,6 +2,11 @@
  * Integration Tests: GET /v1/visits
  *
  * Tests the visits list endpoint with filtering, pagination, and caching
+ *
+ * Reference: Architecture Blueprint - Visit Documentation Endpoints
+ * Task: V6 - Implement GET /v1/visits endpoint
+ *
+ * @see {@link project-documentation/task-plan.md} Phase V - Visit Documentation API
  */
 
 import * as crypto from 'crypto';

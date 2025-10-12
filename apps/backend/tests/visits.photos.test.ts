@@ -16,6 +16,8 @@
  *
  * Reference: Architecture Blueprint - Photo Management, S3 pre-signed URLs
  * Task: V8 - Implement photo upload flow
+ *
+ * @see {@link project-documentation/task-plan.md} Phase V - Visit Documentation API
  */
 
 import * as crypto from 'crypto';

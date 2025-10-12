@@ -15,6 +15,8 @@
  *
  * Reference: Architecture Blueprint - Visit Documentation Endpoints
  * Task: V5 - Implement PATCH /v1/visits/:visitId endpoint
+ *
+ * @see {@link project-documentation/task-plan.md} Phase V - Visit Documentation API
  */
 
 import * as crypto from 'crypto';

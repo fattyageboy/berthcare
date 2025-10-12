@@ -1,3 +1,17 @@
+/**
+ * BerthCare Backend Server - Main Entry Point
+ *
+ * Task B1: Initialize Express.js backend
+ * Set up Express.js 4.x with TypeScript; configure middleware (helmet, cors, compression);
+ * create health check endpoint GET /health; configure logging (Winston);
+ * set up error handling middleware.
+ *
+ * Task B2: Configure database connection (PostgreSQL with connection pooling)
+ * Task B3: Configure Redis connection (with retry logic)
+ *
+ * Reference: project-documentation/task-plan.md - Phase B – Backend Core Infrastructure
+ */
+
 import compression from 'compression';
 import cors from 'cors';
 import dotenv from 'dotenv';

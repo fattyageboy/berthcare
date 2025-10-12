@@ -2,14 +2,18 @@
  * Authentication Routes
  *
  * Handles user authentication endpoints:
- * - POST /v1/auth/register - User registration
- * - POST /v1/auth/login - User login
- * - POST /v1/auth/refresh - Token refresh
+ * - POST /v1/auth/register - User registration (Task A4)
+ * - POST /v1/auth/login - User login (Task A5)
+ * - POST /v1/auth/refresh - Token refresh (Task A6)
+ * - POST /v1/auth/logout - User logout (Task A9)
  *
+ * Task A4: Implement POST /v1/auth/register endpoint
+ * Task A5: Implement POST /v1/auth/login endpoint
+ * Task A6: Implement POST /v1/auth/refresh endpoint
+ * Task A9: Implement POST /v1/auth/logout endpoint
+ *
+ * Reference: project-documentation/task-plan.md - Phase A – Authentication & Authorization
  * Reference: Architecture Blueprint - Authentication Endpoints
- * Task: A4 - Implement POST /v1/auth/register endpoint
- * Task: A5 - Implement POST /v1/auth/login endpoint
- * Task: A6 - Implement POST /v1/auth/refresh endpoint
  *
  * Philosophy: "Uncompromising Security"
  * - Input validation on all endpoints

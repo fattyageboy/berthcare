@@ -1,6 +1,15 @@
 /**
  * JWT Authentication Middleware
  *
+ * Task A7: Implement JWT authentication middleware
+ * Create Express middleware to verify JWT on protected routes; extract user from token;
+ * attach to req.user; handle expired tokens (401); handle invalid tokens (401);
+ * implement token blacklist using Redis (for logout).
+ *
+ * Task A8: Implement role-based authorization middleware
+ * Create middleware to check user role against required roles; support multiple roles
+ * per endpoint; return 403 for insufficient permissions.
+ *
  * Provides JWT token verification for protected routes.
  *
  * Features:
@@ -10,8 +19,8 @@
  * - User context attachment to request
  * - Clear error responses
  *
+ * Reference: project-documentation/task-plan.md - Phase A – Authentication & Authorization
  * Reference: Architecture Blueprint - API Gateway, JWT authentication
- * Task: A7 - Implement JWT authentication middleware
  *
  * Philosophy: "Uncompromising Security"
  * - Stateless authentication for horizontal scalability

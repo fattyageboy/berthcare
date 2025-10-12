@@ -21,7 +21,7 @@ resource "aws_s3_bucket" "photos" {
       Name        = "${var.project_name}-photos-${var.environment}"
       ContentType = "photos"
     }
-  )
+  ) 
 }
 
 # S3 Bucket for Documents

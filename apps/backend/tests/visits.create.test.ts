@@ -13,6 +13,8 @@
  *
  * Reference: Architecture Blueprint - Visit Documentation Endpoints
  * Task: V4 - Implement POST /v1/visits endpoint
+ *
+ * @see {@link project-documentation/task-plan.md} Phase V - Visit Documentation API
  */
 
 import * as crypto from 'crypto';

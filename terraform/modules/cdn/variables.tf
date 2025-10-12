@@ -21,7 +21,7 @@ variable "documents_bucket_domain_name" {
 variable "signatures_bucket_domain_name" {
   description = "Signatures S3 bucket domain name"
   type        = string
-}
+} 
 
 variable "logs_bucket_domain_name" {
   description = "Logs S3 bucket domain name"

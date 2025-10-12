@@ -1,7 +1,14 @@
 /**
  * Shared Test Helpers
  *
- * Provides common utilities for integration tests
+ * Provides common utilities for integration tests including:
+ * - Test app creation with all routes
+ * - Database and Redis connection management
+ * - Test data factories (clients, visits, users)
+ * - Cleanup utilities for test isolation
+ *
+ * @module test-helpers
+ * @see {@link project-documentation/task-plan.md} Phase V - Visit Documentation API
  */
 
 import * as crypto from 'crypto';

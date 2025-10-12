@@ -16,6 +16,8 @@
  *
  * Reference: Architecture Blueprint - Visit Documentation, signature field
  * Task: V9 - Implement signature upload flow
+ *
+ * @see {@link project-documentation/task-plan.md} Phase V - Visit Documentation API
  */
 
 import * as crypto from 'crypto';
