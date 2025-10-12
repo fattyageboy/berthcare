@@ -1,12 +1,28 @@
-name: CI Pipeline
+name: Backend CI
 
 on:
   pull_request:
     branches:
       - main
+    paths:
+      - 'apps/backend/**'
+      - 'libs/shared/**'
+      - '.github/workflows/backend-ci.yml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.base.json'
+      - '.eslintrc.json'
   push:
     branches:
       - main
+    paths:
+      - 'apps/backend/**'
+      - 'libs/shared/**'
+      - '.github/workflows/backend-ci.yml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.base.json'
+      - '.eslintrc.json'
 
 # Cancel in-progress runs when a new workflow with the same group name is triggered
 concurrency:
@@ -179,9 +195,9 @@ jobs:
         with:
           category: '/language:javascript-typescript'
 
-  # Job 5: Dependency Audit
+  # Job 5: Dependency Audit (Backend Only)
   dependency-audit:
-    name: Dependency Audit
+    name: Dependency Audit (Backend)
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -195,12 +211,17 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Run npm audit
-        run: npm audit --audit-level=high
-        continue-on-error: true
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Check for outdated dependencies
-        run: npm outdated || true
+      - name: Audit backend production dependencies
+        run: |
+          # Audit only production dependencies used by backend
+          npm audit --audit-level=high --omit=dev --workspace=@berthcare/backend
+        continue-on-error: false
+
+      - name: Check for outdated backend dependencies
+        run: npm outdated --workspace=@berthcare/backend || true
 
   # Job 6: Build Verification
   build:
