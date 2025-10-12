@@ -70,6 +70,31 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: berthcare_test
+          POSTGRES_USER: berthcare
+          POSTGRES_PASSWORD: berthcare_test_password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -86,6 +111,11 @@ jobs:
       - name: Run tests with coverage (backend only)
         run: npx nx run backend:test --ci --coverage --maxWorkers=1
         continue-on-error: false
+        env:
+          TEST_DATABASE_URL: postgresql://berthcare:berthcare_test_password@localhost:5432/berthcare_test
+          TEST_REDIS_URL: redis://localhost:6379
+          JWT_PRIVATE_KEY: base64:LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBdGVzdGtleQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQ==
+          JWT_PUBLIC_KEY: base64:LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KdGVzdGtleQotLS0tLUVORCBQVUJMSUMgS0VZLS0tLS0=
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
