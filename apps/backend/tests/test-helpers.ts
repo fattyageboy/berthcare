@@ -199,6 +199,17 @@ export function generateTestEmail(prefix: string = 'test'): string {
 }
 
 /**
+ * Register a cleanup function to be called during global teardown
+ * This ensures deterministic cleanup without arbitrary timeouts
+ */
+export function registerCleanup(cleanup: () => Promise<void>): void {
+  if (!global.__TEST_CLEANUPS__) {
+    global.__TEST_CLEANUPS__ = [];
+  }
+  global.__TEST_CLEANUPS__.push(cleanup);
+}
+
+/**
  * Setup test database and Redis connections
  */
 export async function setupTestConnections(): Promise<{
@@ -250,29 +261,37 @@ export async function teardownTestConnections(
   pgPool: Pool,
   redisClient: ReturnType<typeof createClient>
 ): Promise<void> {
+  const cleanupTasks: Promise<void>[] = [];
+
   // Close Redis first (faster)
-  try {
-    if (redisClient.isOpen) {
-      await redisClient.quit();
-    }
-  } catch (error) {
-    console.error('Error closing redisClient:', error);
-    // Force disconnect if quit fails
+  const redisCleanup = (async () => {
     try {
-      await redisClient.disconnect();
-    } catch (disconnectError) {
-      console.error('Error disconnecting redisClient:', disconnectError);
+      if (redisClient.isOpen) {
+        await redisClient.quit();
+      }
+    } catch (error) {
+      console.error('Error closing redisClient:', error);
+      // Force disconnect if quit fails
+      try {
+        await redisClient.disconnect();
+      } catch (disconnectError) {
+        console.error('Error disconnecting redisClient:', disconnectError);
+      }
     }
-  }
+  })();
 
   // Close PostgreSQL pool
-  try {
-    // Wait for all active queries to complete
-    await pgPool.end();
-  } catch (error) {
-    console.error('Error closing pgPool:', error);
-  }
+  const pgCleanup = (async () => {
+    try {
+      // Wait for all active queries to complete
+      await pgPool.end();
+    } catch (error) {
+      console.error('Error closing pgPool:', error);
+    }
+  })();
 
-  // Small delay to ensure all connections are fully closed
-  await new Promise((resolve) => setTimeout(resolve, 100));
+  cleanupTasks.push(redisCleanup, pgCleanup);
+
+  // Wait for all cleanup tasks to complete
+  await Promise.all(cleanupTasks);
 }
