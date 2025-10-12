@@ -211,7 +211,7 @@ describe('GET /api/v1/visits', () => {
       const response = await request(app).get('/api/v1/visits');
 
       expect(response.status).toBe(401);
-      expect(response.body.error).toBe('Unauthorized');
+      expect(response.body.error.code).toBe('MISSING_TOKEN');
     });
 
     it('should return 401 with invalid token', async () => {
@@ -220,7 +220,7 @@ describe('GET /api/v1/visits', () => {
         .set('Authorization', 'Bearer invalid-token');
 
       expect(response.status).toBe(401);
-      expect(response.body.error).toBe('Unauthorized');
+      expect(response.body.error.code).toBe('INVALID_TOKEN');
     });
   });
 
@@ -322,8 +322,10 @@ describe('GET /api/v1/visits', () => {
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
-      expect(response.body.data.visits).toHaveLength(2);
-      // Should include today's visits but not yesterday or tomorrow
+      // Caregiver should see only their own visit within the date range (today's visit)
+      // Yesterday's completed visit and tomorrow's scheduled visit should be excluded
+      expect(response.body.data.visits).toHaveLength(1);
+      expect(response.body.data.visits[0].status).toBe('in_progress');
     });
 
     it('should return 400 for invalid staffId format', async () => {

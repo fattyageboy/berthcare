@@ -158,22 +158,23 @@ The following will trigger automatically:
 
 The PR template includes detailed manual testing instructions:
 
+
 ```bash
 # Create visit
-curl -X POST http://localhost:3000/v1/visits \
-  -H "Authorization: Bearer TOKEN" \
-  -d '{"client_id": "...", "caregiver_id": "...", ...}'
+curl -X POST http://localhost:3000/api/v1/visits \
+   -H "Authorization: Bearer TOKEN" \
+   -d '{"client_id": "...", "caregiver_id": "...", ...}'
 
 # List visits
-curl http://localhost:3000/v1/visits -H "Authorization: Bearer TOKEN"
+curl http://localhost:3000/api/v1/visits -H "Authorization: Bearer TOKEN"
 
 # Get visit details
-curl http://localhost:3000/v1/visits/VISIT_ID -H "Authorization: Bearer TOKEN"
+curl http://localhost:3000/api/v1/visits/VISIT_ID -H "Authorization: Bearer TOKEN"
 
 # Update visit
-curl -X PATCH http://localhost:3000/v1/visits/VISIT_ID \
-  -H "Authorization: Bearer TOKEN" \
-  -d '{"status": "in_progress", ...}'
+curl -X PATCH http://localhost:3000/api/v1/visits/VISIT_ID \
+   -H "Authorization: Bearer TOKEN" \
+   -d '{"status": "in_progress", ...}'
 ```
 
 ---
@@ -185,7 +186,7 @@ If issues are discovered:
 1. Revert the PR merge commit
 2. Roll back database migration:
    ```bash
-   npm run migrate:down -- 004_create_visits
+  npm run migrate:down 004
    ```
 
 ---

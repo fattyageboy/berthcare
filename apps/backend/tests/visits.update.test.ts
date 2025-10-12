@@ -17,12 +17,30 @@
  * Task: V5 - Implement PATCH /v1/visits/:visitId endpoint
  */
 
+import * as crypto from 'crypto';
+
+import { Express } from 'express';
+import { Pool } from 'pg';
+import { createClient } from 'redis';
 import request from 'supertest';
 
 import { generateAccessToken } from '../../../libs/shared/src/jwt-utils';
-import { app, pgPool, redisClient } from '../src/main';
+
+import {
+  cleanAllTestData,
+  createTestApp,
+  createTestClient,
+  createTestVisit,
+  generateTestEmail,
+  setupTestConnections,
+  teardownTestConnections,
+} from './test-helpers';
 
 describe('PATCH /v1/visits/:visitId', () => {
+  let pgPool: Pool;
+  let redisClient: ReturnType<typeof createClient>;
+  let app: Express;
+
   let caregiverToken: string;
   let caregiverId: string;
   let otherCaregiverId: string;
@@ -31,81 +49,75 @@ describe('PATCH /v1/visits/:visitId', () => {
   let visitId: string;
 
   beforeAll(async () => {
-    // Wait for server to be ready
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const connections = await setupTestConnections();
+    pgPool = connections.pgPool;
+    redisClient = connections.redisClient;
+    app = createTestApp(pgPool, redisClient);
 
-    // Use a test zone ID
-    zoneId = '00000000-0000-0000-0000-000000000001';
+    // Create test zone
+    zoneId = crypto.randomUUID();
+    await pgPool.query(
+      'INSERT INTO zones (id, name, region, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW())',
+      [zoneId, 'Test Zone', 'Test Region']
+    );
 
     // Create test caregiver
-    const caregiverResult = await pgPool.query(
-      `INSERT INTO users (email, password_hash, first_name, last_name, role, zone_id, is_active)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING id`,
-      ['caregiver@test.com', '$2b$10$test', 'Test', 'Caregiver', 'caregiver', zoneId, true]
+    caregiverId = crypto.randomUUID();
+    await pgPool.query(
+      `INSERT INTO users (id, email, password_hash, first_name, last_name, role, zone_id, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`,
+      [caregiverId, generateTestEmail('caregiver'), 'hash', 'Test', 'Caregiver', 'caregiver', zoneId]
     );
-    caregiverId = caregiverResult.rows[0].id;
     caregiverToken = generateAccessToken({
       userId: caregiverId,
-      email: 'caregiver@test.com',
+      email: generateTestEmail('caregiver'),
       role: 'caregiver',
       zoneId,
     });
 
     // Create another caregiver
-    const otherCaregiverResult = await pgPool.query(
-      `INSERT INTO users (email, password_hash, first_name, last_name, role, zone_id, is_active)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING id`,
-      ['other@test.com', '$2b$10$test', 'Other', 'Caregiver', 'caregiver', zoneId, true]
-    );
-    otherCaregiverId = otherCaregiverResult.rows[0].id;
-
-    // Create test client
-    const clientResult = await pgPool.query(
-      `INSERT INTO clients (
-        first_name, last_name, date_of_birth, address,
-        latitude, longitude, phone,
-        emergency_contact_name, emergency_contact_phone, emergency_contact_relationship,
-        zone_id
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-      RETURNING id`,
+    otherCaregiverId = crypto.randomUUID();
+    await pgPool.query(
+      `INSERT INTO users (id, email, password_hash, first_name, last_name, role, zone_id, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`,
       [
-        'John',
-        'Doe',
-        '1950-01-01',
-        '123 Test St',
-        43.6532,
-        -79.3832,
-        '+14165551234',
-        'Jane Doe',
-        '+14165555678',
-        'Daughter',
+        otherCaregiverId,
+        generateTestEmail('other-caregiver'),
+        'hash',
+        'Other',
+        'Caregiver',
+        'caregiver',
         zoneId,
       ]
     );
-    clientId = clientResult.rows[0].id;
+
+    // Create test client
+    clientId = await createTestClient(pgPool, {
+      firstName: 'John',
+      lastName: 'Doe',
+      dateOfBirth: '1950-01-01',
+      address: '123 Test St',
+      latitude: 43.6532,
+      longitude: -79.3832,
+      zoneId,
+      emergencyContactName: 'Jane Doe',
+      emergencyContactPhone: '+14165555678',
+      emergencyContactRelationship: 'Daughter',
+    });
 
     // Create a test visit
-    const visitResult = await pgPool.query(
-      `INSERT INTO visits (
-        client_id, staff_id, scheduled_start_time, check_in_time, status
-      ) VALUES ($1, $2, $3, $4, $5)
-      RETURNING id`,
-      [clientId, caregiverId, '2025-10-11T09:00:00Z', '2025-10-11T09:05:00Z', 'in_progress']
-    );
-    visitId = visitResult.rows[0].id;
+    visitId = await createTestVisit(pgPool, {
+      clientId,
+      staffId: caregiverId,
+      scheduledStartTime: '2025-10-11T09:00:00Z',
+      checkInTime: '2025-10-11T09:05:00Z',
+      status: 'in_progress',
+    });
   });
 
   afterAll(async () => {
-    // Clean up test data
-    await pgPool.query('DELETE FROM visits WHERE client_id = $1', [clientId]);
-    await pgPool.query('DELETE FROM clients WHERE id = $1', [clientId]);
-    await pgPool.query('DELETE FROM users WHERE id IN ($1, $2)', [caregiverId, otherCaregiverId]);
-
-    // Close connections
-    await pgPool.end();
-    await redisClient.quit();
+    await cleanAllTestData(pgPool, redisClient);
+    await teardownTestConnections(pgPool, redisClient);
   });
 
   describe('Successful visit updates', () => {
@@ -127,10 +139,9 @@ describe('PATCH /v1/visits/:visitId', () => {
       });
 
       // Verify duration was calculated (60 minutes)
-      const visitCheck = await pgPool.query(
-        'SELECT duration_minutes FROM visits WHERE id = $1',
-        [visitId]
-      );
+      const visitCheck = await pgPool.query('SELECT duration_minutes FROM visits WHERE id = $1', [
+        visitId,
+      ]);
       expect(visitCheck.rows[0].duration_minutes).toBe(60);
     });
   });
@@ -142,7 +153,7 @@ describe('PATCH /v1/visits/:visitId', () => {
       });
 
       expect(response.status).toBe(401);
-      expect(response.body.error).toBe('Unauthorized');
+      expect(response.body.error.code).toBe('MISSING_TOKEN');
     });
 
     it('should reject caregiver updating another caregiver visit', async () => {

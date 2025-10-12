@@ -123,7 +123,7 @@ export function createVisitsRouter(
    * - 401: Unauthorized
    * - 403: Forbidden (access denied)
    */
-  router.get('/', authenticateJWT, async (req: Request, res: Response) => {
+  router.get('/', authenticateJWT(redisClient), async (req: Request, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const userId = authReq.user?.userId;
 
@@ -388,7 +388,7 @@ export function createVisitsRouter(
    * - 403: Caregiver not authorized for this client's zone
    * - 409: Visit already exists for this time slot
    */
-  router.post('/', authenticateJWT, async (req: Request, res: Response) => {
+  router.post('/', authenticateJWT(redisClient), async (req: Request, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const userId = authReq.user?.userId;
     const userRole = authReq.user?.role;
@@ -686,7 +686,7 @@ export function createVisitsRouter(
    * - 404: Visit not found
    * - 403: Not authorized to update this visit
    */
-  router.patch('/:visitId', authenticateJWT, async (req: Request, res: Response) => {
+  router.patch('/:visitId', authenticateJWT(redisClient), async (req: Request, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const userId = authReq.user?.userId;
     const userRole = authReq.user?.role;
@@ -957,7 +957,7 @@ export function createVisitsRouter(
    * - 403: Forbidden (access denied)
    * - 404: Visit not found
    */
-  router.get('/:visitId', authenticateJWT, async (req: Request, res: Response) => {
+  router.get('/:visitId', authenticateJWT(redisClient), async (req: Request, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const userId = authReq.user?.userId;
     const { visitId } = req.params;

@@ -278,7 +278,7 @@ VALUES (?, ?, ?, ...);
 - **Performance**: TEXT has no length overhead in PostgreSQL (same as VARCHAR)
 
 **Example Long URL:**
-```
+```text
 https://berthcare-photos.s3.amazonaws.com/visits/3edaf4f8-2120-4011-a59f-f6d8a47c622f/84c8ca84-3cb4-4d3a-8d3f-86d9ac468ae8.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIOSFODNN7EXAMPLE%2F20251011%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251011T170500Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=...
 ```
 (This can easily exceed 500-1000 characters)

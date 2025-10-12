@@ -7,13 +7,21 @@ module.exports = {
   preset: '../../jest.preset.js',
   testEnvironment: 'node',
   transform: {
-    '^.+\\.[tj]s$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.json' }],
+    '^.+\\.[tj]s$': [
+      'ts-jest',
+      {
+        tsconfig: '<rootDir>/tsconfig.json',
+      },
+    ],
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: '../../coverage/apps/backend',
   testMatch: ['**/tests/**/*.test.ts'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+  globalTeardown: '<rootDir>/tests/teardown.ts',
   maxWorkers: 1, // Run tests serially to avoid database connection issues
+  forceExit: false, // Don't force exit - let connections close properly
+  detectOpenHandles: false, // Disable for faster runs
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.test.ts',

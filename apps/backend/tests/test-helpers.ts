@@ -207,32 +207,72 @@ export async function setupTestConnections(): Promise<{
 }> {
   const pgPool = new Pool({
     connectionString: TEST_DATABASE_URL,
-    max: 10, // Limit pool size to prevent exhaustion
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
+    max: 5, // Reduced pool size for tests
+    min: 0, // Allow pool to scale down to 0
+    idleTimeoutMillis: 10000, // Close idle connections faster
+    connectionTimeoutMillis: 2000, // Fail fast if can't connect
+    allowExitOnIdle: true, // Allow process to exit when pool is idle
   });
-  const redisClient = createClient({ url: TEST_REDIS_URL });
-  await redisClient.connect();
+
+  // Test the connection immediately
+  try {
+    const client = await pgPool.connect();
+    client.release();
+  } catch (error) {
+    console.error('Failed to connect to PostgreSQL:', error);
+    throw new Error('PostgreSQL connection failed. Is the database running?');
+  }
+
+  const redisClient = createClient({
+    url: TEST_REDIS_URL,
+    socket: {
+      connectTimeout: 2000, // Fail fast
+      reconnectStrategy: false, // Don't reconnect in tests
+    },
+  });
+
+  try {
+    await redisClient.connect();
+  } catch (error) {
+    console.error('Failed to connect to Redis:', error);
+    await pgPool.end();
+    throw new Error('Redis connection failed. Is Redis running?');
+  }
 
   return { pgPool, redisClient };
 }
 
 /**
  * Teardown test connections
+ * Ensures all connections are properly closed and no handles remain open
  */
 export async function teardownTestConnections(
   pgPool: Pool,
   redisClient: ReturnType<typeof createClient>
 ): Promise<void> {
+  // Close Redis first (faster)
   try {
+    if (redisClient.isOpen) {
+      await redisClient.quit();
+    }
+  } catch (error) {
+    console.error('Error closing redisClient:', error);
+    // Force disconnect if quit fails
+    try {
+      await redisClient.disconnect();
+    } catch (disconnectError) {
+      console.error('Error disconnecting redisClient:', disconnectError);
+    }
+  }
+
+  // Close PostgreSQL pool
+  try {
+    // Wait for all active queries to complete
     await pgPool.end();
   } catch (error) {
     console.error('Error closing pgPool:', error);
   }
 
-  try {
-    await redisClient.quit();
-  } catch (error) {
-    console.error('Error closing redisClient:', error);
-  }
+  // Small delay to ensure all connections are fully closed
+  await new Promise((resolve) => setTimeout(resolve, 100));
 }

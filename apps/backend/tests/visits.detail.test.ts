@@ -166,14 +166,15 @@ describe('GET /api/v1/visits/:visitId', () => {
     );
 
     // Add photos to visit2
+    const photoS3Key = `photos/test-${crypto.randomUUID()}.jpg`;
     await pgPool.query(
       `INSERT INTO visit_photos (visit_id, s3_key, s3_url, thumbnail_s3_key, uploaded_at)
        VALUES ($1, $2, $3, $4, NOW())`,
       [
         visit2Id,
-        'photos/test1.jpg',
-        'https://s3.example.com/photos/test1.jpg',
-        'photos/test1_thumb.jpg',
+        photoS3Key,
+        `https://s3.example.com/${photoS3Key}`,
+        `photos/test-${crypto.randomUUID()}_thumb.jpg`,
       ]
     );
   });
@@ -193,7 +194,7 @@ describe('GET /api/v1/visits/:visitId', () => {
       const response = await request(app).get(`/api/v1/visits/${visit1Id}`);
 
       expect(response.status).toBe(401);
-      expect(response.body.error).toBe('Unauthorized');
+      expect(response.body.error.code).toBe('MISSING_TOKEN');
     });
 
     it('should return 401 with invalid token', async () => {
@@ -202,7 +203,7 @@ describe('GET /api/v1/visits/:visitId', () => {
         .set('Authorization', 'Bearer invalid-token');
 
       expect(response.status).toBe(401);
-      expect(response.body.error).toBe('Unauthorized');
+      expect(response.body.error.code).toBe('INVALID_TOKEN');
     });
   });
 
@@ -329,10 +330,10 @@ describe('GET /api/v1/visits/:visitId', () => {
         concerns: 'None',
       });
       expect(response.body.data.photos).toHaveLength(1);
-      expect(response.body.data.photos[0]).toMatchObject({
-        s3Key: 'photos/test1.jpg',
-        s3Url: 'https://s3.example.com/photos/test1.jpg',
-      });
+      expect(response.body.data.photos[0]).toHaveProperty('s3Key');
+      expect(response.body.data.photos[0]).toHaveProperty('s3Url');
+      expect(response.body.data.photos[0].s3Key).toMatch(/^photos\/test-.*\.jpg$/);
+      expect(response.body.data.photos[0].s3Url).toMatch(/^https:\/\/s3\.example\.com\/photos\/test-.*\.jpg$/);
     });
 
     it('should return null documentation if none exists', async () => {
