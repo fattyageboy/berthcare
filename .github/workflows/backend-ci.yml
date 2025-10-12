@@ -137,6 +137,15 @@ jobs:
           # Clean up key files
           rm /tmp/jwt_private.pem /tmp/jwt_public.pem
 
+      - name: Run database migrations
+        run: cd apps/backend && npm run migrate:up
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: berthcare_test
+          POSTGRES_USER: berthcare
+          POSTGRES_PASSWORD: berthcare_test_password
+
       - name: Run tests with coverage (backend only)
         run: timeout 10m npx nx run backend:test --ci --coverage --maxWorkers=1
         continue-on-error: false
