@@ -349,6 +349,39 @@ describe('GET /api/v1/visits', () => {
       expect(response.status).toBe(400);
       expect(response.body.message).toContain('Invalid status');
     });
+
+    it('should return 400 for invalid clientId format', async () => {
+      const token = generateAccessToken({ userId: caregiverId, role: 'caregiver', zoneId });
+
+      const response = await request(app)
+        .get('/api/v1/visits?clientId=invalid-uuid')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('Invalid clientId format');
+    });
+
+    it('should return 400 for invalid startDate format', async () => {
+      const token = generateAccessToken({ userId: caregiverId, role: 'caregiver', zoneId });
+
+      const response = await request(app)
+        .get('/api/v1/visits?startDate=invalid-date')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('Invalid startDate format');
+    });
+
+    it('should return 400 for invalid endDate format', async () => {
+      const token = generateAccessToken({ userId: caregiverId, role: 'caregiver', zoneId });
+
+      const response = await request(app)
+        .get('/api/v1/visits?endDate=invalid-date')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('Invalid endDate format');
+    });
   });
 
   describe('Pagination', () => {

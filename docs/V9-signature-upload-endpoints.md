@@ -3,11 +3,12 @@
 **Task ID:** V9  
 **Status:** ✅ Complete  
 **Date:** October 12, 2025  
-**Endpoints:** 
+**Endpoints:**
+
 - POST /api/v1/visits/:visitId/signature/upload-url
 - POST /api/v1/visits/:visitId/signature  
-**Estimated Effort:** 1 day  
-**Actual Effort:** 1 day
+  **Estimated Effort:** 1 day  
+  **Actual Effort:** 1 day
 
 ---
 
@@ -33,8 +34,8 @@ Implemented the signature upload flow using S3 pre-signed URLs for secure, direc
 
 ```typescript
 {
-  signatureType: string;         // Required - Type of signature ('caregiver', 'client', 'family')
-  fileSize: number;              // Required - File size in bytes (max 1MB)
+  signatureType: string; // Required - Type of signature ('caregiver', 'client', 'family')
+  fileSize: number; // Required - File size in bytes (max 1MB)
 }
 ```
 
@@ -42,12 +43,11 @@ Implemented the signature upload flow using S3 pre-signed URLs for secure, direc
 
 ```typescript
 {
-  uploadUrl: string;             // Pre-signed S3 URL (expires in 10 minutes)
-  signatureKey: string;          // S3 object key for later reference
-  expiresAt: string;             // ISO 8601 timestamp when URL expires
+  uploadUrl: string; // Pre-signed S3 URL (expires in 10 minutes)
+  signatureKey: string; // S3 object key for later reference
+  expiresAt: string; // ISO 8601 timestamp when URL expires
 }
 ```
-
 
 ### Endpoint 2: Record Signature Metadata
 
@@ -63,8 +63,8 @@ Implemented the signature upload flow using S3 pre-signed URLs for secure, direc
 
 ```typescript
 {
-  signatureKey: string;          // Required - S3 object key from upload-url endpoint
-  signatureType: string;         // Required - Type of signature ('caregiver', 'client', 'family')
+  signatureKey: string; // Required - S3 object key from upload-url endpoint
+  signatureType: string; // Required - Type of signature ('caregiver', 'client', 'family')
 }
 ```
 
@@ -72,21 +72,21 @@ Implemented the signature upload flow using S3 pre-signed URLs for secure, direc
 
 ```typescript
 {
-  signatureUrl: string;          // Full S3 URL
-  signatureType: string;         // Type of signature
-  uploadedAt: string;            // ISO 8601 timestamp
+  signatureUrl: string; // Full S3 URL
+  signatureType: string; // Type of signature
+  uploadedAt: string; // ISO 8601 timestamp
 }
 ```
 
 ### Error Responses
 
-| Status | Error | Description |
-|--------|-------|-------------|
-| 400 | Bad Request | Missing required fields, invalid format, or file too large |
-| 401 | Unauthorized | Missing or invalid JWT token |
-| 403 | Forbidden | Not authorized to upload signature for this visit |
-| 404 | Not Found | Visit does not exist |
-| 500 | Internal Server Error | Database or S3 error |
+| Status | Error                 | Description                                                |
+| ------ | --------------------- | ---------------------------------------------------------- |
+| 400    | Bad Request           | Missing required fields, invalid format, or file too large |
+| 401    | Unauthorized          | Missing or invalid JWT token                               |
+| 403    | Forbidden             | Not authorized to upload signature for this visit          |
+| 404    | Not Found             | Visit does not exist                                       |
+| 500    | Internal Server Error | Database or S3 error                                       |
 
 ---
 
@@ -105,6 +105,7 @@ curl -X POST http://localhost:3000/api/v1/visits/786bd901-f1bb-48e4-96d9-af0cd3e
 ```
 
 **Response:**
+
 ```json
 {
   "uploadUrl": "https://berthcare-signatures-dev.s3.ca-central-1.amazonaws.com/visits/786bd901-f1bb-48e4-96d9-af0cd3ee84ba/signatures/caregiver-1760246409476.png?X-Amz-Algorithm=...",
@@ -135,6 +136,7 @@ curl -X POST http://localhost:3000/api/v1/visits/786bd901-f1bb-48e4-96d9-af0cd3e
 ```
 
 **Response:**
+
 ```json
 {
   "signatureUrl": "https://berthcare-signatures-dev.s3.ca-central-1.amazonaws.com/visits/786bd901-f1bb-48e4-96d9-af0cd3ee84ba/signatures/caregiver-1760246409476.png",
@@ -150,6 +152,7 @@ curl -X POST http://localhost:3000/api/v1/visits/786bd901-f1bb-48e4-96d9-af0cd3e
 ### 1. Pre-Signed URL Generation
 
 **Functionality:**
+
 - Generates secure, time-limited S3 upload URLs
 - Validates file size (max 1MB)
 - Validates signature type (caregiver, client, family)
@@ -157,12 +160,14 @@ curl -X POST http://localhost:3000/api/v1/visits/786bd901-f1bb-48e4-96d9-af0cd3e
 - Short expiration (10 minutes) for security
 
 **Benefits:**
+
 - **Direct Upload**: Mobile app uploads directly to S3 (bypasses backend)
 - **Performance**: Reduces backend load and network latency
 - **Security**: Time-limited URLs (10 minutes vs 1 hour for photos)
 - **Scalability**: S3 handles upload traffic, not backend
 
 **Implementation:**
+
 ```typescript
 const { url, key } = await generateSignatureUploadUrl(visitId, signatureType, userId);
 
@@ -173,6 +178,7 @@ const { url, key } = await generateSignatureUploadUrl(visitId, signatureType, us
 ### 2. Signature Metadata Recording
 
 **Functionality:**
+
 - Records signature URL in visit_documentation table
 - Links signature to visit
 - Updates existing documentation or creates new record
@@ -180,9 +186,10 @@ const { url, key } = await generateSignatureUploadUrl(visitId, signatureType, us
 - Invalidates visit detail cache
 
 **Database Operations:**
+
 ```sql
 -- Update existing documentation
-UPDATE visit_documentation 
+UPDATE visit_documentation
 SET signature_url = $1, updated_at = CURRENT_TIMESTAMP
 WHERE visit_id = $2
 
@@ -196,23 +203,26 @@ VALUES ($1, $2)
 **Constraint:** Maximum 1MB per signature
 
 **Rationale:**
+
 - **Signature Size**: Digital signatures are typically small (100-500KB)
 - **Storage Costs**: Minimal S3 storage costs
 - **Upload Speed**: Fast uploads even on slow connections
 - **Format**: PNG format with transparency
 
 **Implementation:**
+
 ```typescript
 const maxSize = 1 * 1024 * 1024; // 1MB
 if (fileSize > maxSize) {
   return res.status(400).json({
     error: 'Bad Request',
-    message: 'File size exceeds maximum of 1MB.'
+    message: 'File size exceeds maximum of 1MB.',
   });
 }
 ```
 
 **Expected Sizes:**
+
 - Typical signature: 100-300KB
 - High-resolution signature: 500KB-1MB
 - Compressed PNG with transparency
@@ -220,22 +230,25 @@ if (fileSize > maxSize) {
 ### 4. Signature Type Validation
 
 **Supported Types:**
+
 - `caregiver` - Caregiver's signature confirming service delivery
 - `client` - Client's signature acknowledging service
 - `family` - Family member's signature (if client unable to sign)
 
 **Implementation:**
+
 ```typescript
 const validTypes = ['caregiver', 'client', 'family'];
 if (!validTypes.includes(signatureType)) {
   return res.status(400).json({
     error: 'Bad Request',
-    message: `Invalid signatureType. Allowed types: ${validTypes.join(', ')}`
+    message: `Invalid signatureType. Allowed types: ${validTypes.join(', ')}`,
   });
 }
 ```
 
 **Use Cases:**
+
 - **Caregiver**: Always required, confirms visit completion
 - **Client**: Preferred, acknowledges services received
 - **Family**: Alternative when client cannot sign (cognitive issues, physical limitations)
@@ -245,12 +258,14 @@ if (!validTypes.includes(signatureType)) {
 **Expiration:** 10 minutes (vs 1 hour for photos)
 
 **Rationale:**
+
 - **Immediate Upload**: Signatures captured and uploaded immediately
 - **Security**: Shorter window reduces risk of URL misuse
 - **Workflow**: Signature is last step before visit completion
 - **No Retry**: If upload fails, generate new URL
 
 **Implementation:**
+
 ```typescript
 const expiresAt = new Date(Date.now() + 600 * 1000); // 10 minutes
 ```
@@ -258,24 +273,25 @@ const expiresAt = new Date(Date.now() + 600 * 1000); // 10 minutes
 ### 6. Authorization & Security
 
 **Authorization Checks:**
+
 1. **Authentication**: JWT token required
 2. **Visit Ownership**: Caregiver must own the visit
 3. **Coordinator Override**: Coordinators/admins can upload to any visit
 4. **Visit Existence**: Visit must exist
 
 **Implementation:**
+
 ```typescript
 // Get visit and verify ownership
-const visit = await pool.query(
-  'SELECT id, staff_id, client_id, status FROM visits WHERE id = $1',
-  [visitId]
-);
+const visit = await pool.query('SELECT id, staff_id, client_id, status FROM visits WHERE id = $1', [
+  visitId,
+]);
 
 // Authorization check
 if (userRole === 'caregiver' && visit.staff_id !== userId) {
   return res.status(403).json({
     error: 'Forbidden',
-    message: 'You can only upload signatures for your own visits'
+    message: 'You can only upload signatures for your own visits',
   });
 }
 ```
@@ -283,17 +299,20 @@ if (userRole === 'caregiver' && visit.staff_id !== userId) {
 ### 7. Cache Invalidation
 
 **Functionality:**
+
 - Invalidates visit detail cache after signature upload
 - Ensures fresh data on subsequent requests
 - Uses exact cache key matching
 
 **Implementation:**
+
 ```typescript
 const cacheKeyPattern = `visit:detail:${visitId}`;
 await redisClient.del(cacheKeyPattern);
 ```
 
 **Why This Matters:**
+
 - Visit detail endpoint includes signature URL
 - Cache must be cleared to show new signature
 - Prevents stale data in mobile app
@@ -307,6 +326,7 @@ await redisClient.del(cacheKeyPattern);
 **24 integration tests covering:**
 
 **Upload URL Generation (12 tests):**
+
 - ✅ Generate pre-signed URL for caregiver signature
 - ✅ Generate pre-signed URL for client signature
 - ✅ Generate pre-signed URL for family signature
@@ -321,6 +341,7 @@ await redisClient.del(cacheKeyPattern);
 - ✅ Return 404 for non-existent visit
 
 **Signature Metadata Recording (12 tests):**
+
 - ✅ Record signature metadata after upload
 - ✅ Update existing documentation with signature
 - ✅ Allow coordinator to record signature
@@ -349,7 +370,7 @@ npm run test:coverage
 
 ### Test Results
 
-```
+```text
 PASS  apps/backend/tests/visits.signature.test.ts
   Signature Upload Endpoints
     POST /v1/visits/:visitId/signature/upload-url
@@ -396,7 +417,7 @@ Tests:       24 passed, 24 total
 
 ### File Structure
 
-```
+```text
 apps/backend/src/
   ├── routes/
   │   └── visits.routes.ts          # Signature upload endpoints
@@ -413,6 +434,7 @@ apps/backend/src/db/migrations/
 ### Code Organization
 
 **visits.routes.ts:**
+
 - `POST /:visitId/signature/upload-url` - Generate pre-signed URL
 - `POST /:visitId/signature` - Record signature metadata
 - Request/response interfaces
@@ -421,6 +443,7 @@ apps/backend/src/db/migrations/
 - Cache invalidation
 
 **s3-client.ts:**
+
 - `generateSignatureUploadUrl()` - Generate pre-signed URL with metadata
 - `S3_BUCKETS.SIGNATURES` - Signature bucket constant
 - `FILE_CONFIGS.SIGNATURE` - Signature file configuration
@@ -433,14 +456,14 @@ async function generateSignatureUploadUrl(
   visitId: string,
   signatureType: string,
   uploadedBy: string
-): Promise<{ url: string; key: string }>
+): Promise<{ url: string; key: string }>;
 
 // Record signature metadata
 async function recordSignatureMetadata(
   visitId: string,
   signatureKey: string,
   signatureType: string
-): Promise<SignatureRecord>
+): Promise<SignatureRecord>;
 ```
 
 ---
@@ -452,16 +475,19 @@ async function recordSignatureMetadata(
 **Decision:** Store one signature URL per visit (not multiple)
 
 **Rationale:**
+
 - **Simplicity**: One signature field in visit_documentation table
 - **Workflow**: Signature is final step, typically caregiver's signature
 - **Override**: New signature replaces old signature
 - **Audit**: Signature changes tracked via updated_at timestamp
 
 **Trade-offs:**
+
 - Pros: Simple schema, clear workflow, easy to implement
 - Cons: Cannot store multiple signatures (caregiver + client)
 
 **Future Enhancement:**
+
 - Add separate fields: caregiver_signature_url, client_signature_url, family_signature_url
 - Or create visit_signatures table for multiple signatures
 
@@ -470,12 +496,14 @@ async function recordSignatureMetadata(
 **Decision:** Shorter expiration than photos (10 min vs 1 hour)
 
 **Rationale:**
+
 - **Immediate Upload**: Signatures captured and uploaded immediately
 - **Security**: Shorter window reduces risk
 - **Workflow**: Signature is last step, no delay expected
 - **Mobile App**: Signature pad → capture → upload → complete visit
 
 **Comparison:**
+
 - Photos: 1 hour (may take multiple photos, review before upload)
 - Signatures: 10 minutes (single capture, immediate upload)
 - Documents: 1 hour (may need time to prepare/scan)
@@ -485,17 +513,20 @@ async function recordSignatureMetadata(
 **Decision:** Only accept PNG format for signatures
 
 **Rationale:**
+
 - **Transparency**: PNG supports transparent backgrounds
 - **Quality**: Lossless compression preserves signature details
 - **Standard**: Industry standard for digital signatures
 - **Size**: Efficient compression for line art (signatures)
 
 **Implementation:**
+
 ```typescript
 const key = `visits/${visitId}/signatures/${signatureType}-${timestamp}.png`;
 ```
 
 **Why Not JPEG:**
+
 - No transparency support
 - Lossy compression artifacts on line art
 - Larger file sizes for signatures
@@ -505,17 +536,20 @@ const key = `visits/${visitId}/signatures/${signatureType}-${timestamp}.png`;
 **Decision:** Include signature type in S3 key
 
 **Rationale:**
+
 - **Identification**: Easy to identify signature type from filename
 - **Organization**: Clear file naming convention
 - **Debugging**: Easier troubleshooting
 - **Future**: Supports multiple signatures per visit
 
 **Key Format:**
-```
+
+```text
 visits/{visitId}/signatures/{signatureType}-{timestamp}.png
 ```
 
 **Examples:**
+
 - `visits/786bd901.../signatures/caregiver-1760246409476.png`
 - `visits/786bd901.../signatures/client-1760246409477.png`
 - `visits/786bd901.../signatures/family-1760246409478.png`
@@ -525,30 +559,31 @@ visits/{visitId}/signatures/{signatureType}-{timestamp}.png
 **Decision:** Update existing documentation or create new record
 
 **Rationale:**
+
 - **Flexibility**: Works whether documentation exists or not
 - **Signature First**: Can add signature before other documentation
 - **Idempotent**: Safe to call multiple times
 - **No Errors**: Doesn't fail if documentation missing
 
 **Implementation:**
+
 ```typescript
-const docResult = await client.query(
-  'SELECT id FROM visit_documentation WHERE visit_id = $1',
-  [visitId]
-);
+const docResult = await client.query('SELECT id FROM visit_documentation WHERE visit_id = $1', [
+  visitId,
+]);
 
 if (docResult.rows.length > 0) {
   // Update existing
-  await client.query(
-    'UPDATE visit_documentation SET signature_url = $1 WHERE visit_id = $2',
-    [signatureUrl, visitId]
-  );
+  await client.query('UPDATE visit_documentation SET signature_url = $1 WHERE visit_id = $2', [
+    signatureUrl,
+    visitId,
+  ]);
 } else {
   // Create new
-  await client.query(
-    'INSERT INTO visit_documentation (visit_id, signature_url) VALUES ($1, $2)',
-    [visitId, signatureUrl]
-  );
+  await client.query('INSERT INTO visit_documentation (visit_id, signature_url) VALUES ($1, $2)', [
+    visitId,
+    signatureUrl,
+  ]);
 }
 ```
 
@@ -559,11 +594,13 @@ if (docResult.rows.length > 0) {
 ### Upload Performance
 
 **Expected Upload Times (500KB signature):**
+
 - 4G LTE (20 Mbps): <1 second
 - 3G (2 Mbps): ~2 seconds
 - WiFi (50 Mbps): <1 second
 
 **Optimization Strategies:**
+
 - Direct S3 upload (no backend bottleneck)
 - PNG compression (efficient for line art)
 - Immediate upload (no background processing)
@@ -574,27 +611,32 @@ if (docResult.rows.length > 0) {
 **Query Count per Request:**
 
 **Upload URL Generation:**
+
 - 1 query: Get visit and verify ownership
 - Total: 1 query (~10ms)
 
 **Metadata Recording:**
+
 - 1 query: Get visit and verify ownership
 - 1 query: Check if documentation exists
 - 1 query: Insert or update signature URL
 - Total: 3 queries (~30ms)
 
 **Indexes Used:**
+
 - `idx_visits_id` (primary key) - Visit lookup
 - `idx_visit_documentation_visit_id` - Documentation lookup
 
 ### Caching Strategy
 
 **Cache Invalidation:**
+
 - Visit detail cache cleared after signature upload
 - Ensures fresh signature URL on next request
 - Uses exact key matching for efficiency
 
 **Not Cached:**
+
 - Signature upload operations (write operations)
 - Pre-signed URLs (time-sensitive, unique)
 
@@ -638,6 +680,7 @@ if (docResult.rows.length > 0) {
 ### 400 Bad Request
 
 **Causes:**
+
 - File size exceeds 1MB
 - Invalid signature type
 - Missing required fields
@@ -645,6 +688,7 @@ if (docResult.rows.length > 0) {
 - SignatureKey doesn't match visitId
 
 **Examples:**
+
 ```json
 {
   "error": "Bad Request",
@@ -662,11 +706,13 @@ if (docResult.rows.length > 0) {
 ### 401 Unauthorized
 
 **Causes:**
+
 - Missing Authorization header
 - Invalid JWT token
 - Expired JWT token
 
 **Example:**
+
 ```json
 {
   "error": {
@@ -681,10 +727,12 @@ if (docResult.rows.length > 0) {
 ### 403 Forbidden
 
 **Causes:**
+
 - Caregiver uploading to another caregiver's visit
 - User not authorized for this visit
 
 **Example:**
+
 ```json
 {
   "error": "Forbidden",
@@ -695,10 +743,12 @@ if (docResult.rows.length > 0) {
 ### 404 Not Found
 
 **Causes:**
+
 - Visit does not exist
 - Visit has been deleted
 
 **Example:**
+
 ```json
 {
   "error": "Not Found",
@@ -709,11 +759,13 @@ if (docResult.rows.length > 0) {
 ### 500 Internal Server Error
 
 **Causes:**
+
 - S3 connection error
 - Database connection error
 - Unexpected server error
 
 **Example:**
+
 ```json
 {
   "error": "Internal Server Error",
@@ -730,23 +782,20 @@ if (docResult.rows.length > 0) {
 ```typescript
 // Step 1: Capture signature
 const signatureData = await signaturePad.toDataURL('image/png');
-const signatureBlob = await fetch(signatureData).then(r => r.blob());
+const signatureBlob = await fetch(signatureData).then((r) => r.blob());
 
 // Step 2: Request pre-signed URL
-const urlResponse = await fetch(
-  `/api/v1/visits/${visitId}/signature/upload-url`,
-  {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      signatureType: 'caregiver',
-      fileSize: signatureBlob.size
-    })
-  }
-);
+const urlResponse = await fetch(`/api/v1/visits/${visitId}/signature/upload-url`, {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    signatureType: 'caregiver',
+    fileSize: signatureBlob.size,
+  }),
+});
 
 const { uploadUrl, signatureKey } = await urlResponse.json();
 
@@ -754,22 +803,22 @@ const { uploadUrl, signatureKey } = await urlResponse.json();
 await fetch(uploadUrl, {
   method: 'PUT',
   headers: {
-    'Content-Type': 'image/png'
+    'Content-Type': 'image/png',
   },
-  body: signatureBlob
+  body: signatureBlob,
 });
 
 // Step 4: Record metadata
 await fetch(`/api/v1/visits/${visitId}/signature`, {
   method: 'POST',
   headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
   },
   body: JSON.stringify({
     signatureKey,
-    signatureType: 'caregiver'
-  })
+    signatureType: 'caregiver',
+  }),
 });
 ```
 
@@ -805,6 +854,7 @@ try {
 **Future:** Support caregiver, client, and family signatures simultaneously
 
 **Implementation:**
+
 - Add fields: caregiver_signature_url, client_signature_url, family_signature_url
 - Or create visit_signatures table with signature_type column
 - Update GET visit endpoint to return all signatures
@@ -814,6 +864,7 @@ try {
 **Feature:** Verify signature authenticity
 
 **Implementation:**
+
 - Store signature hash in database
 - Compare uploaded signature with stored hash
 - Detect signature tampering
@@ -824,6 +875,7 @@ try {
 **Feature:** Pre-fill signature pad with previous signature
 
 **Implementation:**
+
 - Store signature as reusable template
 - Load template on signature pad
 - Allow modifications before saving
@@ -834,6 +886,7 @@ try {
 **Endpoint:** GET /api/v1/visits/:visitId/signature
 
 **Functionality:**
+
 - Generate pre-signed download URL
 - Time-limited URL (1 hour)
 - Access control (same as upload)
@@ -844,6 +897,7 @@ try {
 **Endpoint:** DELETE /api/v1/visits/:visitId/signature
 
 **Functionality:**
+
 - Soft delete (mark as deleted)
 - Hard delete after 30 days
 - Delete from S3 and database
@@ -894,6 +948,7 @@ try {
 ### Success Logging
 
 **Upload URL Generation:**
+
 ```typescript
 logInfo('Signature upload URL generated', {
   visitId,
@@ -905,6 +960,7 @@ logInfo('Signature upload URL generated', {
 ```
 
 **Metadata Recording:**
+
 ```typescript
 logInfo('Signature metadata recorded', {
   visitId,
@@ -934,4 +990,3 @@ logError('Error recording signature metadata', error as Error, {
 
 **Status:** ✅ Complete  
 **Next Task:** Mobile app signature capture implementation
-

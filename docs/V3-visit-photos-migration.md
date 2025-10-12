@@ -36,17 +36,17 @@ CREATE TABLE visit_photos (
 
 ### Field Descriptions
 
-| Field | Type | Nullable | Description |
-|-------|------|----------|-------------|
-| `id` | UUID | NOT NULL | Unique photo identifier |
-| `visit_id` | UUID | NOT NULL | Reference to visit (foreign key) |
-| `s3_key` | TEXT | NOT NULL | S3 object key for full-size photo |
-| `s3_url` | TEXT | NOT NULL | Full S3 URL for accessing photo |
-| `thumbnail_s3_key` | TEXT | NULL | S3 object key for thumbnail (320px) |
-| `file_name` | VARCHAR(255) | NULL | Original filename from upload |
-| `file_size` | INTEGER | NULL | File size in bytes |
-| `mime_type` | VARCHAR(100) | NULL | MIME type (e.g., image/jpeg) |
-| `uploaded_at` | TIMESTAMP | NOT NULL | Upload timestamp |
+| Field              | Type         | Nullable | Description                         |
+| ------------------ | ------------ | -------- | ----------------------------------- |
+| `id`               | UUID         | NOT NULL | Unique photo identifier             |
+| `visit_id`         | UUID         | NOT NULL | Reference to visit (foreign key)    |
+| `s3_key`           | TEXT         | NOT NULL | S3 object key for full-size photo   |
+| `s3_url`           | TEXT         | NOT NULL | Full S3 URL for accessing photo     |
+| `thumbnail_s3_key` | TEXT         | NULL     | S3 object key for thumbnail (320px) |
+| `file_name`        | VARCHAR(255) | NULL     | Original filename from upload       |
+| `file_size`        | INTEGER      | NULL     | File size in bytes                  |
+| `mime_type`        | VARCHAR(100) | NULL     | MIME type (e.g., image/jpeg)        |
+| `uploaded_at`      | TIMESTAMP    | NOT NULL | Upload timestamp                    |
 
 ---
 
@@ -57,12 +57,14 @@ CREATE TABLE visit_photos (
 **S3 Key Format:** `visits/{visit_id}/{photo_id}.jpg`
 
 **Example:**
+
 ```text
 s3_key: visits/3edaf4f8-2120-4011-a59f-f6d8a47c622f/84c8ca84-3cb4-4d3a-8d3f-86d9ac468ae8.jpg
 s3_url: https://s3.amazonaws.com/berthcare-photos/visits/3edaf4f8-2120-4011-a59f-f6d8a47c622f/84c8ca84-3cb4-4d3a-8d3f-86d9ac468ae8.jpg
 ```
 
 **Specifications:**
+
 - Max size: 2MB (compressed)
 - Max width: 1920px
 - Format: JPEG (optimized for photos)
@@ -73,11 +75,13 @@ s3_url: https://s3.amazonaws.com/berthcare-photos/visits/3edaf4f8-2120-4011-a59f
 **S3 Key Format:** `visits/{visit_id}/{photo_id}_thumb.jpg`
 
 **Example:**
+
 ```
 thumbnail_s3_key: visits/3edaf4f8-2120-4011-a59f-f6d8a47c622f/84c8ca84-3cb4-4d3a-8d3f-86d9ac468ae8_thumb.jpg
 ```
 
 **Specifications:**
+
 - Max width: 320px
 - Format: JPEG
 - Quality: 80%
@@ -90,27 +94,34 @@ thumbnail_s3_key: visits/3edaf4f8-2120-4011-a59f-f6d8a47c622f/84c8ca84-3cb4-4d3a
 Three indexes were created to optimize query patterns:
 
 ### 1. idx_visit_photos_visit_id (B-tree)
+
 ```sql
 CREATE INDEX idx_visit_photos_visit_id ON visit_photos(visit_id);
 ```
+
 **Purpose:** Fast lookup of all photos for a visit  
 **Query Pattern:** "Get all photos for this visit"  
 **Performance:** O(log n) lookup time
 
 ### 2. idx_visit_photos_uploaded_at (B-tree DESC)
+
 ```sql
 CREATE INDEX idx_visit_photos_uploaded_at ON visit_photos(uploaded_at DESC);
 ```
+
 **Purpose:** Chronological queries (newest first)  
 **Query Patterns:**
+
 - "Get recently uploaded photos"
 - "Photos uploaded in date range"
 - "Latest photos across all visits"
 
 ### 3. idx_visit_photos_visit_uploaded (Composite B-tree)
+
 ```sql
 CREATE INDEX idx_visit_photos_visit_uploaded ON visit_photos(visit_id, uploaded_at DESC);
 ```
+
 **Purpose:** Optimized for visit-specific chronological queries  
 **Query Pattern:** "Get photos for this visit, newest first"  
 **Performance:** Single index scan (no table lookup needed)
@@ -122,11 +133,13 @@ CREATE INDEX idx_visit_photos_visit_uploaded ON visit_photos(visit_id, uploaded_
 ### Foreign Key Constraint
 
 **visit_photos_visit_id_fkey**
+
 ```sql
 FOREIGN KEY (visit_id) REFERENCES visits(id) ON DELETE CASCADE
 ```
 
 **Behavior:**
+
 - **ON DELETE CASCADE**: When a visit is deleted, all associated photos are automatically deleted
 - **Rationale**: Photos have no meaning without their visit
 - **S3 Cleanup**: Application must also delete S3 objects when photos are deleted
@@ -134,11 +147,13 @@ FOREIGN KEY (visit_id) REFERENCES visits(id) ON DELETE CASCADE
 ### Unique Constraint
 
 **unique_s3_key**
+
 ```sql
 CONSTRAINT unique_s3_key UNIQUE (s3_key)
 ```
 
 **Purpose:**
+
 - Prevents duplicate S3 keys in database
 - Ensures one-to-one mapping between database record and S3 object
 - Prevents accidental overwrites
@@ -146,11 +161,13 @@ CONSTRAINT unique_s3_key UNIQUE (s3_key)
 ### Check Constraint
 
 **visit_photos_file_size_check**
+
 ```sql
 CHECK (file_size > 0)
 ```
 
 **Purpose:**
+
 - Ensures file_size is positive if provided
 - Prevents invalid metadata
 - Helps identify upload issues
@@ -174,16 +191,16 @@ docker exec berthcare-postgres psql -U berthcare -d berthcare_dev -c "\d visit_p
 
 # Check indexes
 docker exec berthcare-postgres psql -U berthcare -d berthcare_dev -c "
-  SELECT indexname, indexdef 
-  FROM pg_indexes 
-  WHERE tablename = 'visit_photos' 
+  SELECT indexname, indexdef
+  FROM pg_indexes
+  WHERE tablename = 'visit_photos'
   ORDER BY indexname;
 "
 
 # Check constraints
 docker exec berthcare-postgres psql -U berthcare -d berthcare_dev -c "
-  SELECT conname, pg_get_constraintdef(oid) 
-  FROM pg_constraint 
+  SELECT conname, pg_get_constraintdef(oid)
+  FROM pg_constraint
   WHERE conrelid = 'visit_photos'::regclass;
 "
 ```
@@ -205,12 +222,14 @@ npm run migrate:down 006
 **Decision:** Store only metadata in PostgreSQL, actual files in S3
 
 **Rationale:**
+
 - **Scalability**: Database doesn't grow with photo storage
 - **Performance**: Database queries remain fast
 - **Cost**: S3 is cheaper for large file storage
 - **CDN**: S3 integrates with CloudFront for global delivery
 
 **Trade-offs:**
+
 - Pros: Scalable, performant, cost-effective
 - Cons: Two systems to manage, eventual consistency possible
 
@@ -219,6 +238,7 @@ npm run migrate:down 006
 **Decision:** Use ON DELETE CASCADE for visit_id foreign key
 
 **Rationale:**
+
 - Photos are meaningless without their visit
 - Simplifies data cleanup
 - Prevents orphaned records
@@ -231,16 +251,18 @@ npm run migrate:down 006
 **Decision:** Store thumbnail S3 key separately
 
 **Rationale:**
+
 - **Performance**: Load thumbnails in lists without full images
 - **Bandwidth**: Save mobile data with smaller thumbnails
 - **UX**: Faster page loads and scrolling
 - **Flexibility**: Can regenerate thumbnails independently
 
 **Example Use Case:**
+
 ```sql
 -- Get thumbnails for visit list (fast)
-SELECT id, visit_id, thumbnail_s3_key, uploaded_at 
-FROM visit_photos 
+SELECT id, visit_id, thumbnail_s3_key, uploaded_at
+FROM visit_photos
 WHERE visit_id IN (SELECT id FROM visits WHERE staff_id = ?);
 
 -- Get full image when user clicks (on-demand)
@@ -252,12 +274,14 @@ SELECT s3_url FROM visit_photos WHERE id = ?;
 **Decision:** Enforce uniqueness of S3 keys
 
 **Rationale:**
+
 - **Data Integrity**: One database record per S3 object
 - **Prevent Overwrites**: Catch duplicate uploads early
 - **Debugging**: Easier to track down issues
 - **Consistency**: Ensures database matches S3 state
 
 **Handling Duplicates:**
+
 ```sql
 -- This will fail if s3_key already exists
 INSERT INTO visit_photos (visit_id, s3_key, s3_url, ...)
@@ -271,6 +295,7 @@ VALUES (?, ?, ?, ...);
 **Decision:** Use TEXT instead of VARCHAR for s3_key, s3_url, and thumbnail_s3_key
 
 **Rationale:**
+
 - **Pre-signed URLs**: Can exceed 1000 characters with query parameters
 - **S3 Key Length**: AWS allows up to 1024 characters for object keys
 - **CloudFront URLs**: Can be very long with custom domains and parameters
@@ -278,9 +303,11 @@ VALUES (?, ?, ?, ...);
 - **Performance**: TEXT has no length overhead in PostgreSQL (same as VARCHAR)
 
 **Example Long URL:**
+
 ```text
 https://berthcare-photos.s3.amazonaws.com/visits/3edaf4f8-2120-4011-a59f-f6d8a47c622f/84c8ca84-3cb4-4d3a-8d3f-86d9ac468ae8.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIOSFODNN7EXAMPLE%2F20251011%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251011T170500Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=...
 ```
+
 (This can easily exceed 500-1000 characters)
 
 ### 6. Optional Metadata Fields
@@ -288,6 +315,7 @@ https://berthcare-photos.s3.amazonaws.com/visits/3edaf4f8-2120-4011-a59f-f6d8a47
 **Decision:** Make file_name, file_size, mime_type optional (NULL)
 
 **Rationale:**
+
 - **Flexibility**: Can insert record before metadata is available
 - **Backwards Compatibility**: Existing records without metadata still valid
 - **Graceful Degradation**: Missing metadata doesn't break functionality
@@ -318,6 +346,7 @@ https://berthcare-photos.s3.amazonaws.com/visits/3edaf4f8-2120-4011-a59f-f6d8a47
 ### Storage Estimates
 
 **Database:**
+
 - Average row size: ~150 bytes
 - 10 photos per visit average
 - 1,000 visits/day = 10,000 photos/day = 1.5 MB/day
@@ -325,6 +354,7 @@ https://berthcare-photos.s3.amazonaws.com/visits/3edaf4f8-2120-4011-a59f-f6d8a47
 - 10 years = 5.48 GB (very manageable)
 
 **S3:**
+
 - Full-size photo: ~500 KB average
 - Thumbnail: ~30 KB average
 - 10,000 photos/day = 5.3 GB/day
@@ -332,6 +362,7 @@ https://berthcare-photos.s3.amazonaws.com/visits/3edaf4f8-2120-4011-a59f-f6d8a47
 - 10 years = 19.4 TB
 
 **Cost Optimization:**
+
 - Use S3 Intelligent-Tiering for automatic cost optimization
 - Move old photos to Glacier after 1 year
 - Delete thumbnails after 2 years (regenerate on-demand if needed)
@@ -369,6 +400,7 @@ https://berthcare-photos.s3.amazonaws.com/visits/3edaf4f8-2120-4011-a59f-f6d8a47
 ```
 
 **Requirements:**
+
 - Bucket is private (no public access)
 - Encryption at rest (AES-256)
 - Encryption in transit (HTTPS only)
@@ -406,6 +438,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "photo_id": "84c8ca84-3cb4-4d3a-8d3f-86d9ac468ae8",
@@ -439,6 +472,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "id": "84c8ca84-3cb4-4d3a-8d3f-86d9ac468ae8",
@@ -519,7 +553,7 @@ visits (1) ----< (many) visit_photos
 1. **Visit Created**: `INSERT INTO visits (...)`
 2. **Visit Started**: Caregiver checks in
 3. **Photos Taken**: During visit
-4. **Photos Uploaded**: 
+4. **Photos Uploaded**:
    - Request pre-signed URL
    - Upload to S3
    - Record metadata in `visit_photos`

@@ -24,11 +24,13 @@ Implemented the GET /v1/visits/:visitId endpoint to retrieve complete visit deta
 **Authentication:** Required (JWT token)
 
 **Authorization:**
+
 - Caregivers can only view their own visits
 - Coordinators can view visits in their zone
 - Admins can view visits in their zone
 
 **URL Parameters:**
+
 - `visitId` (UUID, required): The visit identifier
 
 **Response: 200 OK**
@@ -142,7 +144,7 @@ Implemented the GET /v1/visits/:visitId endpoint to retrieve complete visit deta
 ### Main Visit Query
 
 ```sql
-SELECT 
+SELECT
   v.id,
   v.client_id,
   v.staff_id,
@@ -179,13 +181,14 @@ WHERE v.id = $1
 ```
 
 **Indexes Used:**
+
 - Primary key on `visits.id`
 - Foreign key indexes on `visits.client_id` and `visits.staff_id`
 
 ### Documentation Query
 
 ```sql
-SELECT 
+SELECT
   vital_signs,
   activities,
   observations,
@@ -197,12 +200,13 @@ WHERE visit_id = $1
 ```
 
 **Indexes Used:**
+
 - Index on `visit_documentation.visit_id`
 
 ### Photos Query
 
 ```sql
-SELECT 
+SELECT
   id,
   s3_key,
   s3_url,
@@ -214,6 +218,7 @@ ORDER BY uploaded_at ASC
 ```
 
 **Indexes Used:**
+
 - Index on `visit_photos.visit_id`
 
 ---
@@ -260,14 +265,17 @@ npm run test -- visits.detail.test.ts
 ### Authorization Enforcement
 
 **Caregiver Access:**
+
 - Can only view visits where `visit.staff_id === userId`
 - Prevents caregivers from viewing other caregivers' visits
 
 **Coordinator/Admin Access:**
+
 - Can view visits where `client.zone_id === user.zone_id`
 - Zone-based isolation ensures data privacy
 
 **Cache Security:**
+
 - Authorization checked even with cached data
 - Prevents unauthorized access via cache poisoning
 - User validation occurs before returning cached response
@@ -275,11 +283,13 @@ npm run test -- visits.detail.test.ts
 ### Data Privacy
 
 **Client Information:**
+
 - Full client details only visible to authorized users
 - Emergency contact information included for care coordination
 - GPS coordinates included for route planning
 
 **Visit Documentation:**
+
 - Sensitive health information (vital signs, observations)
 - Only accessible to authorized caregivers and coordinators
 - Audit trail maintained via created_at/updated_at timestamps
@@ -313,11 +323,13 @@ npm run test -- visits.detail.test.ts
 **TTL:** 5 minutes (300 seconds)
 
 **Rationale:**
+
 - Visit details change infrequently once completed
 - 5-minute TTL balances freshness and performance
 - Cache invalidated on visit updates
 
 **Cache Invalidation:**
+
 - Explicit invalidation on PATCH /v1/visits/:visitId
 - Prevents stale data after updates
 - Maintains data consistency
@@ -335,6 +347,7 @@ npm run test -- visits.detail.test.ts
 ### Validation Errors
 
 **Invalid UUID Format:**
+
 ```json
 {
   "error": "Bad Request",
@@ -343,6 +356,7 @@ npm run test -- visits.detail.test.ts
 ```
 
 **Visit Not Found:**
+
 ```json
 {
   "error": "Not Found",
@@ -353,6 +367,7 @@ npm run test -- visits.detail.test.ts
 ### Authorization Errors
 
 **Caregiver Viewing Another's Visit:**
+
 ```json
 {
   "error": "Forbidden",
@@ -361,6 +376,7 @@ npm run test -- visits.detail.test.ts
 ```
 
 **Coordinator Viewing Different Zone:**
+
 ```json
 {
   "error": "Forbidden",
@@ -371,6 +387,7 @@ npm run test -- visits.detail.test.ts
 ### Server Errors
 
 **Database Error:**
+
 ```json
 {
   "error": "Internal Server Error",
@@ -379,6 +396,7 @@ npm run test -- visits.detail.test.ts
 ```
 
 **Logging:**
+
 - All errors logged with context (visitId, userId)
 - Sentry integration for production error tracking
 - Audit trail for security events
@@ -390,16 +408,19 @@ npm run test -- visits.detail.test.ts
 ### Related Endpoints
 
 **GET /v1/visits**
+
 - List endpoint provides visit summaries
 - Detail endpoint provides complete information
 - Consistent authorization logic
 
 **PATCH /v1/visits/:visitId**
+
 - Update endpoint invalidates detail cache
 - Ensures data consistency
 - Maintains audit trail
 
 **POST /v1/visits/:visitId/photos**
+
 - Photo upload updates photos array
 - Cache invalidation ensures fresh data
 - Consistent response structure
@@ -430,16 +451,19 @@ npm run test -- visits.detail.test.ts
 ### Decision 1: Single Endpoint for All Visit Data
 
 **Rationale:**
+
 - Mobile app needs complete visit information
 - Reduces number of API calls
 - Simplifies client-side logic
 
 **Trade-offs:**
+
 - Larger response payload
 - More complex query
 - Acceptable for detail view use case
 
 **Mitigation:**
+
 - Redis caching reduces database load
 - Efficient queries with proper indexing
 - Gzip compression reduces network payload
@@ -447,16 +471,19 @@ npm run test -- visits.detail.test.ts
 ### Decision 2: Authorization on Cache Hits
 
 **Rationale:**
+
 - Security cannot be compromised for performance
 - Prevents unauthorized access via cache
 - Maintains consistent authorization logic
 
 **Trade-offs:**
+
 - Additional database query on cache hits
 - Slightly slower cache hit performance
 - Worth it for security guarantee
 
 **Implementation:**
+
 - User validation query is fast (indexed)
 - Authorization check is in-memory
 - Minimal performance impact
@@ -464,11 +491,13 @@ npm run test -- visits.detail.test.ts
 ### Decision 3: Null Documentation vs Empty Object
 
 **Rationale:**
+
 - Null clearly indicates no documentation exists
 - Distinguishes from empty documentation
 - Simplifies client-side logic
 
 **Trade-offs:**
+
 - Client must handle null case
 - Consistent with REST best practices
 - Clear semantic meaning
@@ -476,16 +505,19 @@ npm run test -- visits.detail.test.ts
 ### Decision 4: Include Client and Staff Details
 
 **Rationale:**
+
 - Mobile app needs this data for display
 - Reduces need for additional API calls
 - Improves user experience
 
 **Trade-offs:**
+
 - Larger response payload
 - More complex query
 - Acceptable for detail view
 
 **Mitigation:**
+
 - Data is needed anyway
 - Single query is efficient
 - Caching reduces repeated fetches

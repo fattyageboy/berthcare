@@ -66,7 +66,15 @@ describe('PATCH /v1/visits/:visitId', () => {
     await pgPool.query(
       `INSERT INTO users (id, email, password_hash, first_name, last_name, role, zone_id, created_at, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`,
-      [caregiverId, generateTestEmail('caregiver'), 'hash', 'Test', 'Caregiver', 'caregiver', zoneId]
+      [
+        caregiverId,
+        generateTestEmail('caregiver'),
+        'hash',
+        'Test',
+        'Caregiver',
+        'caregiver',
+        zoneId,
+      ]
     );
     caregiverToken = generateAccessToken({
       userId: caregiverId,
@@ -144,6 +152,50 @@ describe('PATCH /v1/visits/:visitId', () => {
       ]);
       expect(visitCheck.rows[0].duration_minutes).toBe(60);
     });
+
+    it('should update visit with documentation', async () => {
+      const response = await request(app)
+        .patch(`/api/v1/visits/${visitId}`)
+        .set('Authorization', `Bearer ${caregiverToken}`)
+        .send({
+          status: 'in_progress',
+          documentation: {
+            vitalSigns: { bloodPressure: '120/80', heartRate: 72 },
+            activities: ['medication', 'meal_prep'],
+            observations: 'Client in good spirits',
+            concerns: 'None',
+          },
+        });
+
+      expect(response.status).toBe(200);
+    });
+
+    it('should update documentation multiple times', async () => {
+      // First update with documentation
+      await request(app)
+        .patch(`/api/v1/visits/${visitId}`)
+        .set('Authorization', `Bearer ${caregiverToken}`)
+        .send({
+          status: 'in_progress',
+          documentation: {
+            vitalSigns: { bloodPressure: '120/80' },
+          },
+        });
+
+      // Then update documentation again
+      const response = await request(app)
+        .patch(`/api/v1/visits/${visitId}`)
+        .set('Authorization', `Bearer ${caregiverToken}`)
+        .send({
+          status: 'in_progress',
+          documentation: {
+            vitalSigns: { bloodPressure: '130/85', heartRate: 75 },
+            activities: ['medication'],
+          },
+        });
+
+      expect(response.status).toBe(200);
+    });
   });
 
   describe('Authorization', () => {
@@ -206,6 +258,19 @@ describe('PATCH /v1/visits/:visitId', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.message).toContain('checkOutLatitude');
+    });
+
+    it('should reject invalid checkout longitude', async () => {
+      const response = await request(app)
+        .patch(`/api/v1/visits/${visitId}`)
+        .set('Authorization', `Bearer ${caregiverToken}`)
+        .send({
+          checkOutLatitude: 43.6532,
+          checkOutLongitude: 181, // Invalid: > 180
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('checkOutLongitude');
     });
 
     it('should reject invalid status', async () => {

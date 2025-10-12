@@ -35,17 +35,17 @@ CREATE TABLE visit_documentation (
 
 ### Field Descriptions
 
-| Field | Type | Nullable | Description |
-|-------|------|----------|-------------|
-| `id` | UUID | NOT NULL | Unique documentation identifier |
-| `visit_id` | UUID | NOT NULL | Reference to visit (foreign key) |
-| `vital_signs` | JSONB | NULL | Structured vital signs data |
-| `activities` | JSONB | NULL | Structured list of activities performed |
-| `observations` | TEXT | NULL | Free-form text observations |
-| `concerns` | TEXT | NULL | Any concerns or issues noted |
-| `signature_url` | VARCHAR(500) | NULL | URL to digital signature in S3 |
-| `created_at` | TIMESTAMP | NOT NULL | Record creation timestamp |
-| `updated_at` | TIMESTAMP | NOT NULL | Record last update timestamp |
+| Field           | Type         | Nullable | Description                             |
+| --------------- | ------------ | -------- | --------------------------------------- |
+| `id`            | UUID         | NOT NULL | Unique documentation identifier         |
+| `visit_id`      | UUID         | NOT NULL | Reference to visit (foreign key)        |
+| `vital_signs`   | JSONB        | NULL     | Structured vital signs data             |
+| `activities`    | JSONB        | NULL     | Structured list of activities performed |
+| `observations`  | TEXT         | NULL     | Free-form text observations             |
+| `concerns`      | TEXT         | NULL     | Any concerns or issues noted            |
+| `signature_url` | VARCHAR(500) | NULL     | URL to digital signature in S3          |
+| `created_at`    | TIMESTAMP    | NOT NULL | Record creation timestamp               |
+| `updated_at`    | TIMESTAMP    | NOT NULL | Record last update timestamp            |
 
 ---
 
@@ -54,6 +54,7 @@ CREATE TABLE visit_documentation (
 ### Vital Signs (vital_signs JSONB)
 
 Example structure:
+
 ```json
 {
   "blood_pressure": "120/80",
@@ -67,6 +68,7 @@ Example structure:
 ```
 
 **Benefits:**
+
 - Flexible schema - can add new vital signs without migration
 - Efficient storage - only store vitals that were measured
 - Queryable - GIN index enables fast searches
@@ -74,6 +76,7 @@ Example structure:
 ### Activities (activities JSONB)
 
 Example structure:
+
 ```json
 [
   {
@@ -97,6 +100,7 @@ Example structure:
 ```
 
 **Benefits:**
+
 - Structured activity tracking
 - Supports completion status
 - Flexible notes per activity
@@ -109,56 +113,66 @@ Example structure:
 Three indexes were created to optimize query patterns:
 
 ### 1. idx_visit_documentation_visit_id (B-tree)
+
 ```sql
 CREATE INDEX idx_visit_documentation_visit_id ON visit_documentation(visit_id);
 ```
+
 **Purpose:** Fast lookup of documentation by visit  
 **Query Pattern:** "Get documentation for this visit"  
 **Performance:** O(log n) lookup time
 
 ### 2. idx_visit_documentation_vital_signs (GIN)
+
 ```sql
 CREATE INDEX idx_visit_documentation_vital_signs ON visit_documentation USING GIN (vital_signs);
 ```
+
 **Purpose:** Fast JSONB queries on vital signs  
 **Query Patterns:**
+
 - "Find visits where blood pressure was recorded"
 - "Find visits with heart rate > 100"
 - "Search for specific vital sign values"
 
 **Example Queries:**
+
 ```sql
 -- Find all visits with blood pressure recorded
-SELECT * FROM visit_documentation 
+SELECT * FROM visit_documentation
 WHERE vital_signs ? 'blood_pressure';
 
 -- Find visits with high heart rate
-SELECT * FROM visit_documentation 
+SELECT * FROM visit_documentation
 WHERE (vital_signs->>'heart_rate')::int > 100;
 
 -- Find visits with specific blood pressure
-SELECT * FROM visit_documentation 
+SELECT * FROM visit_documentation
 WHERE vital_signs->>'blood_pressure' = '120/80';
 ```
 
 ### 3. idx_visit_documentation_activities (GIN)
+
 ```sql
 CREATE INDEX idx_visit_documentation_activities ON visit_documentation USING GIN (activities);
 ```
+
 **Purpose:** Fast JSONB queries on activities  
 **Query Patterns:**
+
 - "Find visits where medication was administered"
 - "Find visits with incomplete activities"
 - "Search for specific activity types"
 
 **Example Queries:**
+
 ```sql
 -- Find visits where medication was administered
-SELECT * FROM visit_documentation 
+SELECT * FROM visit_documentation
 WHERE activities @> '[{"activity": "Medication administered"}]';
 
 -- Find visits with incomplete activities
-SELECT * FROM visit_documentation 
+SELECT * FROM visit_documentation
 WHERE activities @> '[{"completed": false}]';
 ```
 
@@ -173,11 +187,13 @@ FOREIGN KEY (visit_id) REFERENCES visits(id) ON DELETE CASCADE
 ```
 
 **Behavior:**
+
 - **ON DELETE CASCADE**: When a visit is deleted, all associated documentation is automatically deleted
 - **Rationale**: Documentation has no meaning without its visit
 - **Data Integrity**: Prevents orphaned documentation records
 
 **Testing:**
+
 ```sql
 -- Create visit and documentation
 INSERT INTO visits (...) VALUES (...) RETURNING id; -- Returns visit_id
@@ -206,6 +222,7 @@ CREATE TRIGGER update_visit_documentation_updated_at
 ```
 
 **Behavior:**
+
 - Fires before every UPDATE operation
 - Sets `updated_at` to CURRENT_TIMESTAMP
 - Provides automatic audit trail
@@ -229,16 +246,16 @@ docker exec berthcare-postgres psql -U berthcare -d berthcare_dev -c "\d visit_d
 
 # Check indexes
 docker exec berthcare-postgres psql -U berthcare -d berthcare_dev -c "
-  SELECT indexname, indexdef 
-  FROM pg_indexes 
-  WHERE tablename = 'visit_documentation' 
+  SELECT indexname, indexdef
+  FROM pg_indexes
+  WHERE tablename = 'visit_documentation'
   ORDER BY indexname;
 "
 
 # Check foreign key
 docker exec berthcare-postgres psql -U berthcare -d berthcare_dev -c "
-  SELECT conname, pg_get_constraintdef(oid) 
-  FROM pg_constraint 
+  SELECT conname, pg_get_constraintdef(oid)
+  FROM pg_constraint
   WHERE conrelid = 'visit_documentation'::regclass;
 "
 ```
@@ -260,12 +277,14 @@ npm run migrate:down 005
 **Decision:** Use JSONB instead of separate columns or tables
 
 **Rationale:**
+
 - **Flexibility**: Different clients may require different vital signs
 - **Extensibility**: Can add new fields without schema changes
 - **Performance**: GIN indexes make JSONB queries fast
 - **Storage**: Only store data that exists (sparse data)
 
 **Trade-offs:**
+
 - Pros: Flexible, extensible, efficient for sparse data
 - Cons: Less type safety than columns, requires application-level validation
 
@@ -274,12 +293,14 @@ npm run migrate:down 005
 **Decision:** Use ON DELETE CASCADE for visit_id foreign key
 
 **Rationale:**
+
 - Documentation is meaningless without its visit
 - Simplifies data cleanup
 - Prevents orphaned records
 - Maintains referential integrity
 
 **Alternative Considered:** ON DELETE RESTRICT
+
 - Rejected because it would require manual cleanup
 - Would complicate visit deletion logic
 
@@ -288,12 +309,14 @@ npm run migrate:down 005
 **Decision:** Create GIN indexes on both JSONB columns
 
 **Rationale:**
+
 - Enables fast queries on JSONB content
 - Supports containment operators (@>, ?, ?&, ?|)
 - Essential for reporting and analytics
 - Small storage overhead for significant query performance
 
 **Performance Impact:**
+
 - Query time: O(log n) instead of O(n)
 - Storage: ~20-30% overhead on JSONB columns
 - Write time: Slightly slower inserts (acceptable trade-off)
@@ -303,15 +326,17 @@ npm run migrate:down 005
 **Decision:** Keep observations and concerns as separate TEXT fields
 
 **Rationale:**
+
 - **Concerns** are actionable and may trigger alerts
 - **Observations** are general notes
 - Separation enables different business logic
 - Easier to query for visits with concerns
 
 **Example Use Case:**
+
 ```sql
 -- Find all visits with concerns in the last week
-SELECT v.*, vd.concerns 
+SELECT v.*, vd.concerns
 FROM visits v
 JOIN visit_documentation vd ON v.id = vd.visit_id
 WHERE vd.concerns IS NOT NULL
@@ -323,6 +348,7 @@ WHERE vd.concerns IS NOT NULL
 **Decision:** Store S3 URL as string, not binary data
 
 **Rationale:**
+
 - Signatures stored in S3, not database
 - URL provides reference to S3 object
 - Keeps database size manageable
@@ -361,6 +387,7 @@ WHERE vd.concerns IS NOT NULL
 ### JSONB vs JSON
 
 **Why JSONB?**
+
 - Binary format (faster processing)
 - Supports indexing (JSON does not)
 - Removes duplicate keys
@@ -406,11 +433,11 @@ INSERT INTO visit_documentation (
 );
 
 -- Test 2: Query JSONB with containment
-SELECT * FROM visit_documentation 
+SELECT * FROM visit_documentation
 WHERE vital_signs ? 'blood_pressure';
 
 -- Test 3: Query JSONB with value comparison
-SELECT * FROM visit_documentation 
+SELECT * FROM visit_documentation
 WHERE (vital_signs->>'heart_rate')::int > 70;
 
 -- Test 4: Test CASCADE delete
@@ -418,8 +445,8 @@ DELETE FROM visits WHERE id = (SELECT visit_id FROM visit_documentation LIMIT 1)
 -- Verify documentation was deleted
 
 -- Test 5: Test updated_at trigger
-UPDATE visit_documentation 
-SET observations = 'Updated observation' 
+UPDATE visit_documentation
+SET observations = 'Updated observation'
 WHERE id = (SELECT id FROM visit_documentation LIMIT 1);
 -- Verify updated_at changed
 ```
@@ -430,7 +457,7 @@ WHERE id = (SELECT id FROM visit_documentation LIMIT 1);
 
 ### Relationship
 
-```
+````
 visits (1) ----< (many) visit_documentation
 ```text
 
@@ -501,5 +528,6 @@ visits (1) ----< (many) visit_documentation
 
 ---
 
-**Status:** ✅ Complete  
+**Status:** ✅ Complete
 **Next Task:** V3 - Visit Photos Table Migration
+````

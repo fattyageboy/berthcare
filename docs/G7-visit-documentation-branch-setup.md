@@ -17,11 +17,13 @@ Created feature branch `feat/visit-documentation` from `main` and set up draft P
 ## Completed Actions
 
 ### 1. Branch Creation
+
 - ✅ Created branch `feat/visit-documentation` from `main`
 - ✅ Pushed branch to remote repository
 - ✅ Branch linked to issue #4
 
 ### 2. PR Template Creation
+
 - ✅ Created `.github/PULL_REQUEST_TEMPLATE/visit-documentation-pr.md`
 - ✅ Included comprehensive checklist covering:
   - Database schema (visits table migration)
@@ -36,18 +38,21 @@ Created feature branch `feat/visit-documentation` from `main` and set up draft P
 ### 3. Checklist Components
 
 #### Database Schema
+
 - Visits table migration with all required fields
 - Foreign key constraints to clients and users tables
 - Proper indexing strategy
 - Rollback migration
 
 #### API Endpoints
+
 - POST /v1/visits (Create Visit)
 - GET /v1/visits (List Visits with filtering)
 - GET /v1/visits/:visitId (Get Visit Details)
 - PATCH /v1/visits/:visitId (Update Visit)
 
 #### Security Features
+
 - JWT authentication required
 - Role-based authorization (caregiver, coordinator, admin)
 - Zone-based access control
@@ -55,6 +60,7 @@ Created feature branch `feat/visit-documentation` from `main` and set up draft P
 - SQL injection protection
 
 #### Testing Requirements
+
 - Unit tests for service functions
 - Integration tests for all endpoints
 - 80%+ test coverage
@@ -92,10 +98,12 @@ Created feature branch `feat/visit-documentation` from `main` and set up draft P
 ## Dependencies
 
 **Requires:**
+
 - ✅ Client Management API (PR #3) - merged to main
 - ✅ Authentication system (PR #2) - merged to main
 
 **Blocks:**
+
 - Task D1: Visits table migration
 - Task D2-D5: Visit CRUD endpoints
 - Task D6: Real-time sync implementation
@@ -158,7 +166,6 @@ The following will trigger automatically:
 
 The PR template includes detailed manual testing instructions:
 
-
 ```bash
 # Create visit
 curl -X POST http://localhost:3000/api/v1/visits \
@@ -186,7 +193,7 @@ If issues are discovered:
 1. Revert the PR merge commit
 2. Roll back database migration:
    ```bash
-  npm run migrate:down 004
+   npm run migrate:down 004
    ```
 
 ---

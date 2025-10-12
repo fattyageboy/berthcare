@@ -5,7 +5,7 @@
 **Status:** ✅ Completed  
 **Date:** October 11, 2025  
 **Developer:** Backend Engineer  
-**Estimated Time:** 1.5d  
+**Estimated Time:** 1.5d
 
 ## Overview
 
@@ -18,6 +18,7 @@ Successfully implemented the GET /v1/visits endpoint with comprehensive filterin
 **File:** `apps/backend/src/routes/visits.routes.ts`
 
 **Features:**
+
 - GET /v1/visits endpoint with full functionality
 - Filtering by staffId, clientId, date range (startDate/endDate), and status
 - Pagination (default 50, max 100)
@@ -31,6 +32,7 @@ Successfully implemented the GET /v1/visits endpoint with comprehensive filterin
 **File:** `apps/backend/src/main.ts`
 
 **Updates:**
+
 - Updated `createVisitsRouter` call to pass `redisClient` parameter
 - Visits routes now have access to Redis for caching
 
@@ -39,6 +41,7 @@ Successfully implemented the GET /v1/visits endpoint with comprehensive filterin
 **File:** `apps/backend/tests/test-helpers.ts`
 
 **Updates:**
+
 - Added `createTestVisit` helper function for creating test visits
 - Updated `cleanupTestData` to delete visits before clients
 - Updated `cleanAllTestData` to include visits table
@@ -49,6 +52,7 @@ Successfully implemented the GET /v1/visits endpoint with comprehensive filterin
 **File:** `apps/backend/tests/visits.list.test.ts`
 
 **Test Coverage:**
+
 - Authentication (401 without token, 401 with invalid token)
 - Authorization (caregivers see only their visits, coordinators/admins see zone visits)
 - Filtering (by staffId, clientId, status, date range)
@@ -75,15 +79,15 @@ Authorization: Bearer <access_token>
 
 ### Query Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| staffId | string (UUID) | No | - | Filter by staff member |
-| clientId | string (UUID) | No | - | Filter by client |
-| startDate | string (ISO 8601) | No | - | Filter visits from this date |
-| endDate | string (ISO 8601) | No | - | Filter visits until this date |
-| status | string | No | - | Filter by status (scheduled, in_progress, completed, cancelled) |
-| page | number | No | 1 | Page number (min: 1) |
-| limit | number | No | 50 | Results per page (min: 1, max: 100) |
+| Parameter | Type              | Required | Default | Description                                                     |
+| --------- | ----------------- | -------- | ------- | --------------------------------------------------------------- |
+| staffId   | string (UUID)     | No       | -       | Filter by staff member                                          |
+| clientId  | string (UUID)     | No       | -       | Filter by client                                                |
+| startDate | string (ISO 8601) | No       | -       | Filter visits from this date                                    |
+| endDate   | string (ISO 8601) | No       | -       | Filter visits until this date                                   |
+| status    | string            | No       | -       | Filter by status (scheduled, in_progress, completed, cancelled) |
+| page      | number            | No       | 1       | Page number (min: 1)                                            |
+| limit     | number            | No       | 50      | Results per page (min: 1, max: 100)                             |
 
 ### Response (200 OK)
 
@@ -119,6 +123,7 @@ Authorization: Bearer <access_token>
 ### Error Responses
 
 **400 Bad Request**
+
 ```json
 {
   "error": "Bad Request",
@@ -127,6 +132,7 @@ Authorization: Bearer <access_token>
 ```
 
 **401 Unauthorized**
+
 ```json
 {
   "error": "Unauthorized",
@@ -135,6 +141,7 @@ Authorization: Bearer <access_token>
 ```
 
 **403 Forbidden**
+
 ```json
 {
   "error": "Forbidden",
@@ -143,6 +150,7 @@ Authorization: Bearer <access_token>
 ```
 
 **500 Internal Server Error**
+
 ```json
 {
   "error": "Internal Server Error",
@@ -155,11 +163,13 @@ Authorization: Bearer <access_token>
 ### Authorization Logic
 
 **Caregivers:**
+
 - Can only see their own visits (filtered by staff_id = userId)
 - Cannot see visits from other caregivers
 - staffId filter parameter is ignored (always uses their own ID)
 
 **Coordinators and Admins:**
+
 - Can see all visits in their zone (filtered by client's zone_id)
 - Can further filter by staffId if provided
 - Have access to all visits within their zone
@@ -167,17 +177,20 @@ Authorization: Bearer <access_token>
 ### Filtering Logic
 
 **Multiple Filters:**
+
 - All filters are combined with AND logic
 - Authorization filter is always applied first
 - Additional filters are applied on top of authorization
 
 **Date Range Filtering:**
+
 - startDate: Filters visits with scheduled_start_time >= startDate
 - endDate: Filters visits with scheduled_start_time <= endDate
 - Both can be used together for a date range
 - Dates must be in ISO 8601 format
 
 **Status Filtering:**
+
 - Valid values: scheduled, in_progress, completed, cancelled
 - Case-sensitive matching
 - Returns 400 error for invalid status values
@@ -195,6 +208,7 @@ Authorization: Bearer <access_token>
 ### Sorting
 
 Results are always sorted by:
+
 1. scheduled_start_time (descending) - newest first
 
 This ensures the most recent visits appear first in the list.
@@ -202,11 +216,13 @@ This ensures the most recent visits appear first in the list.
 ### Redis Caching
 
 **Cache Key Format:**
+
 ```
 visits:list:staff={staffId}:client={clientId}:start={startDate}:end={endDate}:status={status}:page={page}:limit={limit}
 ```
 
 **Cache Behavior:**
+
 - TTL: 300 seconds (5 minutes)
 - Cache miss: Query database, cache result
 - Cache hit: Return cached data with `meta.cached: true`
@@ -214,6 +230,7 @@ visits:list:staff={staffId}:client={clientId}:start={startDate}:end={endDate}:st
 - Cache errors don't fail the request (graceful degradation)
 
 **Cache Key Examples:**
+
 ```
 visits:list:staff=all:client=all:start=all:end=all:status=all:page=1:limit=50
 visits:list:staff=uuid-123:client=all:start=all:end=all:status=completed:page=1:limit=50
@@ -223,6 +240,7 @@ visits:list:staff=all:client=uuid-456:start=2025-10-01:end=2025-10-31:status=all
 ### Database Query Optimization
 
 **Indexes Used:**
+
 - `idx_visits_staff_id` - Fast staff filtering
 - `idx_visits_client_id` - Fast client filtering
 - `idx_visits_status` - Fast status filtering
@@ -230,6 +248,7 @@ visits:list:staff=all:client=uuid-456:start=2025-10-01:end=2025-10-31:status=all
 - `idx_visits_staff_scheduled` - Composite index for caregiver queries
 
 **Query Strategy:**
+
 - Two queries: COUNT for total, SELECT for data
 - INNER JOIN with clients table for client names and zone filtering
 - INNER JOIN with users table for staff names
@@ -239,11 +258,13 @@ visits:list:staff=all:client=uuid-456:start=2025-10-01:end=2025-10-31:status=all
 ### Performance Characteristics
 
 **Without Cache:**
+
 - Simple query (no filters): < 10ms
 - With filters: < 20ms
 - Pagination overhead: < 1ms
 
 **With Cache:**
+
 - Cache hit: < 1ms
 - Cache miss + set: < 25ms
 
@@ -261,15 +282,18 @@ TEST_DATABASE_URL=postgresql://berthcare:berthcare_password@localhost:5432/berth
 ### Test Coverage
 
 **Authentication Tests:**
+
 - ✅ Returns 401 without token
 - ✅ Returns 401 with invalid token
 
 **Authorization Tests:**
+
 - ✅ Caregivers see only their own visits
 - ✅ Coordinators see all zone visits
 - ✅ Admins see all zone visits
 
 **Filtering Tests:**
+
 - ✅ Filter by staffId works
 - ✅ Filter by clientId works
 - ✅ Filter by status works
@@ -280,18 +304,21 @@ TEST_DATABASE_URL=postgresql://berthcare:berthcare_password@localhost:5432/berth
 - ✅ Invalid date format returns 400
 
 **Pagination Tests:**
+
 - ✅ Default pagination (page 1, limit 50)
 - ✅ Custom page and limit respected
 - ✅ Max limit of 100 enforced
 - ✅ Page 2 returns correct results
 
 **Response Format Tests:**
+
 - ✅ Correct data structure returned
 - ✅ Client name included in visit summary
 - ✅ Staff name included in visit summary
 - ✅ Results sorted by scheduled_start_time DESC
 
 **Caching Tests:**
+
 - ✅ Results are cached after first request
 - ✅ Different queries have different cache keys
 
@@ -311,24 +338,28 @@ npm test --prefix apps/backend -- --coverage
 ## Design Philosophy Applied
 
 ### Simplicity is the Ultimate Sophistication
+
 - Clean, straightforward API design
 - Predictable filtering and pagination behavior
 - Simple query parameters
 - Clear error messages
 
 ### Obsess Over Details
+
 - Sub-second response times via caching
 - Efficient database queries with proper indexes
 - Comprehensive error handling and validation
 - Detailed logging for debugging
 
 ### Start with User Experience
+
 - Fast queries for caregiver workflows
 - Zone-based filtering automatic for non-admins
 - Flexible filtering for coordinators and admins
 - Pagination prevents overwhelming results
 
 ### Uncompromising Security
+
 - JWT authentication required
 - Zone-based access control enforced
 - SQL injection prevention via parameterized queries
@@ -339,16 +370,19 @@ npm test --prefix apps/backend -- --coverage
 ### Supports Mobile App Workflows
 
 **Caregiver Daily Schedule:**
+
 - GET /v1/visits?status=scheduled - Today's scheduled visits
 - GET /v1/visits?status=in_progress - Current active visit
 - GET /v1/visits?status=completed - Completed visits history
 
 **Coordinator Dashboard:**
+
 - GET /v1/visits?status=in_progress - All active visits in zone
 - GET /v1/visits?staffId={id} - Specific caregiver's visits
 - GET /v1/visits?startDate={today}&endDate={today} - Today's visits
 
 **Admin Reporting:**
+
 - GET /v1/visits?startDate={start}&endDate={end} - Date range reports
 - GET /v1/visits?status=completed - Completed visits for billing
 - GET /v1/visits?clientId={id} - Client visit history
@@ -356,6 +390,7 @@ npm test --prefix apps/backend -- --coverage
 ### API Consistency
 
 Follows established patterns from other endpoints:
+
 - Same response format (`data` wrapper with `pagination`)
 - Same error format (`error` object with `message`)
 - Same authentication mechanism (JWT)
@@ -365,10 +400,12 @@ Follows established patterns from other endpoints:
 ## Files Created/Modified
 
 ### Created
+
 - `apps/backend/tests/visits.list.test.ts` - Integration tests
 - `docs/V6-list-visits-endpoint.md` - This documentation
 
 ### Modified
+
 - `apps/backend/src/routes/visits.routes.ts` - Added GET /v1/visits endpoint
 - `apps/backend/src/main.ts` - Updated visits router initialization
 - `apps/backend/tests/test-helpers.ts` - Added createTestVisit helper
@@ -385,6 +422,7 @@ With the GET /v1/visits endpoint complete, the Visit Documentation feature is no
 6. ✅ **V6:** GET /v1/visits Endpoint (List visits)
 
 **Future Enhancements:**
+
 - GET /v1/visits/:visitId - Get visit details with full documentation
 - GET /v1/visits/:visitId/photos - Get visit photos
 - DELETE /v1/visits/:visitId - Cancel visit
@@ -397,6 +435,7 @@ With the GET /v1/visits endpoint complete, the Visit Documentation feature is no
 **Error:** Cannot connect to Redis
 
 **Solution:**
+
 ```bash
 # Check Redis is running
 docker-compose ps redis
@@ -413,16 +452,17 @@ docker-compose logs redis
 **Issue:** Slow queries
 
 **Solution:**
+
 ```sql
 -- Check if indexes exist
 SELECT indexname FROM pg_indexes WHERE tablename = 'visits';
 
 -- Analyze query performance
-EXPLAIN ANALYZE 
+EXPLAIN ANALYZE
 SELECT v.*, c.first_name || ' ' || c.last_name as client_name
 FROM visits v
 INNER JOIN clients c ON v.client_id = c.id
-WHERE v.staff_id = 'uuid' 
+WHERE v.staff_id = 'uuid'
 ORDER BY v.scheduled_start_time DESC
 LIMIT 50;
 ```
@@ -432,6 +472,7 @@ LIMIT 50;
 **Issue:** Every request hits database
 
 **Solution:**
+
 ```bash
 # Check Redis connection
 docker-compose exec redis redis-cli PING
@@ -448,6 +489,7 @@ docker-compose exec redis redis-cli TTL "visits:list:..."
 **Issue:** Tests fail with "relation does not exist"
 
 **Solution:**
+
 ```bash
 # Run migrations on test database
 TEST_DATABASE_URL=postgresql://berthcare:berthcare_password@localhost:5432/berthcare_test npm run migrate:up --prefix apps/backend
@@ -480,6 +522,7 @@ The GET /v1/visits endpoint is now complete and production-ready. The implementa
 ---
 
 **Implementation Files:**
+
 - ✅ `apps/backend/src/routes/visits.routes.ts` - Route implementation
 - ✅ `apps/backend/src/main.ts` - Route registration
 - ✅ `apps/backend/tests/test-helpers.ts` - Test helpers
@@ -487,4 +530,3 @@ The GET /v1/visits endpoint is now complete and production-ready. The implementa
 - ✅ `docs/V6-list-visits-endpoint.md` - This documentation
 
 **Next Feature:** Visit detail endpoint or mobile app integration
-

@@ -44,28 +44,28 @@ Implemented the POST /v1/visits endpoint to enable caregivers to start visits (c
 
 ```typescript
 {
-  id: string;                    // UUID of created visit
-  clientId: string;              // UUID of client
-  staffId: string;               // UUID of caregiver (from JWT)
-  scheduledStartTime: string;    // ISO 8601 timestamp
-  checkInTime: string | null;    // ISO 8601 timestamp
+  id: string; // UUID of created visit
+  clientId: string; // UUID of client
+  staffId: string; // UUID of caregiver (from JWT)
+  scheduledStartTime: string; // ISO 8601 timestamp
+  checkInTime: string | null; // ISO 8601 timestamp
   checkInLatitude: number | null;
   checkInLongitude: number | null;
-  status: string;                // Always 'in_progress'
-  createdAt: string;             // ISO 8601 timestamp
+  status: string; // Always 'in_progress'
+  createdAt: string; // ISO 8601 timestamp
 }
 ```
 
 ### Error Responses
 
-| Status | Error | Description |
-|--------|-------|-------------|
-| 400 | Bad Request | Missing required fields or invalid format |
-| 401 | Unauthorized | Missing or invalid JWT token |
-| 403 | Forbidden | Not a caregiver or wrong zone |
-| 404 | Not Found | Client does not exist |
-| 409 | Conflict | Visit already exists for this time slot |
-| 500 | Internal Server Error | Database or server error |
+| Status | Error                 | Description                               |
+| ------ | --------------------- | ----------------------------------------- |
+| 400    | Bad Request           | Missing required fields or invalid format |
+| 401    | Unauthorized          | Missing or invalid JWT token              |
+| 403    | Forbidden             | Not a caregiver or wrong zone             |
+| 404    | Not Found             | Client does not exist                     |
+| 409    | Conflict              | Visit already exists for this time slot   |
+| 500    | Internal Server Error | Database or server error                  |
 
 ---
 
@@ -84,6 +84,7 @@ curl -X POST http://localhost:3000/api/v1/visits \
 ```
 
 **Response:**
+
 ```json
 {
   "id": "786bd901-f1bb-48e4-96d9-af0cd3ee84ba",
@@ -114,6 +115,7 @@ curl -X POST http://localhost:3000/api/v1/visits \
 ```
 
 **Response:**
+
 ```json
 {
   "id": "786bd901-f1bb-48e4-96d9-af0cd3ee84ba",
@@ -152,12 +154,14 @@ curl -X POST http://localhost:3000/api/v1/visits \
 ### 1. Visit Creation (Check-in)
 
 **Functionality:**
+
 - Creates visit record with status 'in_progress'
 - Records check-in time (auto-uses current time if not provided)
 - Captures GPS coordinates (optional for offline scenarios)
 - Links visit to client and caregiver (staff)
 
 **Database Operations:**
+
 ```sql
 INSERT INTO visits (
   client_id, staff_id, scheduled_start_time,
@@ -170,27 +174,28 @@ RETURNING *;
 ### 2. Smart Data Reuse
 
 **Functionality:**
+
 - Copies documentation from previous visit if `copiedFromVisitId` provided
 - Only copies if source visit belongs to same client
 - Copies: vital_signs, activities, observations
 - Gracefully handles missing source visits
 
 **Implementation:**
+
 ```typescript
 if (copiedFromVisitId) {
   // Verify source visit exists and belongs to same client
-  const sourceVisit = await client.query(
-    'SELECT id, client_id FROM visits WHERE id = $1',
-    [copiedFromVisitId]
-  );
-  
+  const sourceVisit = await client.query('SELECT id, client_id FROM visits WHERE id = $1', [
+    copiedFromVisitId,
+  ]);
+
   if (sourceVisit.client_id === clientId) {
     // Copy documentation
     const sourceDoc = await client.query(
       'SELECT vital_signs, activities, observations FROM visit_documentation WHERE visit_id = $1',
       [copiedFromVisitId]
     );
-    
+
     // Create new documentation with copied data
     await client.query(
       'INSERT INTO visit_documentation (visit_id, vital_signs, activities, observations) VALUES ($1, $2, $3, $4)',
@@ -201,6 +206,7 @@ if (copiedFromVisitId) {
 ```
 
 **Benefits:**
+
 - Saves caregiver time (no re-entering routine data)
 - Maintains consistency across visits
 - Reduces data entry errors
@@ -209,16 +215,19 @@ if (copiedFromVisitId) {
 ### 3. GPS Coordinate Handling
 
 **Validation:**
+
 - Latitude: -90 to 90 degrees
 - Longitude: -180 to 180 degrees
 - Handles 0 as valid coordinate (equator/prime meridian)
 
 **Special Cases:**
+
 - `0` is preserved (not converted to null)
 - `undefined` becomes `null` in database
 - Uses nullish coalescing (`??`) not logical OR (`||`)
 
 **Example Locations at 0:**
+
 - **0°N, 0°E**: Gulf of Guinea (off coast of Africa)
 - **0°N**: Equator (crosses Ecuador, Kenya, Indonesia)
 - **0°E**: Prime Meridian (crosses UK, France, Spain, Ghana)
@@ -226,22 +235,25 @@ if (copiedFromVisitId) {
 ### 4. Security & Authorization
 
 **Authentication:**
+
 - JWT token required in Authorization header
 - Token validated via `authenticateJWT` middleware
 - User ID and role extracted from token
 
 **Authorization Checks:**
+
 1. **Role Check**: Only caregivers can create visits
 2. **Zone Check**: Caregiver must be in same zone as client
 3. **Client Existence**: Client must exist and not be deleted
 
 **Implementation:**
+
 ```typescript
 // Check caregiver role
 if (userRole !== 'caregiver') {
   return res.status(403).json({
     error: 'Forbidden',
-    message: 'Only caregivers can create visits'
+    message: 'Only caregivers can create visits',
   });
 }
 
@@ -252,7 +264,7 @@ const clientZone = await getZone(clientId);
 if (caregiverZone !== clientZone) {
   return res.status(403).json({
     error: 'Forbidden',
-    message: 'Cannot create visit for client in different zone'
+    message: 'Cannot create visit for client in different zone',
   });
 }
 ```
@@ -260,16 +272,19 @@ if (caregiverZone !== clientZone) {
 ### 5. Input Validation
 
 **Required Fields:**
+
 - `clientId` (UUID format)
 - `scheduledStartTime` (ISO 8601 timestamp)
 
 **Optional Fields:**
+
 - `checkInTime` (ISO 8601 timestamp, defaults to now)
 - `checkInLatitude` (number, -90 to 90)
 - `checkInLongitude` (number, -180 to 180)
 - `copiedFromVisitId` (UUID format)
 
 **Validation Rules:**
+
 ```typescript
 // UUID format validation
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -290,19 +305,22 @@ if (checkInLongitude !== undefined && (checkInLongitude < -180 || checkInLongitu
 ### 6. Duplicate Prevention
 
 **Check:**
+
 - Same client
 - Same scheduled start time
 - Status is 'scheduled' or 'in_progress'
 
 **Implementation:**
+
 ```sql
-SELECT id FROM visits 
-WHERE client_id = $1 
+SELECT id FROM visits
+WHERE client_id = $1
 AND status IN ('scheduled', 'in_progress')
 AND scheduled_start_time = $2
 ```
 
 **Response:**
+
 ```json
 {
   "error": "Conflict",
@@ -313,22 +331,24 @@ AND scheduled_start_time = $2
 ### 7. Transaction Management
 
 **Atomicity:**
+
 - All database operations in single transaction
 - Automatic rollback on any error
 - Ensures data consistency
 
 **Implementation:**
+
 ```typescript
 const client = await pool.connect();
 try {
   await client.query('BEGIN');
-  
+
   // 1. Verify client exists and get zone
   // 2. Verify caregiver zone matches
   // 3. Check for duplicate visits
   // 4. Create visit record
   // 5. Copy documentation if requested
-  
+
   await client.query('COMMIT');
 } catch (error) {
   await client.query('ROLLBACK');
@@ -345,6 +365,7 @@ try {
 ### Test Coverage
 
 **15 integration tests covering:**
+
 - ✅ Successful visit creation with GPS
 - ✅ Visit creation without GPS
 - ✅ Auto check-in time (current time)
@@ -422,6 +443,7 @@ apps/backend/src/main.ts        # Route registration
 ### Code Organization
 
 **visits.routes.ts:**
+
 - `createVisitsRouter(pool)` - Router factory function
 - `POST /` - Visit creation endpoint handler
 - Request/response interfaces
@@ -430,27 +452,29 @@ apps/backend/src/main.ts        # Route registration
 - Transaction management
 
 **Key Functions:**
+
 ```typescript
 // Router creation
-export function createVisitsRouter(pool: Pool): Router
+export function createVisitsRouter(pool: Pool): Router;
 
 // Request validation
-validateRequiredFields(body)
-validateUUIDFormat(id)
-validateGPSCoordinates(lat, lng)
+validateRequiredFields(body);
+validateUUIDFormat(id);
+validateGPSCoordinates(lat, lng);
 
 // Authorization
-checkCaregiverRole(user)
-checkZoneAuthorization(caregiverId, clientId)
+checkCaregiverRole(user);
+checkZoneAuthorization(caregiverId, clientId);
 
 // Business logic
-createVisit(data)
-copyDocumentation(sourceVisitId, newVisitId)
+createVisit(data);
+copyDocumentation(sourceVisitId, newVisitId);
 ```
 
 ### Logging
 
 **Success Logging:**
+
 ```typescript
 logInfo('Visit created successfully', {
   visitId: visit.id,
@@ -463,6 +487,7 @@ logInfo('Visit created successfully', {
 ```
 
 **Error Logging:**
+
 ```typescript
 logError('Error creating visit', error as Error, {
   clientId,
@@ -479,12 +504,14 @@ logError('Error creating visit', error as Error, {
 **Decision:** Use current server time if `checkInTime` not provided
 
 **Rationale:**
+
 - Simplifies mobile app implementation
 - Reduces network payload
 - Server time is authoritative
 - Handles timezone issues automatically
 
 **Implementation:**
+
 ```typescript
 const actualCheckInTime = checkInTime || new Date().toISOString();
 ```
@@ -494,12 +521,14 @@ const actualCheckInTime = checkInTime || new Date().toISOString();
 **Decision:** Make GPS coordinates optional (nullable)
 
 **Rationale:**
+
 - **Offline Support**: App works without GPS signal
 - **Indoor Locations**: GPS may not work indoors
 - **Privacy**: Some caregivers may disable location
 - **Flexibility**: Can add GPS later if needed
 
 **Trade-offs:**
+
 - Pros: Works in all scenarios, better UX
 - Cons: Can't verify location for all visits
 
@@ -508,17 +537,19 @@ const actualCheckInTime = checkInTime || new Date().toISOString();
 **Decision:** Use `??` instead of `||` for default values
 
 **Rationale:**
+
 - `0` is a valid coordinate (equator/prime meridian)
 - `||` converts `0` to `null` (incorrect)
 - `??` only converts `null`/`undefined` to `null`
 
 **Example:**
+
 ```typescript
 // Wrong: 0 becomes null
-checkInLatitude || null  // ❌
+checkInLatitude || null; // ❌
 
 // Correct: 0 stays as 0
-checkInLatitude ?? null  // ✅
+checkInLatitude ?? null; // ✅
 ```
 
 ### 4. Zone-Based Authorization
@@ -526,17 +557,19 @@ checkInLatitude ?? null  // ✅
 **Decision:** Enforce zone matching between caregiver and client
 
 **Rationale:**
+
 - **Data Isolation**: Prevents cross-zone data access
 - **Security**: Reduces attack surface
 - **Compliance**: Supports geographic data regulations
 - **Business Logic**: Caregivers work in specific zones
 
 **Implementation:**
+
 ```typescript
 if (caregiverZoneId !== clientZoneId) {
   return res.status(403).json({
     error: 'Forbidden',
-    message: 'Cannot create visit for client in different zone'
+    message: 'Cannot create visit for client in different zone',
   });
 }
 ```
@@ -546,12 +579,14 @@ if (caregiverZoneId !== clientZoneId) {
 **Decision:** Use database transactions for all operations
 
 **Rationale:**
+
 - **Atomicity**: All-or-nothing operations
 - **Consistency**: No partial data
 - **Isolation**: Concurrent request safety
 - **Durability**: Data persisted correctly
 
 **Example:**
+
 ```typescript
 await client.query('BEGIN');
 try {
@@ -568,11 +603,13 @@ try {
 **Decision:** Only copy from same client's visits
 
 **Rationale:**
+
 - **Privacy**: Prevents data leakage between clients
 - **Accuracy**: Ensures relevant data
 - **Security**: Additional authorization layer
 
 **Implementation:**
+
 ```typescript
 if (sourceVisit.client_id === clientId) {
   // Copy documentation
@@ -589,6 +626,7 @@ if (sourceVisit.client_id === clientId) {
 ### Database Queries
 
 **Query Count per Request:**
+
 - 1 query: Check client exists and get zone
 - 1 query: Get caregiver zone
 - 1 query: Check for duplicate visits
@@ -600,23 +638,27 @@ if (sourceVisit.client_id === clientId) {
 ### Query Optimization
 
 **Indexes Used:**
+
 - `idx_clients_zone_id` - Client zone lookup
 - `idx_users_zone_id` - Caregiver zone lookup
 - `idx_visits_client_id` - Duplicate check
 - `idx_visits_scheduled_time` - Duplicate check
 
 **Expected Response Time:**
+
 - Without documentation copy: <50ms
 - With documentation copy: <100ms
 
 ### Caching Strategy
 
 **Not Cached:**
+
 - Visit creation is a write operation
 - Each visit is unique
 - Real-time data required
 
 **Future Optimization:**
+
 - Cache client zone lookups (5 min TTL)
 - Cache caregiver zone lookups (5 min TTL)
 
@@ -659,12 +701,14 @@ if (sourceVisit.client_id === clientId) {
 ### 400 Bad Request
 
 **Causes:**
+
 - Missing required fields
 - Invalid UUID format
 - Invalid GPS coordinates
 - Invalid timestamp format
 
 **Example:**
+
 ```json
 {
   "error": "Bad Request",
@@ -675,11 +719,13 @@ if (sourceVisit.client_id === clientId) {
 ### 401 Unauthorized
 
 **Causes:**
+
 - Missing Authorization header
 - Invalid JWT token
 - Expired JWT token
 
 **Example:**
+
 ```json
 {
   "error": "Unauthorized",
@@ -690,10 +736,12 @@ if (sourceVisit.client_id === clientId) {
 ### 403 Forbidden
 
 **Causes:**
+
 - User is not a caregiver
 - Caregiver in different zone than client
 
 **Example:**
+
 ```json
 {
   "error": "Forbidden",
@@ -704,10 +752,12 @@ if (sourceVisit.client_id === clientId) {
 ### 404 Not Found
 
 **Causes:**
+
 - Client does not exist
 - Client has been deleted
 
 **Example:**
+
 ```json
 {
   "error": "Not Found",
@@ -718,10 +768,12 @@ if (sourceVisit.client_id === clientId) {
 ### 409 Conflict
 
 **Causes:**
+
 - Visit already exists for same time slot
 - Duplicate visit prevention
 
 **Example:**
+
 ```json
 {
   "error": "Conflict",
@@ -732,11 +784,13 @@ if (sourceVisit.client_id === clientId) {
 ### 500 Internal Server Error
 
 **Causes:**
+
 - Database connection error
 - Unexpected server error
 - Transaction failure
 
 **Example:**
+
 ```json
 {
   "error": "Internal Server Error",

@@ -29,8 +29,8 @@ Implemented the PATCH /v1/visits/:visitId endpoint to enable caregivers to updat
 
 ### Path Parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
+| Parameter | Type | Description               |
+| --------- | ---- | ------------------------- |
 | `visitId` | UUID | ID of the visit to update |
 
 ### Request Body (All Optional)
@@ -54,27 +54,27 @@ Implemented the PATCH /v1/visits/:visitId endpoint to enable caregivers to updat
 
 ```typescript
 {
-  id: string;                     // UUID of visit
-  clientId: string;               // UUID of client
-  staffId: string;                // UUID of caregiver
-  scheduledStartTime: string;     // ISO 8601 timestamp
-  checkInTime: string | null;     // ISO 8601 timestamp
+  id: string; // UUID of visit
+  clientId: string; // UUID of client
+  staffId: string; // UUID of caregiver
+  scheduledStartTime: string; // ISO 8601 timestamp
+  checkInTime: string | null; // ISO 8601 timestamp
   checkInLatitude: number | null;
   checkInLongitude: number | null;
-  status: string;                 // Current status
-  createdAt: string;              // ISO 8601 timestamp
+  status: string; // Current status
+  createdAt: string; // ISO 8601 timestamp
 }
 ```
 
 ### Error Responses
 
-| Status | Error | Description |
-|--------|-------|-------------|
-| 400 | Bad Request | Invalid data, no updates provided |
-| 401 | Unauthorized | Missing or invalid JWT token |
-| 403 | Forbidden | Not authorized to update this visit |
-| 404 | Not Found | Visit does not exist |
-| 500 | Internal Server Error | Database or server error |
+| Status | Error                 | Description                         |
+| ------ | --------------------- | ----------------------------------- |
+| 400    | Bad Request           | Invalid data, no updates provided   |
+| 401    | Unauthorized          | Missing or invalid JWT token        |
+| 403    | Forbidden             | Not authorized to update this visit |
+| 404    | Not Found             | Visit does not exist                |
+| 500    | Internal Server Error | Database or server error            |
 
 ---
 
@@ -95,6 +95,7 @@ curl -X PATCH http://localhost:3000/api/v1/visits/786bd901-f1bb-48e4-96d9-af0cd3
 ```
 
 **Response:**
+
 ```json
 {
   "id": "786bd901-f1bb-48e4-96d9-af0cd3ee84ba",
@@ -167,12 +168,14 @@ curl -X PATCH http://localhost:3000/api/v1/visits/786bd901-f1bb-48e4-96d9-af0cd3
 ### 1. Partial Updates
 
 **Functionality:**
+
 - Only updates fields that are provided in request
 - Supports any combination of fields
 - Dynamic SQL query building
 - No need to send entire visit object
 
 **Implementation:**
+
 ```typescript
 const updates: string[] = [];
 const values: (string | number | null)[] = [];
@@ -193,6 +196,7 @@ const updateQuery = `
 ```
 
 **Benefits:**
+
 - Efficient network usage (only send changed data)
 - Supports auto-save patterns (save field on change)
 - Flexible for different update scenarios
@@ -200,12 +204,14 @@ const updateQuery = `
 ### 2. Automatic Duration Calculation
 
 **Functionality:**
+
 - Calculates duration when check-out time is provided
 - Duration = check_out_time - check_in_time (in minutes)
 - Rounded to nearest minute
 - Stored in `duration_minutes` field
 
 **Implementation:**
+
 ```typescript
 if (checkOutTime && visit.check_in_time) {
   const checkInTime = new Date(visit.check_in_time);
@@ -213,13 +219,14 @@ if (checkOutTime && visit.check_in_time) {
   const durationMinutes = Math.round(
     (checkOutTimeDate.getTime() - checkInTime.getTime()) / (1000 * 60)
   );
-  
+
   updates.push(`duration_minutes = $${paramCount}`);
   values.push(durationMinutes);
 }
 ```
 
 **Example:**
+
 - Check-in: 10:05:00
 - Check-out: 11:05:30
 - Duration: 61 minutes (60.5 rounded up)
@@ -227,12 +234,14 @@ if (checkOutTime && visit.check_in_time) {
 ### 3. Documentation Upsert
 
 **Functionality:**
+
 - Updates documentation if it exists
 - Creates documentation if it doesn't exist
 - Supports partial documentation updates
 - Each field can be updated independently
 
 **Implementation:**
+
 ```typescript
 // Check if documentation exists
 const docResult = await client.query(
@@ -248,7 +257,7 @@ if (docResult.rows.length > 0) {
     docValues.push(JSON.stringify(documentation.vitalSigns));
   }
   // ... other fields
-  
+
   await client.query(
     `UPDATE visit_documentation SET ${docUpdates.join(', ')} WHERE visit_id = $${paramCount}`,
     docValues
@@ -256,7 +265,7 @@ if (docResult.rows.length > 0) {
 } else {
   // Create new documentation
   await client.query(
-    `INSERT INTO visit_documentation (visit_id, vital_signs, activities, observations, concerns) 
+    `INSERT INTO visit_documentation (visit_id, vital_signs, activities, observations, concerns)
      VALUES ($1, $2, $3, $4, $5)`,
     [visitId, ...]
   );
@@ -266,17 +275,16 @@ if (docResult.rows.length > 0) {
 ### 4. Ownership Authorization
 
 **Functionality:**
+
 - Caregivers can only update their own visits
 - Coordinators and admins can update any visit
 - Verified before any updates are made
 
 **Implementation:**
+
 ```typescript
 // Get visit and verify ownership
-const visitResult = await client.query(
-  'SELECT id, staff_id FROM visits WHERE id = $1',
-  [visitId]
-);
+const visitResult = await client.query('SELECT id, staff_id FROM visits WHERE id = $1', [visitId]);
 
 const visit = visitResult.rows[0];
 
@@ -284,7 +292,7 @@ const visit = visitResult.rows[0];
 if (userRole === 'caregiver' && visit.staff_id !== userId) {
   return res.status(403).json({
     error: 'Forbidden',
-    message: 'You can only update your own visits'
+    message: 'You can only update your own visits',
   });
 }
 ```
@@ -292,22 +300,25 @@ if (userRole === 'caregiver' && visit.staff_id !== userId) {
 ### 5. Status Management
 
 **Functionality:**
+
 - Supports status transitions
 - Valid statuses: 'completed', 'cancelled', 'in_progress'
 - Validated before update
 
 **Status Flow:**
+
 ```
 scheduled → in_progress → completed
          ↘ cancelled
 ```
 
 **Validation:**
+
 ```typescript
 if (status && !['completed', 'cancelled', 'in_progress'].includes(status)) {
   return res.status(400).json({
     error: 'Bad Request',
-    message: 'status must be one of: completed, cancelled, in_progress'
+    message: 'status must be one of: completed, cancelled, in_progress',
   });
 }
 ```
@@ -315,16 +326,18 @@ if (status && !['completed', 'cancelled', 'in_progress'].includes(status)) {
 ### 6. GPS Coordinate Handling
 
 **Functionality:**
+
 - Optional check-out GPS coordinates
 - Same validation as check-in (-90 to 90 lat, -180 to 180 long)
 - Preserves 0 as valid coordinate (nullish coalescing)
 
 **Validation:**
+
 ```typescript
 if (checkOutLatitude !== undefined && (checkOutLatitude < -90 || checkOutLatitude > 90)) {
   return res.status(400).json({
     error: 'Bad Request',
-    message: 'checkOutLatitude must be between -90 and 90'
+    message: 'checkOutLatitude must be between -90 and 90',
   });
 }
 ```
@@ -332,20 +345,22 @@ if (checkOutLatitude !== undefined && (checkOutLatitude < -90 || checkOutLatitud
 ### 7. Transaction Management
 
 **Functionality:**
+
 - All updates in single transaction
 - Automatic rollback on any error
 - Ensures data consistency
 
 **Implementation:**
+
 ```typescript
 const client = await pool.connect();
 try {
   await client.query('BEGIN');
-  
+
   // 1. Verify visit exists and ownership
   // 2. Update visit fields
   // 3. Update documentation if provided
-  
+
   await client.query('COMMIT');
 } catch (error) {
   await client.query('ROLLBACK');
@@ -362,6 +377,7 @@ try {
 ### Test Coverage
 
 **7 integration tests covering:**
+
 - ✅ Successful visit completion with GPS and duration
 - ✅ Unauthenticated requests (401)
 - ✅ Wrong owner authorization (403)
@@ -402,10 +418,9 @@ it('should complete visit with check-out GPS and calculate duration', async () =
   expect(response.body.status).toBe('completed');
 
   // Verify duration was calculated (60 minutes)
-  const visitCheck = await pgPool.query(
-    'SELECT duration_minutes FROM visits WHERE id = $1',
-    [visitId]
-  );
+  const visitCheck = await pgPool.query('SELECT duration_minutes FROM visits WHERE id = $1', [
+    visitId,
+  ]);
   expect(visitCheck.rows[0].duration_minutes).toBe(60);
 });
 ```
@@ -427,6 +442,7 @@ apps/backend/tests/
 ### Code Organization
 
 **visits.routes.ts:**
+
 - `PATCH /:visitId` - Visit update endpoint handler
 - Dynamic query building for partial updates
 - Documentation upsert logic
@@ -435,23 +451,25 @@ apps/backend/tests/
 - Transaction management
 
 **Key Functions:**
+
 ```typescript
 // Dynamic update query building
-buildUpdateQuery(fields)
+buildUpdateQuery(fields);
 
 // Duration calculation
-calculateDuration(checkInTime, checkOutTime)
+calculateDuration(checkInTime, checkOutTime);
 
 // Documentation upsert
-upsertDocumentation(visitId, documentation)
+upsertDocumentation(visitId, documentation);
 
 // Ownership verification
-verifyOwnership(visitId, userId, userRole)
+verifyOwnership(visitId, userId, userRole);
 ```
 
 ### Logging
 
 **Success Logging:**
+
 ```typescript
 logInfo('Visit updated successfully', {
   visitId,
@@ -464,6 +482,7 @@ logInfo('Visit updated successfully', {
 ```
 
 **Error Logging:**
+
 ```typescript
 logError('Error updating visit', error as Error, {
   visitId,
@@ -480,12 +499,14 @@ logError('Error updating visit', error as Error, {
 **Decision:** Build SQL UPDATE query dynamically based on provided fields
 
 **Rationale:**
+
 - **Efficiency**: Only update fields that changed
 - **Flexibility**: Supports any combination of fields
 - **Auto-save**: Perfect for auto-save patterns (save on field change)
 - **Network**: Reduces payload size
 
 **Implementation:**
+
 ```typescript
 const updates: string[] = [];
 const values: (string | number | null)[] = [];
@@ -508,14 +529,16 @@ if (updates.length > 0) {
 **Decision:** Calculate duration server-side when check-out time is provided
 
 **Rationale:**
+
 - **Accuracy**: Server time is authoritative
 - **Consistency**: Same calculation logic for all visits
 - **Simplicity**: Client doesn't need to calculate
 - **Validation**: Ensures duration matches actual times
 
 **Formula:**
+
 ```typescript
-duration_minutes = ROUND((check_out_time - check_in_time) / 60000)
+duration_minutes = ROUND((check_out_time - check_in_time) / 60000);
 ```
 
 ### 3. Documentation Upsert Pattern
@@ -523,12 +546,14 @@ duration_minutes = ROUND((check_out_time - check_in_time) / 60000)
 **Decision:** Update if exists, create if doesn't exist
 
 **Rationale:**
+
 - **Flexibility**: Works whether documentation exists or not
 - **Simplicity**: Client doesn't need to check existence
 - **Consistency**: Same endpoint for both cases
 - **Idempotent**: Can be called multiple times safely
 
 **Trade-offs:**
+
 - Pros: Simple API, flexible, idempotent
 - Cons: Extra query to check existence (acceptable overhead)
 
@@ -537,6 +562,7 @@ duration_minutes = ROUND((check_out_time - check_in_time) / 60000)
 **Decision:** Caregivers can only update their own visits
 
 **Rationale:**
+
 - **Security**: Prevents unauthorized modifications
 - **Data Integrity**: Ensures visit ownership
 - **Audit Trail**: Clear responsibility
@@ -549,12 +575,14 @@ duration_minutes = ROUND((check_out_time - check_in_time) / 60000)
 **Decision:** Return 400 error if no fields provided
 
 **Rationale:**
+
 - **Clarity**: Makes it clear that something is wrong
 - **Efficiency**: Avoids unnecessary database operations
 - **API Design**: Explicit is better than implicit
 - **Debugging**: Easier to identify client-side issues
 
 **Alternative Considered:** Return 200 with no changes
+
 - Rejected because it hides potential bugs in client code
 
 ### 6. Status Validation
@@ -562,12 +590,14 @@ duration_minutes = ROUND((check_out_time - check_in_time) / 60000)
 **Decision:** Validate status against allowed values
 
 **Rationale:**
+
 - **Data Integrity**: Prevents invalid states
 - **Business Logic**: Enforces valid status transitions
 - **Error Prevention**: Catches typos and bugs early
 - **Documentation**: Makes valid values explicit
 
 **Valid Statuses:**
+
 - `scheduled` - Visit is scheduled
 - `in_progress` - Visit has started (checked in)
 - `completed` - Visit is finished (checked out)
@@ -580,6 +610,7 @@ duration_minutes = ROUND((check_out_time - check_in_time) / 60000)
 ### Database Queries
 
 **Query Count per Request:**
+
 - 1 query: Get visit and verify ownership
 - 1 query: Update visit (if visit fields provided)
 - 1 query: Check documentation existence (if documentation provided)
@@ -590,21 +621,25 @@ duration_minutes = ROUND((check_out_time - check_in_time) / 60000)
 ### Query Optimization
 
 **Indexes Used:**
+
 - Primary key index on `visits.id` (visit lookup)
 - Index on `visit_documentation.visit_id` (documentation lookup)
 
 **Expected Response Time:**
+
 - Visit update only: <30ms
 - With documentation: <50ms
 
 ### Caching Strategy
 
 **Not Cached:**
+
 - Updates are write operations
 - Real-time data required
 - Each update is unique
 
 **Future Optimization:**
+
 - Cache invalidation for GET endpoints
 - Invalidate visit cache on update
 
@@ -647,12 +682,14 @@ duration_minutes = ROUND((check_out_time - check_in_time) / 60000)
 ### 400 Bad Request
 
 **Causes:**
+
 - Invalid UUID format
 - Invalid GPS coordinates
 - Invalid status value
 - No updates provided
 
 **Example:**
+
 ```json
 {
   "error": "Bad Request",
@@ -663,11 +700,13 @@ duration_minutes = ROUND((check_out_time - check_in_time) / 60000)
 ### 401 Unauthorized
 
 **Causes:**
+
 - Missing Authorization header
 - Invalid JWT token
 - Expired JWT token
 
 **Example:**
+
 ```json
 {
   "error": "Unauthorized",
@@ -678,9 +717,11 @@ duration_minutes = ROUND((check_out_time - check_in_time) / 60000)
 ### 403 Forbidden
 
 **Causes:**
+
 - Caregiver trying to update another caregiver's visit
 
 **Example:**
+
 ```json
 {
   "error": "Forbidden",
@@ -691,10 +732,12 @@ duration_minutes = ROUND((check_out_time - check_in_time) / 60000)
 ### 404 Not Found
 
 **Causes:**
+
 - Visit does not exist
 - Visit has been deleted
 
 **Example:**
+
 ```json
 {
   "error": "Not Found",
@@ -705,11 +748,13 @@ duration_minutes = ROUND((check_out_time - check_in_time) / 60000)
 ### 500 Internal Server Error
 
 **Causes:**
+
 - Database connection error
 - Unexpected server error
 - Transaction failure
 
 **Example:**
+
 ```json
 {
   "error": "Internal Server Error",
@@ -728,15 +773,15 @@ duration_minutes = ROUND((check_out_time - check_in_time) / 60000)
 await fetch(`/api/v1/visits/${visitId}`, {
   method: 'PATCH',
   headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
   },
   body: JSON.stringify({
     checkOutTime: new Date().toISOString(),
     checkOutLatitude: position.coords.latitude,
     checkOutLongitude: position.coords.longitude,
-    status: 'completed'
-  })
+    status: 'completed',
+  }),
 });
 ```
 
@@ -748,12 +793,12 @@ const debouncedSave = debounce(async (observations) => {
   await fetch(`/api/v1/visits/${visitId}`, {
     method: 'PATCH',
     headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      documentation: { observations }
-    })
+      documentation: { observations },
+    }),
   });
 }, 1000);
 ```
@@ -765,12 +810,12 @@ const debouncedSave = debounce(async (observations) => {
 await fetch(`/api/v1/visits/${visitId}`, {
   method: 'PATCH',
   headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
   },
   body: JSON.stringify({
-    status: 'cancelled'
-  })
+    status: 'cancelled',
+  }),
 });
 ```
 

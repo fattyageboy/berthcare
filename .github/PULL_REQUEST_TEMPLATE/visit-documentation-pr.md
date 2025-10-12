@@ -284,6 +284,7 @@ If issues are discovered after merge:
 ## Merge Strategy
 
 **Squash and merge** with commit message:
+
 ```text
 feat: implement visit documentation API
 

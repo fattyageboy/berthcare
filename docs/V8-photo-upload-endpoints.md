@@ -3,11 +3,12 @@
 **Task ID:** V8  
 **Status:** ✅ Complete  
 **Date:** October 12, 2025  
-**Endpoints:** 
+**Endpoints:**
+
 - POST /api/v1/visits/:visitId/photos/upload-url
 - POST /api/v1/visits/:visitId/photos  
-**Estimated Effort:** 2 days  
-**Actual Effort:** 2 days
+  **Estimated Effort:** 2 days  
+  **Actual Effort:** 2 days
 
 ---
 
@@ -33,9 +34,9 @@ Implemented the photo upload flow using S3 pre-signed URLs for secure, direct-to
 
 ```typescript
 {
-  fileName: string;              // Required - Original file name
-  mimeType: string;              // Required - MIME type (image/jpeg, image/png, image/webp, image/heic)
-  fileSize: number;              // Required - File size in bytes (max 2MB)
+  fileName: string; // Required - Original file name
+  mimeType: string; // Required - MIME type (image/jpeg, image/png, image/webp, image/heic)
+  fileSize: number; // Required - File size in bytes (max 2MB)
 }
 ```
 
@@ -43,9 +44,9 @@ Implemented the photo upload flow using S3 pre-signed URLs for secure, direct-to
 
 ```typescript
 {
-  uploadUrl: string;             // Pre-signed S3 URL (expires in 1 hour)
-  photoKey: string;              // S3 object key for later reference
-  expiresAt: string;             // ISO 8601 timestamp when URL expires
+  uploadUrl: string; // Pre-signed S3 URL (expires in 1 hour)
+  photoKey: string; // S3 object key for later reference
+  expiresAt: string; // ISO 8601 timestamp when URL expires
 }
 ```
 
@@ -75,23 +76,23 @@ Implemented the photo upload flow using S3 pre-signed URLs for secure, direct-to
 
 ```typescript
 {
-  id: string;                    // UUID of photo record
-  photoKey: string;              // S3 object key
-  photoUrl: string;              // Full S3 URL
-  thumbnailKey: string | null;   // S3 key for thumbnail
-  uploadedAt: string;            // ISO 8601 timestamp
+  id: string; // UUID of photo record
+  photoKey: string; // S3 object key
+  photoUrl: string; // Full S3 URL
+  thumbnailKey: string | null; // S3 key for thumbnail
+  uploadedAt: string; // ISO 8601 timestamp
 }
 ```
 
 ### Error Responses
 
-| Status | Error | Description |
-|--------|-------|-------------|
-| 400 | Bad Request | Missing required fields, invalid format, or file too large |
-| 401 | Unauthorized | Missing or invalid JWT token |
-| 403 | Forbidden | Not authorized to upload photos for this visit |
-| 404 | Not Found | Visit does not exist |
-| 500 | Internal Server Error | Database or S3 error |
+| Status | Error                 | Description                                                |
+| ------ | --------------------- | ---------------------------------------------------------- |
+| 400    | Bad Request           | Missing required fields, invalid format, or file too large |
+| 401    | Unauthorized          | Missing or invalid JWT token                               |
+| 403    | Forbidden             | Not authorized to upload photos for this visit             |
+| 404    | Not Found             | Visit does not exist                                       |
+| 500    | Internal Server Error | Database or S3 error                                       |
 
 ---
 
@@ -111,6 +112,7 @@ curl -X POST http://localhost:3000/api/v1/visits/786bd901-f1bb-48e4-96d9-af0cd3e
 ```
 
 **Response:**
+
 ```json
 {
   "uploadUrl": "https://berthcare-photos-dev.s3.ca-central-1.amazonaws.com/visits/786bd901-f1bb-48e4-96d9-af0cd3ee84ba/photos/1760246409476-wound-photo.jpg?X-Amz-Algorithm=...",
@@ -143,6 +145,7 @@ curl -X POST http://localhost:3000/api/v1/visits/786bd901-f1bb-48e4-96d9-af0cd3e
 ```
 
 **Response:**
+
 ```json
 {
   "id": "3cf06086-95f4-49d0-b626-92a19c474c56",
@@ -160,6 +163,7 @@ curl -X POST http://localhost:3000/api/v1/visits/786bd901-f1bb-48e4-96d9-af0cd3e
 ### 1. Pre-Signed URL Generation
 
 **Functionality:**
+
 - Generates secure, time-limited S3 upload URLs
 - Validates file size (max 2MB after compression)
 - Validates MIME type (JPEG, PNG, WebP, HEIC)
@@ -167,12 +171,14 @@ curl -X POST http://localhost:3000/api/v1/visits/786bd901-f1bb-48e4-96d9-af0cd3e
 - Includes metadata in S3 object
 
 **Benefits:**
+
 - **Direct Upload**: Mobile app uploads directly to S3 (bypasses backend)
 - **Performance**: Reduces backend load and network latency
 - **Security**: Time-limited URLs (1 hour expiration)
 - **Scalability**: S3 handles upload traffic, not backend
 
 **Implementation:**
+
 ```typescript
 const timestamp = Date.now();
 const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
@@ -194,6 +200,7 @@ const { url } = await generatePhotoUploadUrl(visitId, fileName, metadata);
 ### 2. Photo Metadata Recording
 
 **Functionality:**
+
 - Records photo metadata in database after successful upload
 - Links photo to visit
 - Stores S3 keys for full-size and thumbnail images
@@ -201,6 +208,7 @@ const { url } = await generatePhotoUploadUrl(visitId, fileName, metadata);
 - Invalidates visit detail cache
 
 **Database Operations:**
+
 ```sql
 INSERT INTO visit_photos (
   visit_id, s3_key, s3_url, thumbnail_s3_key,
@@ -214,23 +222,26 @@ RETURNING id, s3_key, s3_url, thumbnail_s3_key, uploaded_at;
 **Constraint:** Maximum 2MB per photo (after compression)
 
 **Rationale:**
+
 - **Mobile Performance**: Faster uploads on 3G/4G
 - **Storage Costs**: Reduced S3 storage costs
 - **User Experience**: Quick upload times
 - **Compression**: Mobile app compresses before upload
 
 **Implementation:**
+
 ```typescript
 const maxSize = 2 * 1024 * 1024; // 2MB
 if (fileSize > maxSize) {
   return res.status(400).json({
     error: 'Bad Request',
-    message: 'File size exceeds maximum of 2MB. Please compress the image before upload.'
+    message: 'File size exceeds maximum of 2MB. Please compress the image before upload.',
   });
 }
 ```
 
 **Expected Compression:**
+
 - Original: 5-10MB (high-res phone camera)
 - Compressed: 1-2MB (1920px width, 80% quality)
 - Thumbnail: 50-100KB (320px width)
@@ -240,23 +251,26 @@ if (fileSize > maxSize) {
 ### 4. MIME Type Validation
 
 **Supported Types:**
+
 - `image/jpeg` - JPEG/JPG images
 - `image/png` - PNG images
 - `image/webp` - WebP images (modern format)
 - `image/heic` - HEIC images (iOS default)
 
 **Implementation:**
+
 ```typescript
 const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
 if (!allowedTypes.includes(mimeType)) {
   return res.status(400).json({
     error: 'Bad Request',
-    message: `Invalid MIME type. Allowed types: ${allowedTypes.join(', ')}`
+    message: `Invalid MIME type. Allowed types: ${allowedTypes.join(', ')}`,
   });
 }
 ```
 
 **Why These Types:**
+
 - **JPEG**: Universal support, good compression
 - **PNG**: Lossless, good for screenshots
 - **WebP**: Modern format, better compression than JPEG
@@ -265,19 +279,22 @@ if (!allowedTypes.includes(mimeType)) {
 ### 5. File Name Sanitization
 
 **Functionality:**
+
 - Removes special characters from file names
 - Prevents path traversal attacks
 - Ensures S3 key compatibility
 - Preserves file extension
 
 **Implementation:**
+
 ```typescript
 const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
-// "photo with spaces & special!chars.jpg" 
+// "photo with spaces & special!chars.jpg"
 // becomes "photo_with_spaces___special_chars.jpg"
 ```
 
 **Security Benefits:**
+
 - Prevents directory traversal (../)
 - Prevents command injection
 - Ensures valid S3 keys
@@ -286,24 +303,25 @@ const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
 ### 6. Authorization & Security
 
 **Authorization Checks:**
+
 1. **Authentication**: JWT token required
 2. **Visit Ownership**: Caregiver must own the visit
 3. **Coordinator Override**: Coordinators/admins can upload to any visit
 4. **Visit Existence**: Visit must exist
 
 **Implementation:**
+
 ```typescript
 // Get visit and verify ownership
-const visit = await pool.query(
-  'SELECT id, staff_id, client_id, status FROM visits WHERE id = $1',
-  [visitId]
-);
+const visit = await pool.query('SELECT id, staff_id, client_id, status FROM visits WHERE id = $1', [
+  visitId,
+]);
 
 // Authorization check
 if (userRole === 'caregiver' && visit.staff_id !== userId) {
   return res.status(403).json({
     error: 'Forbidden',
-    message: 'You can only upload photos for your own visits'
+    message: 'You can only upload photos for your own visits',
   });
 }
 ```
@@ -313,17 +331,20 @@ if (userRole === 'caregiver' && visit.staff_id !== userId) {
 ### 7. Cache Invalidation
 
 **Functionality:**
+
 - Invalidates visit detail cache after photo upload
 - Ensures fresh data on subsequent requests
 - Uses exact cache key matching
 
 **Implementation:**
+
 ```typescript
 const cacheKeyPattern = `visit:detail:${visitId}`;
 await redisClient.del(cacheKeyPattern);
 ```
 
 **Why This Matters:**
+
 - Visit detail endpoint includes photo list
 - Cache must be cleared to show new photos
 - Prevents stale data in mobile app
@@ -331,17 +352,20 @@ await redisClient.del(cacheKeyPattern);
 ### 8. Thumbnail Support
 
 **Functionality:**
+
 - Optional thumbnail key for 320px width images
 - Stored separately from full-size image
 - Used for list views and previews
 
 **Expected Flow:**
+
 1. Mobile app compresses image to 1920px width (full-size)
 2. Mobile app generates thumbnail at 320px width
 3. Mobile app uploads both to S3
 4. Mobile app records both keys in database
 
 **Benefits:**
+
 - **Performance**: Fast loading in list views
 - **Bandwidth**: Reduced data usage
 - **UX**: Instant previews, progressive loading
@@ -355,6 +379,7 @@ await redisClient.del(cacheKeyPattern);
 **29 integration tests covering:**
 
 **Upload URL Generation (15 tests):**
+
 - ✅ Generate pre-signed URL for valid request
 - ✅ Accept PNG images
 - ✅ Accept WebP images
@@ -372,6 +397,7 @@ await redisClient.del(cacheKeyPattern);
 - ✅ Return 404 for non-existent visit
 
 **Photo Metadata Recording (14 tests):**
+
 - ✅ Record photo metadata after upload
 - ✅ Record photo with thumbnail key
 - ✅ Allow coordinator to record photo
@@ -471,6 +497,7 @@ apps/backend/tests/
 ### Code Organization
 
 **visits.routes.ts:**
+
 - `POST /:visitId/photos/upload-url` - Generate pre-signed URL
 - `POST /:visitId/photos` - Record photo metadata
 - Request/response interfaces
@@ -479,12 +506,14 @@ apps/backend/tests/
 - Cache invalidation
 
 **s3-client.ts:**
+
 - `generatePhotoUploadUrl()` - Generate pre-signed URL with metadata
 - `S3_BUCKETS` - Bucket name constants
 - `FILE_CONFIGS` - File type configurations
 - S3 client initialization
 
 **photo-storage.ts:**
+
 - `requestPhotoUpload()` - High-level photo upload request
 - `getPhotoDownloadUrl()` - Generate download URLs
 - `validatePhotoMetadata()` - Metadata validation
@@ -497,14 +526,14 @@ async function generatePhotoUploadUrl(
   visitId: string,
   fileName: string,
   metadata: Partial<PhotoMetadata>
-): Promise<{ url: string; key: string }>
+): Promise<{ url: string; key: string }>;
 
 // Record photo metadata
 async function recordPhotoMetadata(
   visitId: string,
   photoKey: string,
   metadata: PhotoMetadata
-): Promise<PhotoRecord>
+): Promise<PhotoRecord>;
 ```
 
 ---
@@ -516,6 +545,7 @@ async function recordPhotoMetadata(
 **Decision:** Use S3 pre-signed URLs for direct uploads
 
 **Rationale:**
+
 - **Performance**: Eliminates backend as bottleneck
 - **Scalability**: S3 handles upload traffic
 - **Cost**: Reduces backend compute costs
@@ -523,10 +553,12 @@ async function recordPhotoMetadata(
 - **Bandwidth**: Reduces backend bandwidth usage
 
 **Trade-offs:**
+
 - Pros: Better performance, lower costs, more scalable
 - Cons: Two-step process, requires S3 configuration
 
 **Alternative Considered:**
+
 - Upload through backend (multipart/form-data)
 - Rejected: Backend becomes bottleneck, higher costs
 
@@ -535,12 +567,14 @@ async function recordPhotoMetadata(
 **Decision:** Separate URL generation and metadata recording
 
 **Rationale:**
+
 - **Flexibility**: Mobile app controls upload timing
 - **Retry Logic**: Can retry upload without new URL
 - **Offline Support**: Generate URL online, upload later
 - **Error Handling**: Clear separation of concerns
 
 **Flow:**
+
 ```
 1. Mobile app requests pre-signed URL
 2. Backend validates and generates URL
@@ -549,6 +583,7 @@ async function recordPhotoMetadata(
 ```
 
 **Benefits:**
+
 - Mobile app can compress image before requesting URL
 - Upload can be retried without backend involvement
 - Metadata only recorded after successful upload
@@ -558,17 +593,20 @@ async function recordPhotoMetadata(
 **Decision:** Maximum 2MB per photo after compression
 
 **Rationale:**
+
 - **Mobile Performance**: Fast uploads on 3G/4G (5-10 seconds)
 - **Storage Costs**: $0.023/GB/month in S3 (ca-central-1)
 - **User Experience**: Quick upload, no waiting
 - **Quality**: 1920px width at 80% quality is sufficient
 
 **Compression Strategy:**
+
 - Original: 5-10MB (4000x3000px, 100% quality)
 - Compressed: 1-2MB (1920px width, 80% quality)
 - Thumbnail: 50-100KB (320px width, 70% quality)
 
 **Cost Analysis:**
+
 - 1000 photos/month at 2MB = 2GB storage
 - S3 cost: $0.046/month
 - Transfer cost: $0.09/GB = $0.18/month
@@ -581,17 +619,20 @@ async function recordPhotoMetadata(
 **Decision:** Replace special characters with underscores
 
 **Rationale:**
+
 - **Security**: Prevents path traversal attacks
 - **Compatibility**: Ensures valid S3 keys
 - **Readability**: Maintains human-readable names
 - **Simplicity**: Simple regex replacement
 
 **Implementation:**
+
 ```typescript
-fileName.replace(/[^a-zA-Z0-9.-]/g, '_')
+fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
 ```
 
 **Examples:**
+
 - `photo with spaces.jpg` → `photo_with_spaces.jpg`
 - `wound-photo!@#.jpg` → `wound-photo___.jpg`
 - `../../../etc/passwd` → `____________etc_passwd`
@@ -601,17 +642,20 @@ fileName.replace(/[^a-zA-Z0-9.-]/g, '_')
 **Decision:** Include timestamp in S3 keys
 
 **Rationale:**
+
 - **Uniqueness**: Prevents key collisions
 - **Ordering**: Natural chronological ordering
 - **Debugging**: Easy to identify when photo was uploaded
 - **Immutability**: Photos never overwrite each other
 
 **Key Format:**
+
 ```
 visits/{visitId}/photos/{timestamp}-{sanitizedFileName}
 ```
 
 **Example:**
+
 ```
 visits/786bd901-f1bb-48e4-96d9-af0cd3ee84ba/photos/1760246409476-wound-photo.jpg
 ```
@@ -621,12 +665,14 @@ visits/786bd901-f1bb-48e4-96d9-af0cd3ee84ba/photos/1760246409476-wound-photo.jpg
 **Decision:** Store metadata in S3 object metadata
 
 **Rationale:**
+
 - **Traceability**: Know who uploaded, when, and why
 - **Debugging**: Easier troubleshooting
 - **Compliance**: Audit trail for regulatory requirements
 - **Recovery**: Can reconstruct database from S3 if needed
 
 **Metadata Stored:**
+
 ```typescript
 {
   originalName: string;
@@ -646,11 +692,13 @@ visits/786bd901-f1bb-48e4-96d9-af0cd3ee84ba/photos/1760246409476-wound-photo.jpg
 ### Upload Performance
 
 **Expected Upload Times (2MB photo):**
+
 - 4G LTE (20 Mbps): ~1 second
 - 3G (2 Mbps): ~8 seconds
 - WiFi (50 Mbps): <1 second
 
 **Optimization Strategies:**
+
 - Direct S3 upload (no backend bottleneck)
 - Compression before upload (1920px width)
 - Progressive upload (show progress bar)
@@ -661,15 +709,18 @@ visits/786bd901-f1bb-48e4-96d9-af0cd3ee84ba/photos/1760246409476-wound-photo.jpg
 **Query Count per Request:**
 
 **Upload URL Generation:**
+
 - 1 query: Get visit and verify ownership
 - Total: 1 query (~10ms)
 
 **Metadata Recording:**
+
 - 1 query: Get visit and verify ownership
 - 1 query: Insert photo metadata
 - Total: 2 queries (~20ms)
 
 **Indexes Used:**
+
 - `idx_visits_id` (primary key) - Visit lookup
 - `idx_visit_photos_visit_id` - Photo listing
 - `unique_s3_key` - Duplicate prevention
@@ -677,11 +728,13 @@ visits/786bd901-f1bb-48e4-96d9-af0cd3ee84ba/photos/1760246409476-wound-photo.jpg
 ### Caching Strategy
 
 **Cache Invalidation:**
+
 - Visit detail cache cleared after photo upload
 - Ensures fresh photo list on next request
 - Uses exact key matching for efficiency
 
 **Not Cached:**
+
 - Photo upload operations (write operations)
 - Pre-signed URLs (time-sensitive, unique)
 
@@ -726,6 +779,7 @@ visits/786bd901-f1bb-48e4-96d9-af0cd3ee84ba/photos/1760246409476-wound-photo.jpg
 ### 400 Bad Request
 
 **Causes:**
+
 - File size exceeds 2MB
 - Invalid MIME type
 - Missing required fields
@@ -733,6 +787,7 @@ visits/786bd901-f1bb-48e4-96d9-af0cd3ee84ba/photos/1760246409476-wound-photo.jpg
 - PhotoKey doesn't match visitId
 
 **Examples:**
+
 ```json
 {
   "error": "Bad Request",
@@ -750,11 +805,13 @@ visits/786bd901-f1bb-48e4-96d9-af0cd3ee84ba/photos/1760246409476-wound-photo.jpg
 ### 401 Unauthorized
 
 **Causes:**
+
 - Missing Authorization header
 - Invalid JWT token
 - Expired JWT token
 
 **Example:**
+
 ```json
 {
   "error": {
@@ -769,10 +826,12 @@ visits/786bd901-f1bb-48e4-96d9-af0cd3ee84ba/photos/1760246409476-wound-photo.jpg
 ### 403 Forbidden
 
 **Causes:**
+
 - Caregiver uploading to another caregiver's visit
 - User not authorized for this visit
 
 **Example:**
+
 ```json
 {
   "error": "Forbidden",
@@ -783,10 +842,12 @@ visits/786bd901-f1bb-48e4-96d9-af0cd3ee84ba/photos/1760246409476-wound-photo.jpg
 ### 404 Not Found
 
 **Causes:**
+
 - Visit does not exist
 - Visit has been deleted
 
 **Example:**
+
 ```json
 {
   "error": "Not Found",
@@ -797,11 +858,13 @@ visits/786bd901-f1bb-48e4-96d9-af0cd3ee84ba/photos/1760246409476-wound-photo.jpg
 ### 500 Internal Server Error
 
 **Causes:**
+
 - S3 connection error
 - Database connection error
 - Unexpected server error
 
 **Example:**
+
 ```json
 {
   "error": "Internal Server Error",
@@ -820,31 +883,28 @@ visits/786bd901-f1bb-48e4-96d9-af0cd3ee84ba/photos/1760246409476-wound-photo.jpg
 const compressedImage = await compressImage(originalImage, {
   maxWidth: 1920,
   quality: 0.8,
-  format: 'jpeg'
+  format: 'jpeg',
 });
 
 const thumbnail = await compressImage(originalImage, {
   maxWidth: 320,
   quality: 0.7,
-  format: 'jpeg'
+  format: 'jpeg',
 });
 
 // Step 2: Request pre-signed URLs
-const fullSizeResponse = await fetch(
-  `/api/v1/visits/${visitId}/photos/upload-url`,
-  {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      fileName: 'wound-photo.jpg',
-      mimeType: 'image/jpeg',
-      fileSize: compressedImage.size
-    })
-  }
-);
+const fullSizeResponse = await fetch(`/api/v1/visits/${visitId}/photos/upload-url`, {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    fileName: 'wound-photo.jpg',
+    mimeType: 'image/jpeg',
+    fileSize: compressedImage.size,
+  }),
+});
 
 const { uploadUrl, photoKey } = await fullSizeResponse.json();
 
@@ -852,25 +912,25 @@ const { uploadUrl, photoKey } = await fullSizeResponse.json();
 await fetch(uploadUrl, {
   method: 'PUT',
   headers: {
-    'Content-Type': 'image/jpeg'
+    'Content-Type': 'image/jpeg',
   },
-  body: compressedImage.blob
+  body: compressedImage.blob,
 });
 
 // Step 4: Record metadata
 await fetch(`/api/v1/visits/${visitId}/photos`, {
   method: 'POST',
   headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
   },
   body: JSON.stringify({
     photoKey,
     fileName: 'wound-photo.jpg',
     fileSize: compressedImage.size,
     mimeType: 'image/jpeg',
-    thumbnailKey: thumbnailKey // if thumbnail uploaded
-  })
+    thumbnailKey: thumbnailKey, // if thumbnail uploaded
+  }),
 });
 ```
 
@@ -906,12 +966,14 @@ try {
 **Future:** Backend service for server-side compression
 
 **Benefits:**
+
 - Consistent compression quality
 - Automatic format conversion (HEIC → JPEG)
 - Automatic thumbnail generation
 - Reduced mobile app complexity
 
 **Implementation:**
+
 - Lambda function triggered on S3 upload
 - Sharp library for image processing
 - Automatic thumbnail generation (320px)
@@ -922,6 +984,7 @@ try {
 **Endpoint:** GET /api/v1/visits/:visitId/photos/:photoId
 
 **Functionality:**
+
 - Generate pre-signed download URLs
 - Support for full-size and thumbnail
 - Time-limited URLs (1 hour)
@@ -932,6 +995,7 @@ try {
 **Endpoint:** DELETE /api/v1/visits/:visitId/photos/:photoId
 
 **Functionality:**
+
 - Soft delete (mark as deleted)
 - Hard delete after 30 days
 - Delete from S3 and database
@@ -942,6 +1006,7 @@ try {
 **Endpoint:** POST /api/v1/visits/:visitId/photos/bulk
 
 **Functionality:**
+
 - Upload multiple photos at once
 - Generate multiple pre-signed URLs
 - Batch metadata recording
@@ -952,6 +1017,7 @@ try {
 **Endpoint:** GET /api/v1/photos/search
 
 **Functionality:**
+
 - Search by client, date range, caregiver
 - Filter by file size, MIME type
 - Pagination support
@@ -1004,6 +1070,7 @@ try {
 ### Success Logging
 
 **Upload URL Generation:**
+
 ```typescript
 logInfo('Photo upload URL generated', {
   visitId,
@@ -1015,6 +1082,7 @@ logInfo('Photo upload URL generated', {
 ```
 
 **Metadata Recording:**
+
 ```typescript
 logInfo('Photo metadata recorded', {
   visitId,
@@ -1045,4 +1113,3 @@ logError('Error recording photo metadata', error as Error, {
 
 **Status:** ✅ Complete  
 **Next Task:** Mobile app photo upload implementation
-

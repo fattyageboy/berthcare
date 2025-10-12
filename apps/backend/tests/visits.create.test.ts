@@ -145,6 +145,22 @@ describe('POST /v1/visits', () => {
       expect(parseFloat(response.body.checkInLatitude)).toBeCloseTo(43.6532, 4);
       expect(parseFloat(response.body.checkInLongitude)).toBeCloseTo(-79.3832, 4);
     });
+
+    it('should create visit without GPS coordinates', async () => {
+      const response = await request(app)
+        .post('/api/v1/visits')
+        .set('Authorization', `Bearer ${caregiverToken}`)
+        .send({
+          clientId,
+          scheduledStartTime: '2025-10-12T09:00:00Z',
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.clientId).toBe(clientId);
+      expect(response.body.status).toBe('in_progress');
+      expect(response.body.checkInLatitude).toBeNull();
+      expect(response.body.checkInLongitude).toBeNull();
+    });
   });
 
   describe('Authorization', () => {
@@ -185,6 +201,60 @@ describe('POST /v1/visits', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.message).toContain('checkInLatitude');
+    });
+
+    it('should reject invalid check-in longitude', async () => {
+      const response = await request(app)
+        .post('/api/v1/visits')
+        .set('Authorization', `Bearer ${caregiverToken}`)
+        .send({
+          clientId,
+          scheduledStartTime: '2025-10-11T10:00:00Z',
+          checkInLatitude: 43.6532,
+          checkInLongitude: 181, // Invalid: > 180
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('checkInLongitude');
+    });
+
+    it('should reject invalid clientId format', async () => {
+      const response = await request(app)
+        .post('/api/v1/visits')
+        .set('Authorization', `Bearer ${caregiverToken}`)
+        .send({
+          clientId: 'invalid-uuid',
+          scheduledStartTime: '2025-10-11T10:00:00Z',
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('Invalid clientId format');
+    });
+
+    it('should reject invalid copiedFromVisitId format', async () => {
+      const response = await request(app)
+        .post('/api/v1/visits')
+        .set('Authorization', `Bearer ${caregiverToken}`)
+        .send({
+          clientId,
+          scheduledStartTime: '2025-10-11T10:00:00Z',
+          copiedFromVisitId: 'invalid-uuid',
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('Invalid copiedFromVisitId format');
+    });
+
+    it('should reject missing scheduledStartTime', async () => {
+      const response = await request(app)
+        .post('/api/v1/visits')
+        .set('Authorization', `Bearer ${caregiverToken}`)
+        .send({
+          clientId,
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('scheduledStartTime');
     });
   });
 });

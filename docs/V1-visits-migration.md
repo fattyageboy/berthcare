@@ -42,24 +42,24 @@ CREATE TABLE visits (
 
 ### Field Descriptions
 
-| Field | Type | Nullable | Description |
-|-------|------|----------|-------------|
-| `id` | UUID | NOT NULL | Unique visit identifier |
-| `client_id` | UUID | NOT NULL | Reference to client being visited |
-| `staff_id` | UUID | NOT NULL | Reference to caregiver performing visit |
-| `scheduled_start_time` | TIMESTAMP | NOT NULL | Scheduled start time for the visit |
-| `check_in_time` | TIMESTAMP | NULL | Actual time caregiver checked in (arrived) |
-| `check_in_latitude` | DECIMAL(10,8) | NULL | GPS latitude at check-in |
-| `check_in_longitude` | DECIMAL(11,8) | NULL | GPS longitude at check-in |
-| `check_out_time` | TIMESTAMP | NULL | Actual time caregiver checked out (left) |
-| `check_out_latitude` | DECIMAL(10,8) | NULL | GPS latitude at check-out |
-| `check_out_longitude` | DECIMAL(11,8) | NULL | GPS longitude at check-out |
-| `status` | VARCHAR(50) | NOT NULL | Visit status (ENUM constraint) |
-| `duration_minutes` | INTEGER | NULL | Calculated visit duration in minutes |
-| `copied_from_visit_id` | UUID | NULL | Reference to previous visit for data reuse |
-| `created_at` | TIMESTAMP | NOT NULL | Record creation timestamp |
-| `updated_at` | TIMESTAMP | NOT NULL | Record last update timestamp |
-| `synced_at` | TIMESTAMP | NULL | Last sync timestamp (offline-first support) |
+| Field                  | Type          | Nullable | Description                                 |
+| ---------------------- | ------------- | -------- | ------------------------------------------- |
+| `id`                   | UUID          | NOT NULL | Unique visit identifier                     |
+| `client_id`            | UUID          | NOT NULL | Reference to client being visited           |
+| `staff_id`             | UUID          | NOT NULL | Reference to caregiver performing visit     |
+| `scheduled_start_time` | TIMESTAMP     | NOT NULL | Scheduled start time for the visit          |
+| `check_in_time`        | TIMESTAMP     | NULL     | Actual time caregiver checked in (arrived)  |
+| `check_in_latitude`    | DECIMAL(10,8) | NULL     | GPS latitude at check-in                    |
+| `check_in_longitude`   | DECIMAL(11,8) | NULL     | GPS longitude at check-in                   |
+| `check_out_time`       | TIMESTAMP     | NULL     | Actual time caregiver checked out (left)    |
+| `check_out_latitude`   | DECIMAL(10,8) | NULL     | GPS latitude at check-out                   |
+| `check_out_longitude`  | DECIMAL(11,8) | NULL     | GPS longitude at check-out                  |
+| `status`               | VARCHAR(50)   | NOT NULL | Visit status (ENUM constraint)              |
+| `duration_minutes`     | INTEGER       | NULL     | Calculated visit duration in minutes        |
+| `copied_from_visit_id` | UUID          | NULL     | Reference to previous visit for data reuse  |
+| `created_at`           | TIMESTAMP     | NOT NULL | Record creation timestamp                   |
+| `updated_at`           | TIMESTAMP     | NOT NULL | Record last update timestamp                |
+| `synced_at`            | TIMESTAMP     | NULL     | Last sync timestamp (offline-first support) |
 
 ---
 
@@ -79,58 +79,74 @@ The `status` field is constrained to the following values:
 Eight indexes were created to optimize common query patterns:
 
 ### 1. idx_visits_client_id
+
 ```sql
 CREATE INDEX idx_visits_client_id ON visits(client_id);
 ```
+
 **Purpose:** Fast lookup of all visits for a specific client  
 **Query Pattern:** "Get visit history for this client"
 
 ### 2. idx_visits_staff_id
+
 ```sql
 CREATE INDEX idx_visits_staff_id ON visits(staff_id);
 ```
+
 **Purpose:** Fast lookup of all visits for a specific caregiver  
 **Query Pattern:** "Get all visits for this caregiver"
 
 ### 3. idx_visits_scheduled_time
+
 ```sql
 CREATE INDEX idx_visits_scheduled_time ON visits(scheduled_start_time);
 ```
+
 **Purpose:** Fast lookup by scheduled time  
 **Query Pattern:** "Get all visits scheduled for today"
 
 ### 4. idx_visits_status
+
 ```sql
 CREATE INDEX idx_visits_status ON visits(status);
 ```
+
 **Purpose:** Fast filtering by visit status  
 **Query Pattern:** "Get all in-progress visits" or "Get completed visits"
 
 ### 5. idx_visits_staff_scheduled
+
 ```sql
 CREATE INDEX idx_visits_staff_scheduled ON visits(staff_id, scheduled_start_time);
 ```
+
 **Purpose:** Composite index for caregiver's daily schedule  
 **Query Pattern:** "Get today's schedule for this caregiver"
 
 ### 6. idx_visits_client_scheduled
+
 ```sql
 CREATE INDEX idx_visits_client_scheduled ON visits(client_id, scheduled_start_time DESC);
 ```
+
 **Purpose:** Composite index for client's visit history  
 **Query Pattern:** "Get recent visits for this client"
 
 ### 7. idx_visits_unsynced
+
 ```sql
 CREATE INDEX idx_visits_unsynced ON visits(synced_at) WHERE synced_at IS NULL;
 ```
+
 **Purpose:** Partial index for offline sync support  
 **Query Pattern:** "Find all visits that need to be synced"
 
 ### 8. idx_visits_status_scheduled
+
 ```sql
 CREATE INDEX idx_visits_status_scheduled ON visits(status, scheduled_start_time);
 ```
+
 **Purpose:** Composite index for operational queries  
 **Query Pattern:** "Get all scheduled visits for today" or "Get completed visits this week"
 
@@ -155,46 +171,60 @@ CREATE INDEX idx_visits_status_scheduled ON visits(status, scheduled_start_time)
 ### Check Constraints
 
 1. **visits_status_check**
+
    ```sql
    CHECK (status IN ('scheduled', 'in_progress', 'completed', 'cancelled'))
    ```
+
    Ensures status is one of the valid ENUM values
 
 2. **check_times_logical**
+
    ```sql
    CHECK (check_out_time IS NULL OR check_in_time IS NULL OR check_out_time >= check_in_time)
    ```
+
    Ensures check-out time is after check-in time
 
 3. **check_duration_matches**
+
    ```sql
-   CHECK (duration_minutes IS NULL OR check_in_time IS NULL OR check_out_time IS NULL 
+   CHECK (duration_minutes IS NULL OR check_in_time IS NULL OR check_out_time IS NULL
           OR duration_minutes = ROUND(EXTRACT(EPOCH FROM (check_out_time - check_in_time)) / 60)::INTEGER)
    ```
+
    Ensures duration_minutes matches the actual time difference (rounded to nearest minute to handle floating-point precision)
 
 4. **visits_check_in_latitude_check**
+
    ```sql
    CHECK (check_in_latitude BETWEEN -90 AND 90)
    ```
+
    Validates GPS latitude range
 
 5. **visits_check_in_longitude_check**
+
    ```sql
    CHECK (check_in_longitude BETWEEN -180 AND 180)
    ```
+
    Validates GPS longitude range
 
 6. **visits_check_out_latitude_check**
+
    ```sql
    CHECK (check_out_latitude BETWEEN -90 AND 90)
    ```
+
    Validates GPS latitude range
 
 7. **visits_check_out_longitude_check**
+
    ```sql
    CHECK (check_out_longitude BETWEEN -180 AND 180)
    ```
+
    Validates GPS longitude range
 
 8. **visits_duration_minutes_check**
@@ -237,15 +267,15 @@ docker exec berthcare-postgres psql -U berthcare -d berthcare_dev -c "\d visits"
 
 # Check indexes
 docker exec berthcare-postgres psql -U berthcare -d berthcare_dev -c "
-  SELECT indexname FROM pg_indexes 
-  WHERE tablename = 'visits' 
+  SELECT indexname FROM pg_indexes
+  WHERE tablename = 'visits'
   ORDER BY indexname;
 "
 
 # Check constraints
 docker exec berthcare-postgres psql -U berthcare -d berthcare_dev -c "
-  SELECT conname, pg_get_constraintdef(oid) 
-  FROM pg_constraint 
+  SELECT conname, pg_get_constraintdef(oid)
+  FROM pg_constraint
   WHERE conrelid = 'visits'::regclass;
 "
 ```
@@ -269,6 +299,7 @@ npm run migrate:down 004
 **Rationale:** Caregivers work in areas with poor connectivity. The app must work offline and sync when connectivity is available.
 
 **Implementation:**
+
 - `synced_at` tracks when visit was last synced to server
 - Partial index `idx_visits_unsynced` optimizes finding records that need sync
 - NULL `synced_at` means record hasn't been synced yet
@@ -280,6 +311,7 @@ npm run migrate:down 004
 **Rationale:** Verify caregivers are at the correct location when checking in/out
 
 **Implementation:**
+
 - Separate latitude/longitude fields for check-in and check-out
 - DECIMAL(10,8) for latitude (8 decimal places = ~1mm precision)
 - DECIMAL(11,8) for longitude (8 decimal places = ~1mm precision)
@@ -292,6 +324,7 @@ npm run migrate:down 004
 **Rationale:** Caregivers often perform similar tasks on each visit. Allow copying documentation from previous visit to save time.
 
 **Implementation:**
+
 - Self-referencing foreign key to `visits` table
 - ON DELETE SET NULL (safe to delete source visit)
 - Application logic will copy documentation from referenced visit
@@ -303,6 +336,7 @@ npm run migrate:down 004
 **Rationale:** Avoid recalculating duration on every query. Pre-calculate and store.
 
 **Implementation:**
+
 - INTEGER field for minutes
 - Check constraint ensures it matches actual time difference (rounded to nearest minute)
 - Uses ROUND() to handle floating-point precision issues
@@ -312,14 +346,16 @@ npm run migrate:down 004
 
 **Decision:** Use VARCHAR(50) with CHECK constraint instead of PostgreSQL ENUM type
 
-**Rationale:** 
+**Rationale:**
+
 - PostgreSQL ENUMs are difficult to modify (require migrations to add values)
 - VARCHAR with CHECK constraint is more flexible
 - Performance difference is negligible with proper indexing
 
 **Implementation:**
+
 ```sql
-status VARCHAR(50) NOT NULL DEFAULT 'scheduled' 
+status VARCHAR(50) NOT NULL DEFAULT 'scheduled'
   CHECK (status IN ('scheduled', 'in_progress', 'completed', 'cancelled'))
 ```
 
@@ -327,12 +363,14 @@ status VARCHAR(50) NOT NULL DEFAULT 'scheduled'
 
 **Decision:** Created 8 indexes covering all common query patterns
 
-**Rationale:** 
+**Rationale:**
+
 - Visits table will be heavily queried
 - Mobile app needs fast response times
 - Different user roles query different patterns
 
 **Trade-offs:**
+
 - More indexes = slower writes (acceptable for this use case)
 - More indexes = more storage (acceptable for this use case)
 - Benefit: Sub-100ms query response times
@@ -419,7 +457,7 @@ VALUES (
 
 -- Test GPS coordinate validation
 INSERT INTO visits (
-  client_id, staff_id, scheduled_start_time, 
+  client_id, staff_id, scheduled_start_time,
   check_in_latitude, check_in_longitude, status
 )
 VALUES (

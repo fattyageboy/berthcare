@@ -333,7 +333,9 @@ describe('GET /api/v1/visits/:visitId', () => {
       expect(response.body.data.photos[0]).toHaveProperty('s3Key');
       expect(response.body.data.photos[0]).toHaveProperty('s3Url');
       expect(response.body.data.photos[0].s3Key).toMatch(/^photos\/test-.*\.jpg$/);
-      expect(response.body.data.photos[0].s3Url).toMatch(/^https:\/\/s3\.example\.com\/photos\/test-.*\.jpg$/);
+      expect(response.body.data.photos[0].s3Url).toMatch(
+        /^https:\/\/s3\.example\.com\/photos\/test-.*\.jpg$/
+      );
     });
 
     it('should return null documentation if none exists', async () => {
