@@ -29,6 +29,18 @@ import { createVisitsRouter } from './routes/visits.routes';
 // Load environment variables
 dotenv.config({ path: '../../.env' });
 
+// Fail fast: AWS_REGION must be provided for correct S3 URL construction
+if (!process.env.AWS_REGION) {
+  logError(
+    'Missing required environment variable: AWS_REGION',
+    new Error(
+      'AWS_REGION is required for S3 URL construction. Set AWS_REGION in your environment or .env file.'
+    )
+  );
+  // Explicit exit to prevent silent defaults elsewhere in the app
+  process.exit(1);
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 

@@ -1505,8 +1505,8 @@ export function createVisitsRouter(
           });
         }
 
-        // Construct S3 URL
-        const s3Url = `https://${S3_BUCKETS.PHOTOS}.s3.${process.env.AWS_REGION || 'ca-central-1'}.amazonaws.com/${photoKey}`;
+        // Construct S3 URL (use configured AWS region only)
+        const s3Url = `https://${S3_BUCKETS.PHOTOS}.s3.${process.env.AWS_REGION}.amazonaws.com/${photoKey}`;
 
         // Insert photo metadata
         const photoResult = await client.query(
@@ -1814,8 +1814,8 @@ export function createVisitsRouter(
           });
         }
 
-        // Construct S3 URL
-        const signatureUrl = `https://${S3_BUCKETS.SIGNATURES}.s3.${process.env.AWS_REGION || 'ca-central-1'}.amazonaws.com/${signatureKey}`;
+        // Construct S3 URL (use configured AWS region only)
+        const signatureUrl = `https://${S3_BUCKETS.SIGNATURES}.s3.${process.env.AWS_REGION}.amazonaws.com/${signatureKey}`;
 
         // Check if documentation exists
         const docResult = await client.query(

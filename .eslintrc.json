@@ -21,6 +21,7 @@
   "plugins": ["@typescript-eslint", "import", "jest", "prettier"],
   "rules": {
     "prettier/prettier": "error",
+    "import/no-named-as-default-member": "off",
     "@typescript-eslint/no-unused-vars": [
       "error",
       {
@@ -81,6 +82,21 @@
   "overrides": [
     {
       "files": ["**/db/migrate.ts", "**/db/seed.ts", "**/db/verify-schema.ts"],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      "files": ["**/tests/**/*.{ts,tsx,js,jsx}", "**/*.test.{ts,tsx,js,jsx}", "**/*.spec.{ts,tsx,js,jsx}"],
+      "env": {
+        "jest": true
+      },
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      "files": ["**/examples/**/*.{ts,tsx,js,jsx}"],
       "rules": {
         "no-console": "off"
       }

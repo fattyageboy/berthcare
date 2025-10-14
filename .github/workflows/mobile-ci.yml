@@ -103,9 +103,7 @@ jobs:
         run: npm ci
 
       - name: Audit mobile production dependencies
-        run: |
-          # Audit only production dependencies used by mobile
-          npm audit --audit-level=high --omit=dev --workspace=@berthcare/mobile
+        run: node scripts/check-mobile-audit.mjs
         continue-on-error: false
 
       - name: Check for outdated mobile dependencies

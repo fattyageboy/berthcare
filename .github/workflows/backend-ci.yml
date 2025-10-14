@@ -111,14 +111,14 @@ jobs:
           openssl rsa -in /tmp/jwt_private.pem -pubout -out /tmp/jwt_public.pem
 
           # Export as base64-encoded environment variables
-          echo "JWT_PRIVATE_KEY=base64:$(base64 -w 0 /tmp/jwt_private.pem)" >> $GITHUB_ENV
-          echo "JWT_PUBLIC_KEY=base64:$(base64 -w 0 /tmp/jwt_public.pem)" >> $GITHUB_ENV
+          echo "JWT_PRIVATE_KEY=base64:$(base64 -w 0 /tmp/jwt_private.pem)" >> "$GITHUB_ENV"
+          echo "JWT_PUBLIC_KEY=base64:$(base64 -w 0 /tmp/jwt_public.pem)" >> "$GITHUB_ENV"
 
           # Clean up key files
           rm /tmp/jwt_private.pem /tmp/jwt_public.pem
 
       - name: Run database migrations
-        run: npx tsx apps/backend/src/db/migrate.ts up
+        run: npx ts-node --project apps/backend/tsconfig.json apps/backend/src/db/migrate.ts up
         env:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: 5432
