@@ -29,6 +29,11 @@ import {
   S3_BUCKETS,
 } from '../storage/s3-client';
 
+const DEFAULT_VISIT_DURATION_MINUTES = Math.max(
+  1,
+  Number.parseInt(process.env.DEFAULT_VISIT_DURATION_MINUTES || '60', 10)
+);
+
 /**
  * Create visit request body
  */
@@ -461,6 +466,17 @@ export function createVisitsRouter(
       });
     }
 
+    const newVisitStart = new Date(scheduledStartTime);
+    if (Number.isNaN(newVisitStart.getTime())) {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'scheduledStartTime must be a valid ISO 8601 timestamp',
+      });
+    }
+
+    const expectedDurationMinutes = DEFAULT_VISIT_DURATION_MINUTES;
+    const newVisitEnd = new Date(newVisitStart.getTime() + expectedDurationMinutes * 60 * 1000);
+
     const client = await pool.connect();
 
     try {
@@ -518,9 +534,15 @@ export function createVisitsRouter(
       const overlapCheck = await client.query(
         `SELECT id FROM visits 
          WHERE client_id = $1 
-         AND status IN ('scheduled', 'in_progress')
-         AND scheduled_start_time = $2`,
-        [clientId, scheduledStartTime]
+           AND status IN ('scheduled', 'in_progress')
+           AND (
+             status = 'in_progress'
+             OR (
+               scheduled_start_time < $3
+               AND (scheduled_start_time + (COALESCE(duration_minutes, $4) * INTERVAL '1 minute')) > $2
+             )
+           )`,
+        [clientId, newVisitStart.toISOString(), newVisitEnd.toISOString(), expectedDurationMinutes]
       );
 
       if (overlapCheck.rows.length > 0) {
