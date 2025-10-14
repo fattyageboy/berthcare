@@ -36,6 +36,13 @@
         "command": "jest",
         "cwd": "apps/mobile"
       }
+    },
+    "type-check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc --noEmit",
+        "cwd": "apps/mobile"
+      }
     }
   }
 }

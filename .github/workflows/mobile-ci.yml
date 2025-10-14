@@ -1,28 +1,8 @@
 name: Mobile CI
 
 on:
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'apps/mobile/**'
-      - 'libs/shared/**'
-      - '.github/workflows/mobile-ci.yml'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'tsconfig.base.json'
-      - '.eslintrc.json'
-  push:
-    branches:
-      - main
-    paths:
-      - 'apps/mobile/**'
-      - 'libs/shared/**'
-      - '.github/workflows/mobile-ci.yml'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'tsconfig.base.json'
-      - '.eslintrc.json'
+  workflow_call:
+  workflow_dispatch:
 
 # Cancel in-progress runs when a new workflow with the same group name is triggered
 concurrency:

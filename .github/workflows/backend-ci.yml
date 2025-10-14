@@ -1,28 +1,8 @@
 name: Backend CI
 
 on:
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'apps/backend/**'
-      - 'libs/shared/**'
-      - '.github/workflows/backend-ci.yml'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'tsconfig.base.json'
-      - '.eslintrc.json'
-  push:
-    branches:
-      - main
-    paths:
-      - 'apps/backend/**'
-      - 'libs/shared/**'
-      - '.github/workflows/backend-ci.yml'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'tsconfig.base.json'
-      - '.eslintrc.json'
+  workflow_call:
+  workflow_dispatch:
 
 # Cancel in-progress runs when a new workflow with the same group name is triggered
 concurrency:
@@ -168,6 +148,8 @@ jobs:
     name: Security Scan (SAST)
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     permissions:
       security-events: write
       actions: read
@@ -187,12 +169,17 @@ jobs:
         run: npm ci
 
       - name: Run Snyk security scan
+        if: env.SNYK_TOKEN != ''
         uses: snyk/actions/node@master
         continue-on-error: true
         env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          SNYK_TOKEN: ${{ env.SNYK_TOKEN }}
         with:
           args: --severity-threshold=high --all-projects
+
+      - name: Skip Snyk (token missing)
+        if: env.SNYK_TOKEN == ''
+        run: echo "SNYK_TOKEN not configured; skipping Snyk scan."
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
