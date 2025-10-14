@@ -13,9 +13,7 @@ declare global {
 export default async function globalTeardown() {
   // Execute all registered cleanup functions
   if (global.__TEST_CLEANUPS__ && global.__TEST_CLEANUPS__.length > 0) {
-    const results = await Promise.allSettled(
-      global.__TEST_CLEANUPS__.map((cleanup) => cleanup())
-    );
+    const results = await Promise.allSettled(global.__TEST_CLEANUPS__.map((cleanup) => cleanup()));
 
     const failures = results.filter(
       (result): result is PromiseRejectedResult => result.status === 'rejected'
