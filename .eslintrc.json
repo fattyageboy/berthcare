@@ -87,7 +87,11 @@
       }
     },
     {
-      "files": ["**/tests/**/*.{ts,tsx,js,jsx}", "**/*.test.{ts,tsx,js,jsx}", "**/*.spec.{ts,tsx,js,jsx}"],
+      "files": [
+        "**/tests/**/*.{ts,tsx,js,jsx}",
+        "**/*.test.{ts,tsx,js,jsx}",
+        "**/*.spec.{ts,tsx,js,jsx}"
+      ],
       "env": {
         "jest": true
       },

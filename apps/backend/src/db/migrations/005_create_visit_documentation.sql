@@ -32,10 +32,9 @@ CREATE TABLE IF NOT EXISTS visit_documentation (
     -- Any concerns noted during the visit
     concerns TEXT,
     
-    -- Digital signature S3 key (object key only, not full URL)
-    -- Full URLs are constructed at runtime using CloudFront/S3 base URL
-    -- Storing only the key allows URL changes without database updates
-    -- Format: signatures/{visit_id}/{timestamp}.png
+    -- Digital signature URL (full URL to image stored in S3 or served via CDN)
+    -- The application stores the full, usable URL in this column so clients can
+    -- directly access the signature image. Keep as VARCHAR to allow full path storage.
     signature_url VARCHAR(500),
     
     -- Audit timestamps
@@ -63,6 +62,15 @@ CREATE INDEX IF NOT EXISTS idx_visit_documentation_activities ON visit_documenta
 -- TRIGGERS
 -- ============================================================================
 -- Automatic timestamp management for updated_at column
+
+-- Ensure the timestamp update helper exists (idempotent)
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
 -- Trigger for visit_documentation table (reuses function from 001_create_users_auth.sql)
 CREATE TRIGGER update_visit_documentation_updated_at
