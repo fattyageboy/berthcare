@@ -412,6 +412,85 @@ WHERE vd.concerns IS NOT NULL
 - Sanitize text fields (observations, concerns)
 - Validate signature URLs before storage
 
+### Database Encryption: actionable verification steps
+
+- Verify provider-side (cloud) disk encryption is enabled for database storage (e.g., AWS EBS/GP3, GCP Persistent Disk, Azure Managed Disk) and active for the database instance.
+- Confirm that a Customer-Managed Key (CMK) / KMS key is used where required and document the key ARN/ID.
+- Check KMS key rotation policy and, if automatic rotation is enabled, confirm rotation schedule and that previous key versions remain available for decrypting older backups.
+- Inspect PostgreSQL settings and storage layer for server-side encryption (if using managed Postgres with transparent data encryption features) and log the encryption flags.
+- From the database host or management console, inspect `pg_settings` for any encryption-related parameters or extensions in use and record their values:
+  ```sql
+  SELECT name, setting, unit, vartype FROM pg_settings WHERE name LIKE '%encrypt%' OR name LIKE '%ssl%';
+  ```
+- For backups and replicas, verify that snapshots and automated backups are encrypted with the same KMS key and that access controls prevent unauthorized export.
+- Document a verification checklist: storage encryption, KMS key ID, rotation policy, encrypted backups, and test-decrypt of a recent backup in a secure environment.
+
+### Audit log design (recommended)
+
+- Create a separate, append-only audit table to record changes to visit_documentation and related objects. Minimal recommended columns:
+
+  ```sql
+  CREATE TABLE audit_log (
+    id BIGSERIAL PRIMARY KEY,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    user_id UUID NULL,              -- application user who performed the action
+    role TEXT NULL,                 -- user's role at time of action
+    action TEXT NOT NULL,           -- 'INSERT' | 'UPDATE' | 'DELETE'
+    object_type TEXT NOT NULL,      -- e.g., 'visit_documentation'
+    object_id UUID NOT NULL,        -- affected record id
+    changed_fields JSONB NULL,      -- diff or changed fields
+    request_id UUID NULL,           -- optional correlation id from request
+    source_ip TEXT NULL             -- optional client IP
+  );
+  ```
+
+- Consider one of two capture mechanisms:
+  - Database triggers on `visit_documentation` that INSERT into `audit_log` on INSERT/UPDATE/DELETE (keeps auditing close to data; ensure triggers are well-tested and non-blocking).
+  - Application write-path instrumentation where the service emits audit records as part of the same transaction or via a reliable outbox if cross-service (gives richer context like auth claims and request_id).
+- Define retention and archival policy (for example: keep 2 years online, archive to encrypted object storage, and delete beyond retention after legal review). Ensure archived audit logs remain immutable and access-controlled.
+
+### Authorization and Row-Level Security (RLS)
+
+- Enforce least-privilege access to `visit_documentation` using a combination of Postgres RLS policies and application-level checks.
+- Example role separation: `admin`, `clinician`, `auditor`.
+- Example RLS policy sketch (replace placeholder role checks with your auth mapping):
+
+  ```sql
+  -- Enable RLS on the table
+  ALTER TABLE visit_documentation ENABLE ROW LEVEL SECURITY;
+
+  -- Admins can see all rows
+  CREATE POLICY visit_doc_admin ON visit_documentation
+    FOR ALL
+    USING ( current_setting('app.current_role', true) = 'admin' );
+
+  -- Clinicians can see rows for visits assigned to them (application must set app.current_user_id and map visits)
+  CREATE POLICY visit_doc_clinician ON visit_documentation
+    FOR SELECT
+    USING (
+      current_setting('app.current_role', true) = 'clinician'
+      AND visit_documentation.caregiver_id = current_setting('app.current_user_id', true)::uuid
+    );
+
+  -- Auditors can SELECT only (read-only)
+  CREATE POLICY visit_doc_auditor ON visit_documentation
+    FOR SELECT
+    USING ( current_setting('app.current_role', true) = 'auditor' );
+  ```
+
+- Ensure the application sets the appropriate `app.current_role` and `app.current_user_id` using `SET LOCAL` inside each DB transaction, or rely on a trusted session variable mechanism provided by your DB driver/connection pool.
+- In addition to RLS, apply GRANTs for object-level privileges (for example, only the migration/deploy role can ALTER TABLE; application roles get INSERT/UPDATE/SELECT as required).
+- Keep RBAC mapping documented (which application roles map to DB session roles) and enforce authorization checks in the application for complex business rules not easily expressed as RLS.
+
+### Compliance and Implementation References
+
+- PostgreSQL RLS docs: https://www.postgresql.org/docs/current/ddl-rowsecurity.html
+- Audit table and trigger patterns: https://wiki.postgresql.org/wiki/Audit_logging
+- AWS KMS & RDS encryption best practices: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Encryption.html
+- GCP disk encryption docs: https://cloud.google.com/compute/docs/disks/customer-supplied-encryption
+- GDPR/PHIPA/PIPEDA compliance guidance: include legal/compliance team's checklist and retention policy
+
+
 ---
 
 ## Testing
@@ -441,8 +520,16 @@ SELECT * FROM visit_documentation
 WHERE (vital_signs->>'heart_rate')::int > 70;
 
 -- Test 4: Test CASCADE delete
-DELETE FROM visits WHERE id = (SELECT visit_id FROM visit_documentation LIMIT 1);
--- Verify documentation was deleted
+-- Capture a visit_id, delete that visit, then verify documentation for that visit is gone
+WITH target AS (
+  SELECT visit_id FROM visit_documentation LIMIT 1
+), deleted AS (
+  DELETE FROM visits WHERE id = (SELECT visit_id FROM target) RETURNING id
+)
+SELECT COUNT(*) AS remaining_docs_for_deleted_visit
+FROM visit_documentation
+WHERE visit_id = (SELECT visit_id FROM target);
+-- Expect remaining_docs_for_deleted_visit = 0
 
 -- Test 5: Test updated_at trigger
 UPDATE visit_documentation
@@ -457,11 +544,11 @@ WHERE id = (SELECT id FROM visit_documentation LIMIT 1);
 
 ### Relationship
 
-````text
-visits (1) ----< (many) visit_documentation
 ```text
+visits (1) ---- (1) visit_documentation
+```
 
-- One visit can have one documentation record
+- One visit has exactly one documentation record (one-to-one relationship)
 - Documentation is created when visit is completed
 - Documentation can be updated multiple times
 - Documentation is deleted when visit is deleted

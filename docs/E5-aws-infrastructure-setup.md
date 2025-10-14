@@ -730,6 +730,59 @@ aws s3 ls s3://berthcare-terraform-state/staging/ --region ca-central-1
 aws s3 ls s3://berthcare-terraform-state-dr/staging/ --region us-east-1
 ```
 
+##### Initial Data Migration to DR Region
+
+1. **Wait for replication to stabilize.** Confirm that initial cross-region syncs have finished before scheduling failover exercises:
+
+   ```bash
+   aws s3 ls s3://berthcare-terraform-state/staging/ --region ca-central-1
+   aws s3 ls s3://berthcare-terraform-state-dr/staging/ --region us-east-1
+   ```
+
+2. **Validate Terraform state integrity.** Inspect both state objects, compare `ETag` values (or object checksums), and ensure the DR copy matches the primary:
+
+   ```bash
+   PRIMARY_STATE_KEY=staging/default.tfstate
+
+   aws s3api head-object \
+     --bucket berthcare-terraform-state \
+     --key "${PRIMARY_STATE_KEY}" \
+     --region ca-central-1
+
+   aws s3api head-object \
+     --bucket berthcare-terraform-state-dr \
+     --key "${PRIMARY_STATE_KEY}" \
+     --region us-east-1
+   ```
+
+3. **Replicate critical databases.** Identify the latest automated snapshot, create a cross-region copy, and use it to seed the DR account. Automate this path with a scheduled Lambda (triggered via EventBridge) that keeps the most recent copies in sync.
+
+   ```bash
+   LATEST_SNAPSHOT=$(aws rds describe-db-snapshots \
+     --db-instance-identifier berthcare-prod-db \
+     --snapshot-type automated \
+     --query 'DBSnapshots | sort_by(@, &SnapshotCreateTime)[-1].DBSnapshotIdentifier' \
+     --output text \
+     --region ca-central-1)
+
+   aws rds copy-db-snapshot \
+     --source-db-snapshot-identifier "${LATEST_SNAPSHOT}" \
+     --target-db-snapshot-identifier "${LATEST_SNAPSHOT}-dr" \
+     --source-region ca-central-1 \
+     --region us-east-1
+  ```
+
+   Where the engine supports automatic backup replication, configure it with `aws rds modify-db-instance` (for example, specify `--enable-automatic-backup-replication` and `--automatic-backup-replication-region us-east-1`) so snapshots flow to the DR region without operator intervention. Otherwise, schedule an EventBridge rule that invokes a Lambda function to call `aws rds copy-db-snapshot` and prune older DR snapshots.
+
+4. **Verify S3 object parity.** Ensure application data buckets mirror the expected contents before declaring the DR region ready:
+
+   ```bash
+   aws s3 ls s3://berthcare-photos-prod --recursive --summarize --region ca-central-1
+   aws s3 ls s3://berthcare-photos-prod-dr --recursive --summarize --region us-east-1
+   ```
+
+   Investigate mismatched counts or sizes before approving DR readiness, and optionally spot-check object hashes (`aws s3api head-object`) for critical files.
+
 ##### Option 2: DynamoDB Global Tables (Alternative)
 
 ```bash
@@ -847,28 +900,56 @@ terraform apply
 # This will take 15-20 minutes
 ```
 
-**Step 4: Restore Data from Backups**
+**Step 4: Restore Persistent Data**
 
-```bash
-# 1. Restore RDS from latest snapshot
-LATEST_SNAPSHOT=$(aws rds describe-db-snapshots \
-  --db-instance-identifier berthcare-staging-postgres \
-  --query 'DBSnapshots | sort_by(@, &SnapshotCreateTime) | [-1].DBSnapshotIdentifier' \
-  --output text \
-  --region ca-central-1)
+1. **Database:** Locate the newest RDS snapshot from the primary region (or backup account), copy it if necessary, and restore the instance in DR. Use placeholders for automation and double-check identifiers before applying:
 
-aws rds restore-db-instance-from-db-snapshot \
-  --db-instance-identifier berthcare-staging-postgres \
-  --db-snapshot-identifier $LATEST_SNAPSHOT \
-  --region us-east-1
+   ```bash
+   # Discover latest snapshot in primary region
+   aws rds describe-db-snapshots \
+     --db-instance-identifier berthcare-prod-db \
+     --region ca-central-1 \
+     --query 'DBSnapshots | sort_by(@, &SnapshotCreateTime)[-1].DBSnapshotArn' \
+     --output text
 
-# 2. Restore S3 data from replicated buckets or backups
-# If cross-region replication was enabled:
-aws s3 sync s3://berthcare-photos-staging-replica s3://berthcare-photos-staging --region us-east-1
+   # (Optional) copy to DR if the snapshot is not yet replicated
+   aws rds copy-db-snapshot \
+     --source-db-snapshot-identifier arn:aws:rds:ca-central-1:123456789012:snapshot:rds:berthcare-prod-db-2025-10-10-05-30 \
+     --target-db-snapshot-identifier berthcare-prod-db-restore-seed \
+     --source-region ca-central-1 \
+     --region us-east-1
 
-# 3. Redis data will be lost (cache can be rebuilt)
-# Application will repopulate cache on first requests
-```
+   # Restore the DR instance from the copied snapshot
+   aws rds restore-db-instance-from-db-snapshot \
+     --db-instance-identifier berthcare-prod-db-dr \
+     --db-snapshot-identifier berthcare-prod-db-restore-seed \
+     --region us-east-1
+
+   # Apply production parameter group and networking once instance is available
+   aws rds modify-db-instance \
+     --db-instance-identifier berthcare-prod-db-dr \
+     --db-parameter-group-name berthcare-prod-pg \
+     --vpc-security-group-ids sg-xxxxxxxx \
+     --apply-immediately \
+     --region us-east-1
+   ```
+
+2. **Object storage:** If cross-region replication is configured, confirm the latest objects are present. Otherwise sync from the primary bucket before promoting DR:
+
+   ```bash
+   aws s3 sync s3://berthcare-photos-prod s3://berthcare-photos-prod-dr --source-region ca-central-1 --region us-east-1
+   ```
+
+   For large backfills, consider S3 Batch Operations or AWS DataSync and verify parity:
+
+   ```bash
+   aws s3 ls s3://berthcare-photos-prod --recursive --summarize --region ca-central-1
+   aws s3 ls s3://berthcare-photos-prod-dr --recursive --summarize --region us-east-1
+   ```
+
+3. **Caches:** Redis/ElastiCache data is treated as ephemeral. Warm it via normal application flows after the DR stack is online; do **not** attempt to replicate cache snapshots unless a business requirement demands it.
+
+
 
 **Step 5: Update Application Configuration**
 

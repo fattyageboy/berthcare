@@ -33,9 +33,9 @@ CREATE TABLE IF NOT EXISTS visit_documentation (
     concerns TEXT,
     
     -- Digital signature URL (full URL to image stored in S3 or served via CDN)
-    -- The application stores the full, usable URL in this column so clients can
-    -- directly access the signature image. Keep as VARCHAR to allow full path storage.
-    signature_url VARCHAR(500),
+    -- Uses TEXT type to accommodate pre-signed S3 URLs which can exceed 1000 characters
+    -- with query parameters (X-Amz-Algorithm, X-Amz-Credential, X-Amz-Signature, etc.)
+    signature_url TEXT,
     
     -- Audit timestamps
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,

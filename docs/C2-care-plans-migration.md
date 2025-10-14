@@ -274,7 +274,7 @@ Each client can have only one active care plan.
 **Get Care Plan:**
 
 ```sql
--- Uses idx_care_plans_client_id
+-- Uses idx_care_plans_client_unique
 SELECT * FROM care_plans
 WHERE client_id = $1 AND deleted_at IS NULL;
 -- Performance: < 1ms

@@ -14,7 +14,7 @@ terraform {
     }
   }
 }
- 
+
 # Generate random auth token for Redis
 resource "random_password" "redis_auth_token" {
   length  = 32

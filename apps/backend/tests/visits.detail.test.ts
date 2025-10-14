@@ -20,7 +20,7 @@ import { Pool } from 'pg';
 import { createClient } from 'redis';
 import request from 'supertest';
 
-import { generateAccessToken } from '../../../libs/shared/src/jwt-utils';
+import { generateAccessToken } from '@berthcare/shared';
 
 import {
   cleanAllTestData,

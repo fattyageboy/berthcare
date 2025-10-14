@@ -58,11 +58,17 @@ Implemented the PATCH /v1/visits/:visitId endpoint to enable caregivers to updat
   clientId: string; // UUID of client
   staffId: string; // UUID of caregiver
   scheduledStartTime: string; // ISO 8601 timestamp
+  scheduledEndTime: string | null; // ISO 8601 timestamp
   checkInTime: string | null; // ISO 8601 timestamp
   checkInLatitude: number | null;
   checkInLongitude: number | null;
+  checkOutTime: string | null; // ISO 8601 timestamp
+  checkOutLatitude: number | null;
+  checkOutLongitude: number | null;
+  durationMinutes: number | null;
   status: string; // Current status
   createdAt: string; // ISO 8601 timestamp
+  updatedAt: string; // ISO 8601 timestamp
 }
 ```
 
@@ -376,7 +382,7 @@ try {
 
 ### Test Coverage
 
-**7 integration tests covering:**
+**8 integration tests covering:**
 
 - ✅ Successful visit completion with GPS and duration
 - ✅ Unauthenticated requests (401)

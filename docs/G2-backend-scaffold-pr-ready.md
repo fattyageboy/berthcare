@@ -380,7 +380,7 @@ Health Checks: All endpoints returning 200 OK
 ### Post-Merge
 
 1. Verify `main` branch CI passes
-2. Tag release: `v2.0.0-backend-scaffold`
+2. Tag release: `v1.0.0-backend-scaffold`
 3. Update CHANGELOG.md
 4. Create issue #2 for authentication system (G3)
 5. Branch `feat/auth-system` from updated `main`

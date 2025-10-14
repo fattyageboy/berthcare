@@ -77,9 +77,17 @@ export const REFRESH_TOKEN_EXPIRY = '30d';
  */
 export const JWT_ALGORITHM = 'RS256';
 
-// Cache for decoded keys to avoid repeated decoding
-let cachedPrivateKey: string | null = null;
-let cachedPublicKey: string | null = null;
+// Key cache with TTL to support key rotation without requiring process restart
+// Each cache entry stores the key and the timestamp when it was cached
+const KEY_CACHE_TTL = 1000 * 60 * 5; // 5 minutes
+
+type KeyCacheEntry = {
+  key: string;
+  cachedAt: number; // epoch ms
+};
+
+let cachedPrivateKey: KeyCacheEntry | null = null;
+let cachedPublicKey: KeyCacheEntry | null = null;
 
 /**
  * Get JWT private key from environment
@@ -97,12 +105,14 @@ let cachedPublicKey: string | null = null;
  * @throws Error if private key is not configured
  */
 function getPrivateKey(): string {
-  // Return cached key if available
-  if (cachedPrivateKey) {
-    return cachedPrivateKey;
+  const now = Date.now();
+
+  // Return cached key if available and not expired
+  if (cachedPrivateKey && now - cachedPrivateKey.cachedAt < KEY_CACHE_TTL) {
+    return cachedPrivateKey.key;
   }
 
-  // For development and production, use environment variable
+  // Load from environment
   const privateKey = process.env.JWT_PRIVATE_KEY;
 
   if (!privateKey) {
@@ -112,14 +122,13 @@ function getPrivateKey(): string {
     );
   }
 
-  // Handle base64-encoded keys (common in environment variables)
-  if (privateKey.startsWith('base64:')) {
-    cachedPrivateKey = Buffer.from(privateKey.substring(7), 'base64').toString('utf-8');
-  } else {
-    cachedPrivateKey = privateKey;
-  }
+  // Decode base64-encoded keys (common in environment variables)
+  const decoded = privateKey.startsWith('base64:')
+    ? Buffer.from(privateKey.substring(7), 'base64').toString('utf-8')
+    : privateKey;
 
-  return cachedPrivateKey;
+  cachedPrivateKey = { key: decoded, cachedAt: now };
+  return decoded;
 }
 
 /**
@@ -132,9 +141,11 @@ function getPrivateKey(): string {
  * @throws Error if public key is not configured
  */
 function getPublicKey(): string {
-  // Return cached key if available
-  if (cachedPublicKey) {
-    return cachedPublicKey;
+  const now = Date.now();
+
+  // Return cached key if available and not expired
+  if (cachedPublicKey && now - cachedPublicKey.cachedAt < KEY_CACHE_TTL) {
+    return cachedPublicKey.key;
   }
 
   const publicKey = process.env.JWT_PUBLIC_KEY;
@@ -146,14 +157,12 @@ function getPublicKey(): string {
     );
   }
 
-  // Handle base64-encoded keys
-  if (publicKey.startsWith('base64:')) {
-    cachedPublicKey = Buffer.from(publicKey.substring(7), 'base64').toString('utf-8');
-  } else {
-    cachedPublicKey = publicKey;
-  }
+  const decoded = publicKey.startsWith('base64:')
+    ? Buffer.from(publicKey.substring(7), 'base64').toString('utf-8')
+    : publicKey;
 
-  return cachedPublicKey;
+  cachedPublicKey = { key: decoded, cachedAt: now };
+  return decoded;
 }
 
 /**

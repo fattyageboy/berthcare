@@ -50,13 +50,13 @@ Implemented the user login endpoint that authenticates users and issues JWT toke
 
 - `400` - Validation error (missing fields, invalid email format)
 - `401` - Invalid credentials or account disabled
-- `429` - Rate limit exceeded (10 attempts per hour per IP)
+- `429` - Rate limit exceeded (10 attempts per 15 minutes)
 - `500` - Internal server error
 
 ### Security Features
 
 1. **Rate Limiting**
-   - 10 login attempts per hour per IP address
+  - 10 login attempts per 15 minutes
    - Prevents brute force attacks
    - Applies to both successful and failed attempts
    - Redis-backed for distributed rate limiting
@@ -146,7 +146,7 @@ Comprehensive integration tests covering:
 
 **Rate Limiting (4 tests)**
 
-- Allow 10 attempts per hour
+- Allow 10 attempts per 15 minutes
 - Block 11th attempt with 429
 - Rate limit failed attempts
 - Include rate limit headers
@@ -522,7 +522,7 @@ done
 
 ✅ **Rate limit works**
 
-- Allows 10 attempts per hour per IP
+- Allows 10 attempts per 15 minutes per IP
 - Blocks 11th attempt with 429
 - Includes rate limit headers
 - Applies to both success and failure

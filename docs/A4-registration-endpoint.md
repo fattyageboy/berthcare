@@ -135,7 +135,7 @@ POST /api/v1/auth/register
 
 ### Email Validation
 
-- Must be valid email format (user@domain.tld)
+- Must be valid email format (`user@domain.tld`)
 - Case-insensitive duplicate detection
 - Normalized to lowercase before storage
 

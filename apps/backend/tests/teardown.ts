@@ -13,7 +13,27 @@ declare global {
 export default async function globalTeardown() {
   // Execute all registered cleanup functions
   if (global.__TEST_CLEANUPS__ && global.__TEST_CLEANUPS__.length > 0) {
-    await Promise.all(global.__TEST_CLEANUPS__.map((cleanup) => cleanup()));
+    const results = await Promise.allSettled(
+      global.__TEST_CLEANUPS__.map((cleanup) => cleanup())
+    );
+
+    const failures = results.filter(
+      (result): result is PromiseRejectedResult => result.status === 'rejected'
+    );
+
+    let aggregateError: AggregateError | undefined;
+    if (failures.length > 0) {
+      aggregateError = new AggregateError(
+        failures.map((failure) => failure.reason),
+        'One or more test cleanup tasks failed'
+      );
+      console.error('Test cleanup encountered errors:', aggregateError);
+    }
+
     global.__TEST_CLEANUPS__ = [];
+
+    if (aggregateError) {
+      throw aggregateError;
+    }
   }
 }

@@ -229,7 +229,7 @@ The system manages:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Mobile App (React Native)                     │
+│                    Mobile App (React Native)                    │
 │  ┌──────────────────────────────────────────────────────────┐   │
 │  │  UI Layer: Invisible Technology                          │   │
 │  │  - Auto-save (no save buttons)                           │   │
@@ -256,7 +256,7 @@ The system manages:
                     HTTPS/WSS (Encrypted, Compressed)
                                   ↕
 ┌─────────────────────────────────────────────────────────────────┐
-│                    API Gateway (AWS API Gateway)                 │
+│                    API Gateway (AWS API Gateway)                │
 │  - JWT authentication (stateless, scalable)                     │
 │  - Rate limiting (prevent abuse)                                │
 │  - Request validation (fail fast)                               │
@@ -265,7 +265,7 @@ The system manages:
 └─────────────────────────────────────────────────────────────────┘
                                   ↕
 ┌─────────────────────────────────────────────────────────────────┐
-│                Backend Services (Node.js + Express)              │
+│                Backend Services (Node.js + Express)             │
 │  ┌──────────────────────────────────────────────────────────┐   │
 │  │  REST API (Simple, Cacheable, Well-Understood)           │   │
 │  │  - Visit documentation endpoints                         │   │
@@ -5119,13 +5119,13 @@ caregiver → Mobile App → API → Alert Service → WebSocket Server
 
 ### Technology Decision Matrix
 
-| Criteria             | React Native | Native | PWA    | Score                    |
-| -------------------- | ------------ | ------ | ------ | ------------------------ |
-| Time to Market       | 9            | 4      | 10     | RN: 9                    |
-| Offline Support      | 8            | 10     | 5      | RN: 8                    |
-| Performance          | 7            | 10     | 6      | RN: 7                    |
-| Developer Experience | 9            | 6      | 8      | RN: 9                    |
-| Maintenance Cost     | 8            | 5      | 9      | RN: 8                    |
+| Criteria             | React Native | Native | PWA    | Score|
+| ---------------------| ------------ | ------ | ------ | ---- |
+| Time to Market       | 9            | 4      | 10     | RN: 9|
+| Offline Support      | 8            | 10     | 5      | RN: 8|
+| Performance          | 7            | 10     | 6      | RN: 7|
+| Developer Experience | 9            | 6      | 8      | RN: 9|
+| Maintenance Cost     | 8            | 5      | 9      | RN: 8|
 | **Total**            | **41**       | **35** | **38** | **Winner: React Native** |
 
 ### Contact & Support

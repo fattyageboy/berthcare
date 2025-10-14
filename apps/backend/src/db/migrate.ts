@@ -211,6 +211,7 @@ async function migrateDown(migrationNumber: string): Promise<void> {
   }
 
   const rollbackFiles: Record<string, string> = {
+    '000': '000_create_zones_rollback.sql',
     '001': '001_create_users_auth_rollback.sql',
     '002': '002_create_clients_rollback.sql',
     '003': '003_create_care_plans_rollback.sql',

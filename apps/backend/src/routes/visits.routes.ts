@@ -807,6 +807,14 @@ export function createVisitsRouter(
           (checkOutTimeDate.getTime() - checkInTime.getTime()) / (1000 * 60)
         );
 
+        if (durationMinutes < 0) {
+          await client.query('ROLLBACK');
+          return res.status(400).json({
+            error: 'Bad Request',
+            message: 'Check-out time cannot be before check-in time',
+          });
+        }
+
         updates.push(`duration_minutes = $${paramCount}`);
         values.push(durationMinutes);
         paramCount++;

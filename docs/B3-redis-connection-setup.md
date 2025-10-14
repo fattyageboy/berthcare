@@ -33,6 +33,13 @@ const redisClient = createClient({
 - **Default URL:** `redis://localhost:6379`
 - **Connection Mode:** Single client instance (shared across application)
 
+**Note on client libraries:**
+
+- This document describes the `redis` package (v4.x). `ioredis` is a different Redis client library with a distinct API and feature set (stronger first-class support for clusters and Sentinel). They are not interchangeable without code changes. See:
+  - `redis` docs: [https://www.npmjs.com/package/redis](https://www.npmjs.com/package/redis)
+  - `ioredis` docs: [https://www.npmjs.com/package/ioredis](https://www.npmjs.com/package/ioredis)
+  - Quick difference: `ioredis` exposes built-in cluster/sentinel convenience methods and a different connection/command API; `redis` v4 uses a modern promise-based API and built-in retry strategy. Choose the client that best matches your deployment needs.
+
 **Library Features:**
 
 - Built-in connection pooling
@@ -93,8 +100,8 @@ The `redis` v4.x library includes automatic retry logic by default:
         return new Error('Max retries reached');
       }
       return Math.min(retries * 50, 5000);
-    };
-  }
+    },
+  },
 }
 ```
 
