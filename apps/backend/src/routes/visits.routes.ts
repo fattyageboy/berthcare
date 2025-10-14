@@ -33,6 +33,7 @@ const DEFAULT_VISIT_DURATION_MINUTES = Math.max(
   1,
   Number.parseInt(process.env.DEFAULT_VISIT_DURATION_MINUTES || '60', 10)
 );
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Create visit request body
@@ -153,16 +154,14 @@ export function createVisitsRouter(
     const offset = (pageNum - 1) * limitNum;
 
     // Validate UUID formats if provided
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-    if (staffId && !uuidRegex.test(staffId as string)) {
+    if (staffId && !UUID_REGEX.test(staffId as string)) {
       return res.status(400).json({
         error: 'Bad Request',
         message: 'Invalid staffId format',
       });
     }
 
-    if (clientId && !uuidRegex.test(clientId as string)) {
+    if (clientId && !UUID_REGEX.test(clientId as string)) {
       return res.status(400).json({
         error: 'Bad Request',
         message: 'Invalid clientId format',
@@ -436,15 +435,14 @@ export function createVisitsRouter(
     }
 
     // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(clientId)) {
+    if (!UUID_REGEX.test(clientId)) {
       return res.status(400).json({
         error: 'Bad Request',
         message: 'Invalid clientId format',
       });
     }
 
-    if (copiedFromVisitId && !uuidRegex.test(copiedFromVisitId)) {
+    if (copiedFromVisitId && !UUID_REGEX.test(copiedFromVisitId)) {
       return res.status(400).json({
         error: 'Bad Request',
         message: 'Invalid copiedFromVisitId format',
@@ -727,8 +725,7 @@ export function createVisitsRouter(
     }
 
     // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(visitId)) {
+    if (!UUID_REGEX.test(visitId)) {
       return res.status(400).json({
         error: 'Bad Request',
         message: 'Invalid visitId format',
@@ -892,14 +889,14 @@ export function createVisitsRouter(
           }
 
           if (documentation.activities !== undefined) {
+          if (documentation.activities !== undefined) {
             const activitiesValue = typeof documentation.activities === 'string'
               ? documentation.activities
               : JSON.stringify(documentation.activities);
-            docUpdates.push(`activities = $${docParamCount}`);
+            docUpdates.push(`activities = ${docParamCount}`);
             docValues.push(activitiesValue);
             docParamCount++;
           }
-
           if (documentation.observations !== undefined) {
             docUpdates.push(`observations = $${docParamCount}`);
             docValues.push(documentation.observations);
@@ -1025,8 +1022,7 @@ export function createVisitsRouter(
     }
 
     // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(visitId)) {
+    if (!UUID_REGEX.test(visitId)) {
       return res.status(400).json({
         error: 'Bad Request',
         message: 'Invalid visitId format',
@@ -1331,8 +1327,7 @@ export function createVisitsRouter(
       }
 
       // Validate UUID format
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(visitId)) {
+      if (!UUID_REGEX.test(visitId)) {
         return res.status(400).json({
           error: 'Bad Request',
           message: 'Invalid visitId format',
@@ -1484,8 +1479,7 @@ export function createVisitsRouter(
       }
 
       // Validate UUID format
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(visitId)) {
+      if (!UUID_REGEX.test(visitId)) {
         return res.status(400).json({
           error: 'Bad Request',
           message: 'Invalid visitId format',
@@ -1648,8 +1642,7 @@ export function createVisitsRouter(
       }
 
       // Validate UUID format
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(visitId)) {
+      if (!UUID_REGEX.test(visitId)) {
         return res.status(400).json({
           error: 'Bad Request',
           message: 'Invalid visitId format',
@@ -1784,8 +1777,7 @@ export function createVisitsRouter(
       }
 
       // Validate UUID format
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(visitId)) {
+      if (!UUID_REGEX.test(visitId)) {
         return res.status(400).json({
           error: 'Bad Request',
           message: 'Invalid visitId format',
