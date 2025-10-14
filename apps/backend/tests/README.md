@@ -29,15 +29,15 @@ Before running tests, ensure you have:
 1. **PostgreSQL test database** running:
 
    ```bash
-   # Database should be available at:
-   # postgresql://berthcare:berthcare_dev_password@localhost:5432/berthcare_test
+   # Database should be available at (set these env vars first):
+   # postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}_test
    ```
 
 2. **Redis test instance** running:
 
    ```bash
-   # Redis should be available at:
-   # redis://:berthcare_redis_password@localhost:6379/1
+   # Redis should be available at (set REDIS_PASSWORD/REDIS_PORT/REDIS_DB):
+   # redis://:${REDIS_PASSWORD}@${REDIS_HOST:-localhost}:${REDIS_PORT:-6379}/${REDIS_DB:-1}
    ```
 
 3. **Environment variables** configured in `.env` file
@@ -92,7 +92,9 @@ The tests automatically create required tables if they don't exist. However, for
 2. **Run migrations on test database**:
 
    ```bash
-   DATABASE_URL=postgresql://berthcare:berthcare_dev_password@localhost:5432/berthcare_test npm run migrate:up
+   # Ensure DATABASE_URL is exported prior to running this command
+   # e.g. DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}_test"
+   DATABASE_URL="${DATABASE_URL}" npm run migrate:up
    ```
 
 3. **Tests will clean up data** between runs (DELETE operations, not DROP)
@@ -202,7 +204,7 @@ Tests are designed to run in CI/CD pipelines:
 - Tests clean Redis between runs
 - If running tests multiple times quickly, wait or flush Redis manually:
   ```bash
-  redis-cli -a berthcare_redis_password -n 1 FLUSHDB
+  REDISCLI_AUTH="${REDIS_PASSWORD}" redis-cli -n "${REDIS_DB:-1}" FLUSHDB
   ```
 
 ### Timeout errors
