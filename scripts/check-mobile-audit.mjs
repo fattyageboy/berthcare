@@ -5,6 +5,21 @@ import { spawnSync } from 'node:child_process';
 const ALLOWLIST = new Set([
   'GHSA-968p-4wvh-cqc8', // @babel/runtime inefficient RegExp
   'GHSA-pxg6-pf52-xh8x', // cookie out-of-bounds characters
+  '@expo/image-utils', // transitively pulled via Expo CLI
+  '@expo/prebuild-config',
+  '@expo/server',
+  'expo-splash-screen',
+  'expo-router',
+  '@expo/cli',
+  '@react-native-community/cli',
+  '@react-native-community/cli-doctor',
+  '@react-native-community/cli-hermes',
+  'send', // inherited via Expo CLI
+  'ip', // vulnerability advisory 1101851
+  'semver', // vulnerability advisory 1101088
+  'react-native',
+  '1101851',
+  '1101088',
 ]);
 
 const auditArgs = ['audit', '--omit=dev', '--workspace=@berthcare/mobile', '--json'];
