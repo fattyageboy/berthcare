@@ -40,6 +40,15 @@ CREATE INDEX IF NOT EXISTS idx_zones_region ON zones(region) WHERE deleted_at IS
 -- TRIGGERS
 -- ============================================================================
 
+-- Ensure the timestamp update helper function exists before creating triggers
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Trigger for zones table
 CREATE TRIGGER update_zones_updated_at
     BEFORE UPDATE ON zones
