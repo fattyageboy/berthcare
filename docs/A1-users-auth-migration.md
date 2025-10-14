@@ -85,10 +85,12 @@ Manages JWT refresh tokens for multi-device session support.
 
 **Reliability:**
 
-- Foreign key constraints with CASCADE delete
+- Foreign key constraints with CASCADE delete for hard deletes (application explicitly deletes refresh tokens when a user record is marked deleted via the `deleted_at` soft-delete flag)
 - Automatic timestamp management via triggers
 - Transaction support (BEGIN/COMMIT/ROLLBACK)
 - Comprehensive error handling
+
+> **Soft delete token policy:** When `deleted_at` is set on `users`, we immediately revoke relevant refresh tokens at the application layer (e.g., logout logic or dedicated cleanup job). This preserves the audit trail while ensuring no lingering sessions. Hard deletes use `ON DELETE CASCADE` to remove tokens automatically. Operationally, ensure the deployment includes the revocation routine and, if needed, run a one-time cleanup to revoke any tokens associated with already soft-deleted users.
 
 **Maintainability:**
 
