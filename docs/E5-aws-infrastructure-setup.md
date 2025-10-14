@@ -772,7 +772,24 @@ aws s3 ls s3://berthcare-terraform-state-dr/staging/ --region us-east-1
      --region us-east-1
   ```
 
-   Where the engine supports automatic backup replication, configure it with `aws rds modify-db-instance` (for example, specify `--enable-automatic-backup-replication` and `--automatic-backup-replication-region us-east-1`) so snapshots flow to the DR region without operator intervention. Otherwise, schedule an EventBridge rule that invokes a Lambda function to call `aws rds copy-db-snapshot` and prune older DR snapshots.
+   When the engine supports cross-Region automated backup replication, enable it with the dedicated command. Example:
+
+   ```bash
+   aws rds start-db-instance-automated-backups-replication \
+     --source-db-instance-arn arn:aws:rds:ca-central-1:123456789012:db:berthcare-prod-db \
+     --backup-retention-period 7 \
+     --region us-east-1 \
+     --source-region ca-central-1 \
+     --kms-key-id arn:aws:kms:us-east-1:123456789012:key/your-dr-kms-key
+   ```
+
+   - `--source-db-instance-arn` — ARN of the primary RDS instance
+   - `--backup-retention-period` — retention in days for replicated backups
+   - `--region` — destination Region for automated backup replication
+   - `--source-region` (optional if CLI is invoked in the primary Region)
+   - `--kms-key-id` (optional) — DR Region KMS key for encrypted backups
+
+   If the engine lacks automated backup replication, schedule an EventBridge rule that triggers a Lambda to invoke `aws rds copy-db-snapshot` and prune older DR snapshots.
 
 4. **Verify S3 object parity.** Ensure application data buckets mirror the expected contents before declaring the DR region ready:
 
