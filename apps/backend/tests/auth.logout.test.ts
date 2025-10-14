@@ -28,12 +28,12 @@ describe('POST /v1/auth/logout', () => {
   beforeAll(async () => {
     // Initialize PostgreSQL connection
     pgPool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL,
     });
 
     // Initialize Redis connection
     redisClient = createClient({
-      url: process.env.REDIS_URL || 'redis://localhost:6379',
+      url: process.env.TEST_REDIS_URL ?? process.env.REDIS_URL ?? 'redis://localhost:6379',
     });
     await redisClient.connect();
 
