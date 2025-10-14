@@ -883,14 +883,20 @@ export function createVisitsRouter(
           let docParamCount = 1;
 
           if (documentation.vitalSigns !== undefined) {
+            const vitalSignsValue = typeof documentation.vitalSigns === 'string'
+              ? documentation.vitalSigns
+              : JSON.stringify(documentation.vitalSigns);
             docUpdates.push(`vital_signs = $${docParamCount}`);
-            docValues.push(JSON.stringify(documentation.vitalSigns));
+            docValues.push(vitalSignsValue);
             docParamCount++;
           }
 
           if (documentation.activities !== undefined) {
+            const activitiesValue = typeof documentation.activities === 'string'
+              ? documentation.activities
+              : JSON.stringify(documentation.activities);
             docUpdates.push(`activities = $${docParamCount}`);
-            docValues.push(JSON.stringify(documentation.activities));
+            docValues.push(activitiesValue);
             docParamCount++;
           }
 
