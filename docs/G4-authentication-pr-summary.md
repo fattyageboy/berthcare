@@ -177,7 +177,11 @@ Authenticate user and issue tokens.
     "accessToken": "jwt-token",
     "refreshToken": "jwt-token",
     "user": {
-      /* user profile */
+      "id": "user-uuid",
+      "email": "user@example.com",
+      "firstName": "Taylor",
+      "lastName": "Caregiver",
+      "role": "caregiver"
     }
   }
 }
