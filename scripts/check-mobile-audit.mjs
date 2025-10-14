@@ -58,11 +58,12 @@ for (const [pkgName, info] of Object.entries(vulnerabilities)) {
   const viaEntries = Array.isArray(info?.via) ? info.via : [];
   const sources = viaEntries
     .map((item) => {
-      if (typeof item === 'string') {
-        return item;
+      if (typeof item === 'string' || typeof item === 'number') {
+        return String(item);
       }
       if (item && typeof item === 'object') {
-        return item.source || item.url || item.title || null;
+        const source = item.source ?? item.url ?? item.title ?? null;
+        return source != null ? String(source) : null;
       }
       return null;
     })
