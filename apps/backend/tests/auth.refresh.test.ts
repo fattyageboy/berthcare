@@ -327,7 +327,9 @@ describe('POST /v1/auth/refresh', () => {
 
       expect(response.status).toBe(401);
       expect(response.body.error.code).toBe('DEVICE_MISMATCH');
-      expect(response.body.error.message).toBe('Refresh token device does not match active session');
+      expect(response.body.error.message).toBe(
+        'Refresh token device does not match active session'
+      );
     });
 
     it('should return 401 for expired token', async () => {

@@ -151,13 +151,13 @@ Authorization: Bearer <access_token>
 
 ### Zone-Based Access Control
 
-**Non-Admin Users (Caregivers, Coordinators):**
+### Non-Admin Users (Caregivers, Coordinators)
 
 - Can only access clients in their assigned zone
 - Attempting to access a different zone returns 403 Forbidden
 - zoneId query parameter is ignored (always uses user's zone)
 
-**Admin Users:**
+### Admin Users
 
 - Can access clients in all zones
 - Can filter by specific zone using zoneId query parameter
@@ -194,7 +194,7 @@ Results are always sorted by:
 clients:list:zone={zoneId}:search={search}:page={page}:limit={limit}
 ```
 
-**Cache Behavior:**
+### Cache behavior
 
 - TTL: 300 seconds (5 minutes)
 - Cache miss: Query database, cache result

@@ -146,8 +146,7 @@ describe('POST /api/v1/clients - Create Client', () => {
            center_latitude = EXCLUDED.center_latitude,
            center_longitude = EXCLUDED.center_longitude,
            deleted_at = NULL,
-           updated_at = NOW()`
-        ,
+           updated_at = NOW()`,
         [zone.id, zone.name, zone.region, zone.latitude, zone.longitude]
       );
     }

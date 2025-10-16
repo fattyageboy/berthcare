@@ -85,7 +85,16 @@ function formatDateTime(value: unknown): string | null {
     return value.toISOString();
   }
 
-  if (typeof value === 'string' || typeof value === 'number') {
+  if (typeof value === 'number') {
+    // Numeric timestamps are expected in milliseconds; normalize second-based values for clarity.
+    const normalizedValue = value < 1_000_000_000_000 ? value * 1000 : value;
+    const parsed = new Date(normalizedValue);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toISOString();
+    }
+  }
+
+  if (typeof value === 'string') {
     const parsed = new Date(value);
     if (!Number.isNaN(parsed.getTime())) {
       return parsed.toISOString();
@@ -1138,22 +1147,22 @@ export function createClientRoutes(pgPool: Pool, redisClient: RedisClient): Rout
       const dataResult = await client.query(dataQuery, queryParams);
 
       // Transform database results to API response format
-      const clients: ClientListItem[] = dataResult.rows.map((row) => ({
-        id: row.id,
-        firstName: row.first_name,
-        lastName: row.last_name,
-        dateOfBirth: row.date_of_birth,
-        address: row.address,
-        latitude: parseFloat(row.latitude),
-        longitude: parseFloat(row.longitude),
-        carePlanSummary: row.care_plan_summary,
-        lastVisitDate: row.last_visit_date
-          ? new Date(row.last_visit_date).toISOString()
-          : null,
-        nextScheduledVisit: row.next_scheduled_visit
-          ? new Date(row.next_scheduled_visit).toISOString()
-          : null,
-      }));
+      const clients: ClientListItem[] = dataResult.rows.map((row) => {
+        const { last_visit_date: lastVisitRaw, next_scheduled_visit: nextVisitRaw } = row;
+
+        return {
+          id: row.id,
+          firstName: row.first_name,
+          lastName: row.last_name,
+          dateOfBirth: row.date_of_birth,
+          address: row.address,
+          latitude: parseFloat(row.latitude),
+          longitude: parseFloat(row.longitude),
+          carePlanSummary: row.care_plan_summary,
+          lastVisitDate: lastVisitRaw ? new Date(lastVisitRaw).toISOString() : null,
+          nextScheduledVisit: nextVisitRaw ? new Date(nextVisitRaw).toISOString() : null,
+        };
+      });
 
       // Build pagination metadata
       const pagination: PaginationMeta = {
@@ -1411,8 +1420,7 @@ export function createClientRoutes(pgPool: Pool, redisClient: RedisClient): Rout
               )
             : 0;
 
-        const duration =
-          durationFromColumns !== null ? durationFromColumns : computedDuration;
+        const duration = durationFromColumns !== null ? durationFromColumns : computedDuration;
 
         const staffName = [visit.staff_first_name, visit.staff_last_name]
           .filter((part) => typeof part === 'string' && part.trim().length > 0)

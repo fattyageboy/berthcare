@@ -47,16 +47,8 @@ export const ROLE_PERMISSIONS = {
     'update:schedule',
     'create:user',
   ],
-  admin: [
-    '*',
-  ],
-  family: [
-    'read:clients',
-    'read:care-plans',
-    'read:visits',
-    'read:schedules',
-    'create:message',
-  ],
+  admin: ['*'],
+  family: ['read:clients', 'read:care-plans', 'read:visits', 'read:schedules', 'create:message'],
 } as const satisfies Record<UserRole, readonly string[]>;
 
 /** Literal union of all supported permission identifiers. */

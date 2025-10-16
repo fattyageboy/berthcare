@@ -155,14 +155,17 @@ FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
 
 When a client is deleted, their care plan is automatically deleted.
 
-**3. Unique Client Constraint**
+**3. Unique Partial Index on Client**
 
 ```sql
-UNIQUE INDEX idx_care_plans_client_unique ON care_plans(client_id)
-WHERE deleted_at IS NULL
+CREATE UNIQUE INDEX idx_care_plans_client_unique
+ON care_plans (client_id)
+WHERE deleted_at IS NULL;
 ```
 
-Each client can have only one active care plan.
+This unique partial index enforces one active care plan per client while ignoring soft-deleted records.
+
+_Note: A `UNIQUE` constraint is declared on a column or table definition, whereas a unique partial index uses `CREATE UNIQUE INDEX` and can include a `WHERE` clause to target only a subset of rows._
 
 ### Triggers
 
@@ -274,7 +277,8 @@ Each client can have only one active care plan.
 **Get Care Plan:**
 
 ```sql
--- Uses idx_care_plans_client_unique
+-- Planner may use idx_care_plans_client_id for this lookup
+-- or fall back to idx_care_plans_client_unique depending on statistics
 SELECT * FROM care_plans
 WHERE client_id = $1 AND deleted_at IS NULL;
 -- Performance: < 1ms

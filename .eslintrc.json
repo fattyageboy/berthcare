@@ -17,7 +17,7 @@
   "parserOptions": {
     "ecmaVersion": 2022,
     "sourceType": "module",
-    "EXPERIMENTAL_useProjectService": true
+    "projectService": true
   },
   "plugins": ["@typescript-eslint", "import", "jest", "prettier"],
   "rules": {

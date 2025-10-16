@@ -3,10 +3,19 @@ import { Pool, PoolConfig } from 'pg';
 const MAX_PRIMARY_CONNECTIONS = 20;
 const MAX_REPLICA_CONNECTIONS = 20;
 
+const primaryMaxConnections = clampPoolSize(process.env.DB_POOL_MAX, MAX_PRIMARY_CONNECTIONS, 20);
+
+const primaryMinConnections = (() => {
+  const defaultMin = 2;
+  const parsed = parseInt(process.env.DB_POOL_MIN ?? String(defaultMin), 10);
+  const normalized = Math.max(0, Number.isNaN(parsed) ? defaultMin : parsed);
+  return Math.min(primaryMaxConnections, normalized);
+})();
+
 const primaryConfig: PoolConfig = {
   connectionString: resolveConnectionString(),
-  max: clampPoolSize(process.env.DB_POOL_MAX, MAX_PRIMARY_CONNECTIONS, 20),
-  min: Math.max(0, parseInt(process.env.DB_POOL_MIN ?? '2', 10)),
+  max: primaryMaxConnections,
+  min: primaryMinConnections,
   idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT_MS ?? '30000', 10),
   connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT_MS ?? '2000', 10),
 };
@@ -51,11 +60,45 @@ function resolveConnectionString(): string {
     return process.env.DATABASE_URL;
   }
 
-  const user = process.env.POSTGRES_USER ?? 'berthcare';
-  const password = process.env.POSTGRES_PASSWORD ?? 'berthcare_dev_password';
-  const host = process.env.POSTGRES_HOST ?? 'localhost';
-  const port = process.env.POSTGRES_PORT ?? '5432';
-  const database = process.env.POSTGRES_DB ?? 'berthcare_dev';
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  let user = process.env.POSTGRES_USER ?? '';
+  let password = process.env.POSTGRES_PASSWORD ?? '';
+  let host = process.env.POSTGRES_HOST ?? '';
+  let port = process.env.POSTGRES_PORT ?? '';
+  let database = process.env.POSTGRES_DB ?? '';
+
+  const missingKeys = [
+    user ? null : 'POSTGRES_USER',
+    password ? null : 'POSTGRES_PASSWORD',
+    host ? null : 'POSTGRES_HOST',
+    port ? null : 'POSTGRES_PORT',
+    database ? null : 'POSTGRES_DB',
+  ].filter(Boolean) as string[];
+
+  if (!isDevelopment && missingKeys.length > 0) {
+    throw new Error(
+      `Missing required Postgres environment variables: ${missingKeys.join(
+        ', '
+      )}. Set DATABASE_URL or configure POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST, POSTGRES_PORT, and POSTGRES_DB.`
+    );
+  }
+
+  if (isDevelopment && missingKeys.length > 0) {
+    console.warn(
+      `[db] Missing Postgres env vars (${missingKeys.join(', ')}); using development defaults.`
+    );
+    user = user || 'berthcare';
+    password = password || 'berthcare_dev_password';
+    host = host || 'localhost';
+    port = port || '5432';
+    database = database || 'berthcare_dev';
+  }
+
+  if (!user || !host || !port || !database) {
+    throw new Error(
+      'Unable to resolve Postgres connection string. Set DATABASE_URL or provide POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST, POSTGRES_PORT, and POSTGRES_DB.'
+    );
+  }
 
   const auth =
     password.length > 0

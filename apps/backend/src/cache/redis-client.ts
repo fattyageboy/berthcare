@@ -1,5 +1,4 @@
-import connectRedis from 'connect-redis';
-import session from 'express-session';
+import RedisStore from 'connect-redis';
 import Redis, { RedisOptions } from 'ioredis';
 
 const redisUrl = process.env.REDIS_URL ?? 'redis://localhost:6379';
@@ -29,8 +28,6 @@ export function createRedisClient(options: Partial<RedisOptions> = {}): RedisCli
 export const redisClient = createRedisClient();
 
 export function createSessionStore() {
-  const RedisStore = connectRedis(session);
-
   return new RedisStore({
     client: redisClient,
     prefix: 'berthcare:sess:',

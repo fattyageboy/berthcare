@@ -12,15 +12,20 @@
  */
 
 import * as crypto from 'crypto';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 import express, { Express } from 'express';
-import { Pool } from 'pg';
+import { Pool, PoolClient } from 'pg';
 
 import { createRedisClient, RedisClient } from '../src/cache/redis-client';
 import { createAuthRoutes } from '../src/routes/auth.routes';
 import { createCarePlanRoutes } from '../src/routes/care-plans.routes';
 import { createClientRoutes } from '../src/routes/clients.routes';
 import { createVisitsRouter } from '../src/routes/visits.routes';
+
+const MIGRATIONS_DIR = path.resolve(__dirname, '../src/db/migrations');
+const MIGRATIONS_TABLE = 'schema_migrations';
 
 // Test configuration
 export const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
@@ -33,54 +38,112 @@ if (!TEST_REDIS_URL) {
   throw new Error('TEST_REDIS_URL environment variable is required');
 }
 
-async function ensureTestSchema(pgPool: Pool): Promise<void> {
-  // Ensure zone coordinate columns exist for zone assignment tests
-  await pgPool.query(
-    `
-      ALTER TABLE zones
-        ADD COLUMN IF NOT EXISTS center_latitude DOUBLE PRECISION,
-        ADD COLUMN IF NOT EXISTS center_longitude DOUBLE PRECISION
-    `
-  );
+type ParsedMigration = {
+  version: number;
+  baseName: string;
+  fileName: string;
+  fullPath: string;
+};
 
-  // Ensure soft-delete column exists (some environments may lack recent migration)
-  await pgPool.query(
-    `
-      ALTER TABLE zones
-        ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ
-    `
-  );
+function parseMigrationFile(fileName: string): ParsedMigration | null {
+  const match = /^(\d{3})_(.+)\.sql$/i.exec(fileName);
+  if (!match) {
+    return null;
+  }
 
-  // Add check constraints if they are missing (idempotent)
-  await pgPool.query(
-    `
-      DO $$
-      BEGIN
-        IF NOT EXISTS (
-          SELECT 1
-          FROM pg_constraint
-          WHERE conname = 'zones_center_latitude_check'
-            AND conrelid = 'zones'::regclass
-        ) THEN
-          ALTER TABLE zones
-            ADD CONSTRAINT zones_center_latitude_check
-            CHECK (center_latitude IS NULL OR (center_latitude BETWEEN -90 AND 90));
-        END IF;
+  const [, versionPart, remainder] = match;
+  if (remainder.endsWith('-down')) {
+    return null;
+  }
 
-        IF NOT EXISTS (
-          SELECT 1
-          FROM pg_constraint
-          WHERE conname = 'zones_center_longitude_check'
-            AND conrelid = 'zones'::regclass
-        ) THEN
-          ALTER TABLE zones
-            ADD CONSTRAINT zones_center_longitude_check
-            CHECK (center_longitude IS NULL OR (center_longitude BETWEEN -180 AND 180));
-        END IF;
-      END;
-      $$;
-    `
-  );
+  const version = Number.parseInt(versionPart, 10);
+  if (Number.isNaN(version)) {
+    return null;
+  }
+
+  return {
+    version,
+    baseName: `${versionPart}_${remainder}`,
+    fileName,
+    fullPath: path.join(MIGRATIONS_DIR, fileName),
+  };
+}
+
+async function ensureMigrationsTable(client: PoolClient): Promise<void> {
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS ${MIGRATIONS_TABLE} (
+      name TEXT PRIMARY KEY,
+      run_on TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+}
+
+async function loadPendingMigrations(client: PoolClient): Promise<ParsedMigration[]> {
+  let entries: string[];
+  try {
+    entries = await fs.readdir(MIGRATIONS_DIR);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'Unknown error reading migrations directory';
+    throw new Error(`Unable to read migrations directory at ${MIGRATIONS_DIR}: ${message}`);
+  }
+
+  const files: ParsedMigration[] = [];
+
+  for (const fileName of entries) {
+    const parsed = parseMigrationFile(fileName);
+    if (!parsed) {
+      continue;
+    }
+    files.push(parsed);
+  }
+
+  const { rows } = await client.query<{ name: string }>(`SELECT name FROM ${MIGRATIONS_TABLE}`);
+  const applied = new Set(rows.map((row) => row.name));
+
+  const pending = files.filter((migration) => !applied.has(migration.baseName));
+
+  return pending.sort((a, b) => {
+    if (a.version !== b.version) {
+      return a.version - b.version;
+    }
+    return a.baseName.localeCompare(b.baseName);
+  });
+}
+
+export async function runTestMigrations(pgPool: Pool): Promise<void> {
+  const client = await pgPool.connect();
+
+  try {
+    await ensureMigrationsTable(client);
+    const pendingMigrations = await loadPendingMigrations(client);
+
+    for (const migration of pendingMigrations) {
+      let sql: string;
+      try {
+        sql = await fs.readFile(migration.fullPath, 'utf8');
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Unknown error reading migration file';
+        throw new Error(`Unable to read migration ${migration.fileName}: ${message}`);
+      }
+
+      await client.query('BEGIN');
+      try {
+        await client.query(sql);
+        await client.query(`INSERT INTO ${MIGRATIONS_TABLE} (name) VALUES ($1)`, [
+          migration.baseName,
+        ]);
+        await client.query('COMMIT');
+      } catch (error) {
+        await client.query('ROLLBACK');
+        const message = error instanceof Error ? error.message : 'Unknown error applying migration';
+        throw new Error(`Failed to apply migration ${migration.fileName}: ${message}`);
+      }
+    }
+  } finally {
+    client.release();
+  }
 }
 
 /**
@@ -291,7 +354,7 @@ export async function setupTestConnections(): Promise<{
     throw new Error('PostgreSQL connection failed. Is the database running?');
   }
 
-  await ensureTestSchema(pgPool);
+  await runTestMigrations(pgPool);
 
   const redisClient = createRedisClient({ url: TEST_REDIS_URL });
 

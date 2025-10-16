@@ -3,7 +3,7 @@
   "ignorePatterns": ["!**/*", "jest.config.ts"],
   "parserOptions": {
     "project": ["libs/shared/tsconfig.eslint.json"],
-    "EXPERIMENTAL_useProjectService": true
+    "projectService": true
   },
   "settings": {
     "import/resolver": {

@@ -55,7 +55,10 @@ export class ZoneAssignmentError extends Error {
 export class ZoneAssignmentService {
   private cacheTTL: number = 3600; // 1 hour
 
-  constructor(private pgPool: Pool, private redisClient: RedisClient) {}
+  constructor(
+    private pgPool: Pool,
+    private redisClient: RedisClient
+  ) {}
 
   private parseCoordinate(value: unknown): number | null {
     if (typeof value === 'number') {
@@ -251,7 +254,7 @@ export class ZoneAssignmentService {
       [zoneId]
     );
 
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   /**

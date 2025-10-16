@@ -525,7 +525,9 @@ describe('GET /api/v1/clients/:clientId', () => {
 
       expect(recentVisits).toHaveLength(10);
 
-      const expectedMostRecentDate = new Date(BASE_VISIT_DATE.getTime() + 5 * 60 * 1000).toISOString();
+      const expectedMostRecentDate = new Date(
+        BASE_VISIT_DATE.getTime() + 5 * 60 * 1000
+      ).toISOString();
       const expectedTenthDate = new Date(
         BASE_VISIT_DATE.getTime() - 9 * 24 * 60 * 60 * 1000 + 5 * 60 * 1000
       ).toISOString();

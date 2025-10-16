@@ -3,7 +3,7 @@
   "ignorePatterns": ["!**/*", ".expo/**"],
   "parserOptions": {
     "project": ["apps/mobile/tsconfig.eslint.json"],
-    "EXPERIMENTAL_useProjectService": true
+    "projectService": true
   },
   "overrides": [
     {

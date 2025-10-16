@@ -258,14 +258,32 @@ export function authenticateJWT(redisClient: RedisClient) {
           ? (Array.from(new Set(payload.permissions)) as Permission[])
           : getRolePermissions(payload.role);
 
-      req.user = {
-        userId: payload.userId,
+      const userId = payload.userId ?? payload.sub;
+      if (!userId) {
+        res.status(401).json({
+          error: {
+            code: 'INVALID_TOKEN',
+            message: 'Token payload missing user identifier',
+            timestamp: new Date().toISOString(),
+            requestId: req.headers['x-request-id'] || 'unknown',
+          },
+        });
+        return;
+      }
+
+      const userContext: NonNullable<AuthenticatedRequest['user']> = {
+        userId,
         role: payload.role,
         zoneId: payload.zoneId,
-        email: payload.email,
         deviceId: payload.deviceId ?? DEFAULT_DEVICE_ID,
         permissions: resolvedPermissions,
       };
+
+      if (payload.email) {
+        userContext.email = payload.email;
+      }
+
+      req.user = userContext;
 
       next();
     } catch (error) {
@@ -346,13 +364,15 @@ export function authorize(
 
   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
-      res.status(401).json(
-        buildAuthErrorResponse(
-          req,
-          'AUTH_UNAUTHENTICATED',
-          'Authentication is required to access this resource'
-        )
-      );
+      res
+        .status(401)
+        .json(
+          buildAuthErrorResponse(
+            req,
+            'AUTH_UNAUTHENTICATED',
+            'Authentication is required to access this resource'
+          )
+        );
       return;
     }
 
@@ -360,10 +380,15 @@ export function authorize(
 
     if (requiredRoles.length > 0 && !hasRole(user, requiredRoles)) {
       res.status(403).json(
-        buildAuthErrorResponse(req, 'AUTH_INSUFFICIENT_ROLE', 'You do not have permission to access this resource', {
-          requiredRoles,
-          userRole: user.role,
-        })
+        buildAuthErrorResponse(
+          req,
+          'AUTH_INSUFFICIENT_ROLE',
+          'You do not have permission to access this resource',
+          {
+            requiredRoles,
+            userRole: user.role,
+          }
+        )
       );
       return;
     }

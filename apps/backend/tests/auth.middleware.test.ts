@@ -109,7 +109,7 @@ class InMemoryRedisClient {
   }
 
   private patternToRegex(pattern: string): RegExp {
-    const escaped = pattern.replace(/[-\/\\^$+?.()|[\]{}]/g, '\\$&').replace(/\*/g, '.*');
+    const escaped = pattern.replace(/[-/\\^$+?.()|[\]{}]/g, '\\$&').replace(/\*/g, '.*');
     return new RegExp(`^${escaped}$`);
   }
 }
@@ -315,7 +315,10 @@ describe('JWT Authentication Middleware', () => {
     });
 
     it('should prefer permissions from token payload when provided', async () => {
-      const customPermissions = ['create:visit', 'update:visit-documentation'] as jwtUtils.Permission[];
+      const customPermissions = [
+        'create:visit',
+        'update:visit-documentation',
+      ] as jwtUtils.Permission[];
       const token = jwtUtils.generateAccessToken({
         userId: 'user_permissions',
         role: 'caregiver',

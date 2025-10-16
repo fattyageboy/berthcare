@@ -92,9 +92,7 @@ describe('POST /v1/auth/login', () => {
   });
 
   const postRegister = () =>
-    request(app)
-      .post('/v1/auth/register')
-      .set('Authorization', `Bearer ${adminAccessToken}`);
+    request(app).post('/v1/auth/register').set('Authorization', `Bearer ${adminAccessToken}`);
 
   // Helper function to create a test user
   async function createTestUser(

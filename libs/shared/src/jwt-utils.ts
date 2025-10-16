@@ -30,6 +30,13 @@ import jwt, { type JwtPayload } from 'jsonwebtoken';
 
 import type { Permission } from './authorization';
 
+type SecretsManagerGetSecretValueOutput =
+  import('@aws-sdk/client-secrets-manager').GetSecretValueCommandOutput;
+
+interface SecretsClient {
+  send(command: unknown): Promise<SecretsManagerGetSecretValueOutput>;
+}
+
 /**
  * User role types
  * - caregiver: Home care workers who provide direct care to clients
@@ -115,9 +122,20 @@ interface ConfigCache {
   cachedAt: number;
 }
 
+interface EnvKeyMaterialSnapshot {
+  json: string | null;
+  keyId: string | null;
+  privateKey: string | null;
+  publicKey: string | null;
+  publicKeySet: string | null;
+}
+
 let runtimeKeyConfig: KeyConfig | null = null;
-let runtimeKeyConfigLoadedAt = 0;
+let runtimeKeyConfigLoadedAt: number | null = null;
 let envKeyCache: ConfigCache | null = null;
+let envKeyCacheBuildInProgress = false;
+let secretsManagerInitialization: Promise<void> | null = null;
+let secretsManagerInitialized = false;
 
 /**
  * Clear cached key configuration.
@@ -125,7 +143,7 @@ let envKeyCache: ConfigCache | null = null;
  */
 export function clearJwtKeyCache(): void {
   runtimeKeyConfig = null;
-  runtimeKeyConfigLoadedAt = 0;
+  runtimeKeyConfigLoadedAt = null;
   envKeyCache = null;
 }
 
@@ -203,7 +221,10 @@ function parseKeySetFromJson(jsonValue: string, source: string): KeyConfig {
 
   const configObject = parsed as Record<string, unknown>;
   const activeKidValue =
-    configObject.activeKid ?? configObject.activeKey ?? configObject.currentKid ?? configObject.currentKey;
+    configObject.activeKid ??
+    configObject.activeKey ??
+    configObject.currentKid ??
+    configObject.currentKey;
 
   if (typeof activeKidValue !== 'string' || !activeKidValue.trim()) {
     throw new Error(`${source} must include a non-empty "activeKid" property`);
@@ -268,16 +289,16 @@ function parseKeySetFromJson(jsonValue: string, source: string): KeyConfig {
   };
 }
 
-function buildConfigFromEnv(): KeyConfig {
-  const activeKid = (process.env.JWT_KEY_ID || 'env-default').trim();
+function buildConfigFromEnv(snapshot?: EnvKeyMaterialSnapshot): KeyConfig {
+  const keyIdRaw = snapshot?.keyId ?? process.env.JWT_KEY_ID;
+  const activeKid = (keyIdRaw && keyIdRaw.trim()) || 'env-default';
 
-  const privateKeyRaw = process.env.JWT_PRIVATE_KEY;
-  const publicKeyRaw = process.env.JWT_PUBLIC_KEY;
+  const privateKeyRaw = snapshot?.privateKey ?? process.env.JWT_PRIVATE_KEY;
+  const publicKeyRaw = snapshot?.publicKey ?? process.env.JWT_PUBLIC_KEY;
 
   if (!publicKeyRaw) {
     throw new Error(
-      'JWT_PUBLIC_KEY not configured. ' +
-        'Set JWT_PUBLIC_KEY environment variable (optionally base64-encoded with "base64:" prefix).'
+      'JWT_PUBLIC_KEY not configured. Set JWT_PUBLIC_KEY environment variable (optionally base64-encoded with "base64:" prefix).'
     );
   }
 
@@ -291,15 +312,13 @@ function buildConfigFromEnv(): KeyConfig {
     },
   };
 
-  const publicKeySetRaw = process.env.JWT_PUBLIC_KEY_SET;
+  const publicKeySetRaw = snapshot?.publicKeySet ?? process.env.JWT_PUBLIC_KEY_SET;
   if (publicKeySetRaw) {
     let additional: unknown;
     try {
       additional = JSON.parse(publicKeySetRaw);
     } catch (error) {
-      throw new Error(
-        `JWT_PUBLIC_KEY_SET contains invalid JSON: ${(error as Error).message}`
-      );
+      throw new Error(`JWT_PUBLIC_KEY_SET contains invalid JSON: ${(error as Error).message}`);
     }
 
     if (!additional || typeof additional !== 'object') {
@@ -319,46 +338,83 @@ function buildConfigFromEnv(): KeyConfig {
 }
 
 function getKeyConfig(): KeyConfig {
+  const now = Date.now();
   const secretArn = process.env.JWT_KEYS_SECRET_ARN;
-  const shouldUseRuntimeConfig =
-    runtimeKeyConfig &&
-    (!secretArn ||
-      (runtimeKeyConfigLoadedAt && Date.now() - runtimeKeyConfigLoadedAt < KEY_CACHE_TTL));
+  const currentRuntimeConfig = runtimeKeyConfig;
+  const currentRuntimeLoadedAt = runtimeKeyConfigLoadedAt;
 
-  if (shouldUseRuntimeConfig && runtimeKeyConfig) {
-    return runtimeKeyConfig;
+  const runtimeCacheFresh =
+    currentRuntimeLoadedAt !== null && now - currentRuntimeLoadedAt < KEY_CACHE_TTL;
+  const shouldUseRuntimeConfig = Boolean(currentRuntimeConfig) && (!secretArn || runtimeCacheFresh);
+
+  if (shouldUseRuntimeConfig && currentRuntimeConfig) {
+    return currentRuntimeConfig;
   }
 
+  const envSnapshot: EnvKeyMaterialSnapshot = {
+    json: process.env.JWT_KEYS_JSON ?? null,
+    keyId: process.env.JWT_KEY_ID ?? null,
+    privateKey: process.env.JWT_PRIVATE_KEY ?? null,
+    publicKey: process.env.JWT_PUBLIC_KEY ?? null,
+    publicKeySet: process.env.JWT_PUBLIC_KEY_SET ?? null,
+  };
+
   const signature = JSON.stringify({
-    json: process.env.JWT_KEYS_JSON || '',
-    keyId: process.env.JWT_KEY_ID || '',
-    privateKey: process.env.JWT_PRIVATE_KEY || '',
-    publicKey: process.env.JWT_PUBLIC_KEY || '',
-    publicKeySet: process.env.JWT_PUBLIC_KEY_SET || '',
+    json: envSnapshot.json ?? '',
+    keyId: envSnapshot.keyId ?? '',
+    privateKey: envSnapshot.privateKey ?? '',
+    publicKey: envSnapshot.publicKey ?? '',
+    publicKeySet: envSnapshot.publicKeySet ?? '',
   });
 
-  if (envKeyCache && envKeyCache.signature === signature) {
-    const isFresh = Date.now() - envKeyCache.cachedAt < KEY_CACHE_TTL;
+  const cachedSnapshot = envKeyCache;
+  if (cachedSnapshot && cachedSnapshot.signature === signature) {
+    const isFresh = now - cachedSnapshot.cachedAt < KEY_CACHE_TTL;
     if (isFresh) {
-      return envKeyCache.config;
+      return cachedSnapshot.config;
     }
   }
 
-  let config: KeyConfig;
-
-  if (process.env.JWT_KEYS_JSON) {
-    config = parseKeySetFromJson(process.env.JWT_KEYS_JSON, 'JWT_KEYS_JSON');
-  } else {
-    config = buildConfigFromEnv();
+  if (envKeyCacheBuildInProgress) {
+    const latestCache = envKeyCache;
+    if (latestCache && latestCache.signature === signature) {
+      return latestCache.config;
+    }
   }
 
-  envKeyCache = {
-    signature,
-    config,
-    cachedAt: Date.now(),
-  };
+  envKeyCacheBuildInProgress = true;
 
-  return config;
+  try {
+    const config = envSnapshot.json
+      ? parseKeySetFromJson(envSnapshot.json, 'JWT_KEYS_JSON')
+      : buildConfigFromEnv(envSnapshot);
+
+    const newEntry: ConfigCache = {
+      signature,
+      config,
+      cachedAt: now,
+    };
+
+    if (envKeyCache === cachedSnapshot) {
+      envKeyCache = newEntry;
+    } else {
+      const latestCache = envKeyCache;
+      const latestIsOutdated =
+        !latestCache ||
+        latestCache.signature !== signature ||
+        now - latestCache.cachedAt >= KEY_CACHE_TTL;
+
+      if (latestIsOutdated) {
+        envKeyCache = newEntry;
+      }
+    }
+
+    const finalCache = envKeyCache && envKeyCache.signature === signature ? envKeyCache : newEntry;
+
+    return finalCache.config;
+  } finally {
+    envKeyCacheBuildInProgress = false;
+  }
 }
 
 /**
@@ -383,48 +439,67 @@ export interface InitializeJwtKeyStoreOptions {
 export async function initializeJwtKeyStore(
   options: InitializeJwtKeyStoreOptions = {}
 ): Promise<void> {
-  const secretArn = options.secretArn ?? process.env.JWT_KEYS_SECRET_ARN;
-  if (!secretArn) {
+  // Designed to run once during bootstrap; subsequent calls short-circuit.
+  if (secretsManagerInitialized) {
     return;
   }
 
-  const region =
-    options.region ?? process.env.AWS_REGION ?? process.env.AWS_DEFAULT_REGION ?? 'us-east-1';
-
-  type SecretsClient = { send: (command: any) => Promise<any> };
-
-  let client = options.client as SecretsClient | undefined;
-  let GetSecretValueCommand: new (input: { SecretId: string }) => any;
-
-  const awsModule = await import('@aws-sdk/client-secrets-manager');
-  GetSecretValueCommand = awsModule.GetSecretValueCommand;
-
-  if (!client) {
-    client = new awsModule.SecretsManagerClient({ region }) as unknown as SecretsClient;
+  if (secretsManagerInitialization) {
+    await secretsManagerInitialization;
+    return;
   }
 
-  if (!client) {
-    throw new Error('Failed to initialise Secrets Manager client for JWT key loading');
+  const initialize = async () => {
+    const secretArn = options.secretArn ?? process.env.JWT_KEYS_SECRET_ARN;
+    if (!secretArn) {
+      return;
+    }
+
+    const region =
+      options.region ?? process.env.AWS_REGION ?? process.env.AWS_DEFAULT_REGION ?? 'us-east-1';
+
+    let client = options.client as SecretsClient | undefined;
+
+    const { SecretsManagerClient, GetSecretValueCommand } = await import(
+      '@aws-sdk/client-secrets-manager'
+    );
+
+    if (!client) {
+      client = new SecretsManagerClient({ region }) as unknown as SecretsClient;
+    }
+
+    if (!client) {
+      throw new Error('Failed to initialise Secrets Manager client for JWT key loading');
+    }
+
+    const command = new GetSecretValueCommand({ SecretId: secretArn });
+    const response = await client.send(command);
+
+    const secretString: string | undefined =
+      response.SecretString ??
+      (response.SecretBinary
+        ? Buffer.from(response.SecretBinary as Uint8Array).toString('utf-8')
+        : undefined);
+
+    if (!secretString) {
+      throw new Error(`Secrets Manager secret "${secretArn}" is empty`);
+    }
+
+    const config = parseKeySetFromJson(secretString, `SecretsManager:${secretArn}`);
+
+    runtimeKeyConfig = config;
+    runtimeKeyConfigLoadedAt = Date.now();
+    envKeyCache = null;
+    secretsManagerInitialized = true;
+  };
+
+  secretsManagerInitialization = initialize();
+
+  try {
+    await secretsManagerInitialization;
+  } finally {
+    secretsManagerInitialization = null;
   }
-
-  const command = new GetSecretValueCommand({ SecretId: secretArn });
-  const response = await client.send(command);
-
-  const secretString: string | undefined =
-    response.SecretString ??
-    (response.SecretBinary
-      ? Buffer.from(response.SecretBinary as Uint8Array).toString('utf-8')
-      : undefined);
-
-  if (!secretString) {
-    throw new Error(`Secrets Manager secret "${secretArn}" is empty`);
-  }
-
-  const config = parseKeySetFromJson(secretString, `SecretsManager:${secretArn}`);
-
-  runtimeKeyConfig = config;
-  runtimeKeyConfigLoadedAt = Date.now();
-  envKeyCache = null;
 }
 
 function getSigningKey(): { kid: string; key: string } {
@@ -484,10 +559,13 @@ export function generateAccessToken(options: AccessTokenOptions): string {
       role: options.role,
       zoneId: options.zoneId,
       deviceId,
-      ...(options.email && { email: options.email }),
-      ...(options.permissions && options.permissions.length > 0 && {
-        permissions: options.permissions,
+      ...(options.email && {
+        email: options.email,
       }),
+      ...(options.permissions &&
+        options.permissions.length > 0 && {
+          permissions: options.permissions,
+        }),
     };
 
     const jwtId = randomUUID();
@@ -503,9 +581,8 @@ export function generateAccessToken(options: AccessTokenOptions): string {
 
     return token;
   } catch (error) {
-    throw new Error(
-      `Access token generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-    );
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error(`Access token generation failed: ${errorMessage}`);
   }
 }
 
@@ -557,9 +634,10 @@ export function generateRefreshToken(options: RefreshTokenOptions): string {
       zoneId: options.zoneId,
       deviceId,
       tokenId,
-      ...(options.permissions && options.permissions.length > 0 && {
-        permissions: options.permissions,
-      }),
+      ...(options.permissions &&
+        options.permissions.length > 0 && {
+          permissions: options.permissions,
+        }),
     };
 
     const token = jwt.sign(payload, privateKey, {
@@ -573,9 +651,8 @@ export function generateRefreshToken(options: RefreshTokenOptions): string {
 
     return token;
   } catch (error) {
-    throw new Error(
-      `Refresh token generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-    );
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error(`Refresh token generation failed: ${errorMessage}`);
   }
 }
 
@@ -656,9 +733,8 @@ export function verifyToken(token: string): JWTPayload {
           continue;
         }
 
-        throw new Error(
-          `Token verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-        );
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        throw new Error(`Token verification failed: ${errorMessage}`);
       }
     }
 
@@ -678,9 +754,8 @@ export function verifyToken(token: string): JWTPayload {
     if (error instanceof jwt.JsonWebTokenError) {
       throw new Error(`Invalid token: ${error.message}`);
     }
-    throw new Error(
-      `Token verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-    );
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error(`Token verification failed: ${errorMessage}`);
   }
 }
 

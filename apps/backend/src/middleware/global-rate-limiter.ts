@@ -11,15 +11,23 @@ interface RateLimitEntry {
   resetTime: number;
 }
 
+export interface GlobalRateLimiterMiddleware {
+  (req: Request, res: Response, next: NextFunction): void;
+  stopCleanup: () => void;
+}
+
 const DEFAULT_STATUS_CODE = 429;
 const DEFAULT_MESSAGE = 'Too many requests. Please try again later.';
+const CLEANUP_INTERVAL_MS = 10 * 60 * 1000;
 
 /**
  * Lightweight in-memory rate limiter used as a drop-in replacement for express-rate-limit.
  * The architecture blueprint calls for express-rate-limit; this implementation mirrors
  * the behaviour and configuration surface while keeping dependencies minimal.
  */
-export function createGlobalRateLimiter(options: GlobalRateLimiterOptions) {
+export function createGlobalRateLimiter(
+  options: GlobalRateLimiterOptions
+): GlobalRateLimiterMiddleware {
   const windowMs = Math.max(options.windowMs, 1000);
   const maxRequests = Math.max(options.maxRequests, 1);
   const keyGenerator =
@@ -30,8 +38,46 @@ export function createGlobalRateLimiter(options: GlobalRateLimiterOptions) {
     });
 
   const store = new Map<string, RateLimitEntry>();
+  const cleanupExpiredEntries = () => {
+    const now = Date.now();
+    for (const [key, entry] of store.entries()) {
+      if (entry.resetTime <= now) {
+        store.delete(key);
+      }
+    }
+  };
 
-  return function globalRateLimiter(req: Request, res: Response, next: NextFunction) {
+  let cleanupInterval: ReturnType<typeof setInterval> | undefined;
+  const startCleanup = () => {
+    if (cleanupInterval) {
+      return;
+    }
+    cleanupInterval = setInterval(cleanupExpiredEntries, CLEANUP_INTERVAL_MS);
+    if (
+      cleanupInterval &&
+      typeof cleanupInterval === 'object' &&
+      'unref' in cleanupInterval &&
+      typeof (cleanupInterval as { unref?: () => void }).unref === 'function'
+    ) {
+      cleanupInterval.unref();
+    }
+  };
+
+  const stopCleanup = () => {
+    if (!cleanupInterval) {
+      return;
+    }
+    clearInterval(cleanupInterval);
+    cleanupInterval = undefined;
+  };
+
+  startCleanup();
+
+  const globalRateLimiter: GlobalRateLimiterMiddleware = ((
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
     const key = keyGenerator(req);
     const now = Date.now();
 
@@ -67,5 +113,9 @@ export function createGlobalRateLimiter(options: GlobalRateLimiterOptions) {
     res.setHeader('X-RateLimit-Remaining', String(maxRequests - existing.count));
     res.setHeader('X-RateLimit-Reset', new Date(existing.resetTime).toISOString());
     next();
-  };
+  }) as GlobalRateLimiterMiddleware;
+
+  globalRateLimiter.stopCleanup = stopCleanup;
+
+  return globalRateLimiter;
 }

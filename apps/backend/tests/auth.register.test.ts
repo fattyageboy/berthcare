@@ -88,9 +88,7 @@ describe('POST /v1/auth/register', () => {
   });
 
   const postRegister = () =>
-    request(app)
-      .post('/v1/auth/register')
-      .set('Authorization', `Bearer ${adminAccessToken}`);
+    request(app).post('/v1/auth/register').set('Authorization', `Bearer ${adminAccessToken}`);
 
   describe('Authorization', () => {
     it('should return 401 when authorization header is missing', async () => {

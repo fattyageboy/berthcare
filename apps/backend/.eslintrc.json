@@ -3,7 +3,7 @@
   "ignorePatterns": ["!**/*", "node_modules/**", "dist/**"],
   "parserOptions": {
     "project": ["apps/backend/tsconfig.eslint.json"],
-    "EXPERIMENTAL_useProjectService": true
+    "projectService": true
   },
   "overrides": [
     {

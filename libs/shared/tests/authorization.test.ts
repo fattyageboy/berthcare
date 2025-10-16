@@ -1,9 +1,4 @@
-import {
-  getRolePermissions,
-  hasPermission,
-  hasRole,
-  ROLE_PERMISSIONS,
-} from '../src/authorization';
+import { getRolePermissions, hasPermission, hasRole, ROLE_PERMISSIONS } from '../src/authorization';
 
 describe('authorization utilities', () => {
   describe('getRolePermissions', () => {

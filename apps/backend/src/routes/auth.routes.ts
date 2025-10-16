@@ -41,13 +41,13 @@ import {
 
 import { RedisClient } from '../cache/redis-client';
 import { logAuth, logError } from '../config/logger';
+import { authenticateJWT, requireRole } from '../middleware/auth';
 import { createLoginRateLimiter, createRegistrationRateLimiter } from '../middleware/rate-limiter';
 import {
   validateLogin,
   validateRefreshToken,
   validateRegistration,
 } from '../middleware/validation';
-import { authenticateJWT, requireRole } from '../middleware/auth';
 
 export function createAuthRoutes(pgPool: Pool, redisClient: RedisClient): Router {
   const router = Router();
@@ -443,11 +443,11 @@ export function createAuthRoutes(pgPool: Pool, redisClient: RedisClient): Router
    * Errors:
    * - 400: Validation error
    * - 401: Invalid credentials
- * - 429: Rate limit exceeded (10 attempts per 15 minutes per IP)
+   * - 429: Rate limit exceeded (10 attempts per 15 minutes per IP)
    * - 500: Server error
    *
    * Security:
- * - Rate limiting: 10 attempts per 15 minutes per IP
+   * - Rate limiting: 10 attempts per 15 minutes per IP
    * - Password verification: bcrypt constant-time comparison
    * - Input validation: email format
    * - Refresh token hashing: SHA-256 before storage
@@ -655,10 +655,14 @@ export function createAuthRoutes(pgPool: Pool, redisClient: RedisClient): Router
       let userId: string | null = null;
       try {
         const decoded = verifyToken(token);
-        userId = decoded.userId;
+        userId = decoded.userId ?? null;
       } catch (error) {
-        if (decodedToken?.userId && error instanceof Error && error.message === 'Token has expired') {
-          userId = decodedToken.userId;
+        if (
+          decodedToken?.userId &&
+          error instanceof Error &&
+          error.message === 'Token has expired'
+        ) {
+          userId = decodedToken.userId ?? null;
         }
       }
 

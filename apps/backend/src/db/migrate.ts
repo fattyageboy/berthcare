@@ -1,6 +1,5 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
 import dotenv from 'dotenv';
 import { Client } from 'pg';
@@ -13,10 +12,7 @@ type MigrationFile = {
   isDown: boolean;
 };
 
-const moduleDir =
-  typeof __dirname !== 'undefined'
-    ? __dirname
-    : path.dirname(fileURLToPath(import.meta.url));
+const moduleDir = __dirname;
 
 const envPath = path.resolve(moduleDir, '../../.env');
 dotenv.config({ path: envPath });
@@ -61,15 +57,9 @@ void (async () => {
   }
 })();
 
-async function runMigrateUp(
-  client: Client,
-  upMigrations: MigrationFile[],
-  targetArg?: string,
-) {
+async function runMigrateUp(client: Client, upMigrations: MigrationFile[], targetArg?: string) {
   const executed = await loadExecutedMigrations(client);
-  const pending = upMigrations.filter(
-    (migration) => !executed.has(migration.baseName),
-  );
+  const pending = upMigrations.filter((migration) => !executed.has(migration.baseName));
 
   if (pending.length === 0) {
     console.log('No pending migrations to apply.');
@@ -94,7 +84,7 @@ async function runMigrateDown(
   client: Client,
   allMigrations: MigrationFile[],
   upMigrations: MigrationFile[],
-  targetArg?: string,
+  targetArg?: string
 ) {
   const executedList = await loadExecutedList(client);
 
@@ -115,12 +105,7 @@ async function runMigrateDown(
     }
   }
 
-  const planned = selectDownMigrations(
-    executedList,
-    orderIndex,
-    downMap,
-    targetArg,
-  );
+  const planned = selectDownMigrations(executedList, orderIndex, downMap, targetArg);
 
   if (planned.length === 0) {
     console.log('No migrations selected for rollback.');
@@ -177,10 +162,7 @@ async function loadMigrationFiles(dir: string): Promise<MigrationFile[]> {
   return migrations;
 }
 
-function parseMigrationFile(
-  fileName: string,
-  dir: string,
-): MigrationFile | null {
+function parseMigrationFile(fileName: string, dir: string): MigrationFile | null {
   const match = /^(\d{3})_(.+)\.sql$/.exec(fileName);
   if (!match) {
     return null;
@@ -204,7 +186,7 @@ function parseMigrationFile(
 function selectUpMigrations(
   pending: MigrationFile[],
   orderedAll: MigrationFile[],
-  targetArg?: string,
+  targetArg?: string
 ): MigrationFile[] {
   if (!targetArg || targetArg.toLowerCase() === 'all') {
     return pending;
@@ -216,25 +198,20 @@ function selectUpMigrations(
   }
 
   const resolvedName = resolveMigrationName(targetArg, orderedAll);
-  const limitIndex = orderedAll.findIndex(
-    (migration) => migration.baseName === resolvedName,
-  );
+  const limitIndex = orderedAll.findIndex((migration) => migration.baseName === resolvedName);
 
   if (limitIndex === -1) {
     throw new Error(`Unknown migration target: ${targetArg}`);
   }
 
   const allowed = new Set(
-    orderedAll.slice(0, limitIndex + 1).map((migration) => migration.baseName),
+    orderedAll.slice(0, limitIndex + 1).map((migration) => migration.baseName)
   );
 
   return pending.filter((migration) => allowed.has(migration.baseName));
 }
 
-function resolveMigrationName(
-  input: string,
-  orderedAll: MigrationFile[],
-): string {
+function resolveMigrationName(input: string, orderedAll: MigrationFile[]): string {
   if (/^\d+$/.test(input) && input.length === 3) {
     const match = orderedAll.find((migration) => migration.code === input);
     if (match) {
@@ -242,13 +219,9 @@ function resolveMigrationName(
     }
   }
 
-  const normalized = input.endsWith('.sql')
-    ? input.slice(0, -'.sql'.length)
-    : input;
+  const normalized = input.endsWith('.sql') ? input.slice(0, -'.sql'.length) : input;
   const match = orderedAll.find(
-    (migration) =>
-      migration.baseName === normalized ||
-      migration.fileName === `${normalized}.sql`,
+    (migration) => migration.baseName === normalized || migration.fileName === `${normalized}.sql`
   );
 
   if (!match) {
@@ -262,7 +235,7 @@ function selectDownMigrations(
   executed: string[],
   orderIndex: Map<string, number>,
   downMap: Map<string, MigrationFile>,
-  targetArg?: string,
+  targetArg?: string
 ): MigrationFile[] {
   const executedSorted = Array.from(new Set(executed))
     .filter((name) => orderIndex.has(name))
@@ -282,10 +255,7 @@ function selectDownMigrations(
 
   if (/^\d+$/.test(targetArg) && targetArg.length !== 3) {
     const count = Number.parseInt(targetArg, 10);
-    return collectDownMigrations(
-      executedSorted.slice(0, Math.max(count, 0)),
-      downMap,
-    );
+    return collectDownMigrations(executedSorted.slice(0, Math.max(count, 0)), downMap);
   }
 
   const resolvedName = resolveTargetForDown(targetArg, orderIndex);
@@ -296,19 +266,16 @@ function selectDownMigrations(
   }
 
   const namesToRollback = executedSorted.filter(
-    (name) => (orderIndex.get(name) ?? -1) >= targetIndex,
+    (name) => (orderIndex.get(name) ?? -1) >= targetIndex
   );
 
   return collectDownMigrations(namesToRollback, downMap);
 }
 
-function resolveTargetForDown(
-  input: string,
-  orderIndex: Map<string, number>,
-): string {
+function resolveTargetForDown(input: string, orderIndex: Map<string, number>): string {
   if (/^\d+$/.test(input) && input.length === 3) {
-    const candidates = Array.from(orderIndex.entries()).filter(
-      ([name]) => name.startsWith(`${input}_`),
+    const candidates = Array.from(orderIndex.entries()).filter(([name]) =>
+      name.startsWith(`${input}_`)
     );
     if (candidates.length === 0) {
       throw new Error(`Unknown migration target: ${input}`);
@@ -318,9 +285,7 @@ function resolveTargetForDown(
     return candidates[0][0];
   }
 
-  const normalized = input.endsWith('.sql')
-    ? input.slice(0, -'.sql'.length)
-    : input;
+  const normalized = input.endsWith('.sql') ? input.slice(0, -'.sql'.length) : input;
 
   if (!orderIndex.has(normalized)) {
     throw new Error(`Unknown migration target: ${input}`);
@@ -331,7 +296,7 @@ function resolveTargetForDown(
 
 function collectDownMigrations(
   names: string[],
-  downMap: Map<string, MigrationFile>,
+  downMap: Map<string, MigrationFile>
 ): MigrationFile[] {
   const selected: MigrationFile[] = [];
 
@@ -339,7 +304,7 @@ function collectDownMigrations(
     const migration = downMap.get(name);
     if (!migration) {
       throw new Error(
-        `Missing rollback SQL file for migration "${name}". Expected "<code>_<name>-down.sql"`,
+        `Missing rollback SQL file for migration "${name}". Expected "<code>_<name>-down.sql"`
       );
     }
     selected.push(migration);
@@ -348,11 +313,7 @@ function collectDownMigrations(
   return selected;
 }
 
-async function applySqlFile(
-  client: Client,
-  migration: MigrationFile,
-  mode: 'up' | 'down',
-) {
+async function applySqlFile(client: Client, migration: MigrationFile, mode: 'up' | 'down') {
   const sql = await fs.readFile(migration.fullPath, 'utf8');
   console.log(`${mode === 'up' ? 'Applying' : 'Reverting'} ${migration.fileName}`);
 
@@ -367,12 +328,10 @@ async function applySqlFile(
           VALUES ($1, NOW())
           ON CONFLICT (name) DO NOTHING
         `,
-        [migration.baseName],
+        [migration.baseName]
       );
     } else {
-      await client.query('DELETE FROM schema_migrations WHERE name = $1', [
-        migration.baseName,
-      ]);
+      await client.query('DELETE FROM schema_migrations WHERE name = $1', [migration.baseName]);
     }
 
     await client.query('COMMIT');
@@ -382,21 +341,19 @@ async function applySqlFile(
     throw new Error(
       `Migration "${migration.fileName}" failed: ${
         error instanceof Error ? error.message : String(error)
-      }`,
+      }`
     );
   }
 }
 
 async function loadExecutedMigrations(client: Client): Promise<Set<string>> {
-  const result = await client.query<{ name: string }>(
-    'SELECT name FROM schema_migrations',
-  );
+  const result = await client.query<{ name: string }>('SELECT name FROM schema_migrations');
   return new Set(result.rows.map((row) => row.name));
 }
 
 async function loadExecutedList(client: Client): Promise<string[]> {
   const result = await client.query<{ name: string }>(
-    'SELECT name FROM schema_migrations ORDER BY run_on DESC, name DESC',
+    'SELECT name FROM schema_migrations ORDER BY run_on DESC, name DESC'
   );
   return result.rows.map((row) => row.name);
 }

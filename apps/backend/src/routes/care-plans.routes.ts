@@ -240,7 +240,15 @@ export function createCarePlanRoutes(pgPool: Pool, redisClient: RedisClient): Ro
             await redisClient.del(...allZoneKeys);
           }
         } catch (cacheError) {
-          console.warn('Care plan cache invalidation error:', cacheError);
+          logError(
+            'Care plan cache invalidation error',
+            cacheError instanceof Error ? cacheError : new Error(String(cacheError)),
+            {
+              clientId,
+              userId: user.userId,
+              requestId: req.headers['x-request-id'] || 'unknown',
+            }
+          );
         }
 
         // Log the operation

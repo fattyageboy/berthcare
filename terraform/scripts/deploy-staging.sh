@@ -83,6 +83,11 @@ mkdir -p "${VERIFICATION_DIR}"
 OUTPUT_FILE="${VERIFICATION_DIR}/staging-$(date +%Y%m%d-%H%M%S).json"
 terraform output -json > "${OUTPUT_FILE}"
 
+if [ ! -s "${OUTPUT_FILE}" ]; then
+  echo "❌ terraform output failed: ${OUTPUT_FILE} is missing or empty." >&2
+  exit 1
+fi
+
 echo ""
 echo "📝 Saved raw outputs to ${OUTPUT_FILE}"
 echo "   Update docs/E5-aws-infrastructure-setup.md verification table with these values."

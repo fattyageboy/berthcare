@@ -392,6 +392,11 @@ mkdir -p ../../../docs/infra-verification
 terraform output -json > ../../../docs/infra-verification/staging-$(date +%Y%m%d-%H%M%S).json
 ```
 
+> ⚠️ **Security Note:** Exported outputs may contain sensitive information (ARNs,
+> endpoints, account IDs). Review the JSON before committing to version control,
+> or store outputs in a secure artifact repository if your compliance requirements
+> prohibit committing infrastructure metadata.
+
 > 💡 The helper script `terraform/scripts/deploy-staging.sh` now performs the
 > same export automatically after a successful `terraform apply`.
 
@@ -734,7 +739,10 @@ aws dynamodb create-table \
   --attribute-definitions AttributeName=LockID,AttributeType=S \
   --key-schema AttributeName=LockID,KeyType=HASH \
   --billing-mode PAY_PER_REQUEST \
+  --sse-specification Enabled=true,SSEType=KMS,KMSMasterKeyId=alias/aws/dynamodb \
   --region us-east-1
+
+# Uses AWS managed DynamoDB key; swap alias/aws/dynamodb for your CMK ARN if you need a dedicated key.
 
 # Verify table is active
 aws dynamodb describe-table \
@@ -787,24 +795,9 @@ aws s3 ls s3://berthcare-terraform-state-dr/staging/ --region us-east-1
      --region us-east-1
    ```
 
-3. **Replicate critical databases.** Identify the latest automated snapshot, create a cross-region copy, and use it to seed the DR account. Automate this path with a scheduled Lambda (triggered via EventBridge) that keeps the most recent copies in sync.
+> Automated backup replication provides lower RPO, lower operational overhead, and uses native AWS support—make it your default approach.
 
-   ```bash
-   LATEST_SNAPSHOT=$(aws rds describe-db-snapshots \
-     --db-instance-identifier berthcare-prod-db \
-     --snapshot-type automated \
-     --query 'DBSnapshots | sort_by(@, &SnapshotCreateTime)[-1].DBSnapshotIdentifier' \
-     --output text \
-     --region ca-central-1)
-
-   aws rds copy-db-snapshot \
-     --source-db-snapshot-identifier "${LATEST_SNAPSHOT}" \
-     --target-db-snapshot-identifier "${LATEST_SNAPSHOT}-dr" \
-     --source-region ca-central-1 \
-     --region us-east-1
-  ```
-
-   When the engine supports cross-Region automated backup replication, enable it with the dedicated command. Example:
+3. **Replicate critical databases.** Strongly recommend enabling automated backup replication for production workloads.
 
    ```bash
    aws rds start-db-instance-automated-backups-replication \
@@ -821,7 +814,24 @@ aws s3 ls s3://berthcare-terraform-state-dr/staging/ --region us-east-1
    - `--source-region` (optional if CLI is invoked in the primary Region)
    - `--kms-key-id` (optional) — DR Region KMS key for encrypted backups
 
-   If the engine lacks automated backup replication, schedule an EventBridge rule that triggers a Lambda to invoke `aws rds copy-db-snapshot` and prune older DR snapshots.
+   If the engine lacks automated backup replication, fall back to manual snapshot copies, seed the DR account, and automate that path with a scheduled Lambda (triggered via EventBridge) that keeps the most recent copies in sync.
+
+   ```bash
+   LATEST_SNAPSHOT=$(aws rds describe-db-snapshots \
+     --db-instance-identifier berthcare-prod-db \
+     --snapshot-type automated \
+     --query 'DBSnapshots | sort_by(@, &SnapshotCreateTime)[-1].DBSnapshotIdentifier' \
+     --output text \
+     --region ca-central-1)
+
+   aws rds copy-db-snapshot \
+     --source-db-snapshot-identifier "${LATEST_SNAPSHOT}" \
+     --target-db-snapshot-identifier "${LATEST_SNAPSHOT}-dr" \
+     --source-region ca-central-1 \
+     --region us-east-1
+  ```
+
+   If you are using the fallback approach, schedule an EventBridge rule that triggers a Lambda to invoke `aws rds copy-db-snapshot` and prune older DR snapshots.
 
 4. **Verify S3 object parity.** Ensure application data buckets mirror the expected contents before declaring the DR region ready:
 
@@ -932,10 +942,21 @@ terraform refresh
 
 **Step 3: Update Region and Redeploy Infrastructure**
 
-```bash
-# Update terraform.tfvars with new region
-sed -i.bak 's/aws_region = "ca-central-1"/aws_region = "us-east-1"/' terraform.tfvars
+Run the command that matches your platform to update `terraform.tfvars` with the DR region:
 
+```bash
+# macOS (BSD sed requires an empty string after -i)
+sed -i '' 's/aws_region = "ca-central-1"/aws_region = "us-east-1"/' terraform.tfvars
+```
+
+```bash
+# Linux (GNU sed)
+sed -i 's/aws_region = "ca-central-1"/aws_region = "us-east-1"/' terraform.tfvars
+```
+
+Then re-plan and apply in the DR region:
+
+```bash
 # Review changes
 terraform plan
 
@@ -1079,19 +1100,39 @@ curl https://$(terraform output -raw cloudfront_domain_name)/health
 
 #### Rollback Procedure
 
-If ca-central-1 becomes available again and you need to fail back:
+If ca-central-1 becomes available again and you need to fail back, complete these ordered steps and confirm each operation succeeds before moving on.
 
-```bash
-# 1. Ensure all data is synchronized
-# 2. Update backend configuration back to ca-central-1
-# 3. Run terraform init -migrate-state
-# 4. Update aws_region in terraform.tfvars
-# 5. Run terraform apply to recreate resources in ca-central-1
-# 6. Restore data from us-east-1 backups
-# 7. Update application configuration
-# 8. Verify functionality
-# 9. Destroy us-east-1 resources to avoid duplicate costs
-```
+**Prerequisites**
+
+- Confirm the primary Region is healthy (`aws health describe-events --region ca-central-1`) and that required services (RDS, S3, DynamoDB) are available.
+- Verify the ca-central-1 S3 state bucket and DynamoDB lock table still exist and are reachable: `aws s3 ls s3://berthcare-terraform-state --region ca-central-1` and `aws dynamodb describe-table --table-name berthcare-terraform-locks --region ca-central-1`.
+- Review the remote Terraform state to ensure no drift occurred while operating from DR.
+
+**Step 1: Capture Final DR Snapshot**
+
+- In us-east-1, create a final snapshot of the DR database instance (`aws rds create-db-snapshot ... --region us-east-1`) and wait for `DBSnapshotStatus` to report `available`. Do not proceed until the snapshot is fully created.
+
+**Step 2: Synchronize Data from DR to Primary**
+
+- Sync object storage back to the primary Region, ensuring the direction is DR ➜ primary: `aws s3 sync s3://berthcare-photos-prod-dr s3://berthcare-photos-prod --source-region us-east-1 --region ca-central-1 --delete`. Wait for the command to finish successfully.
+- Copy the final DR snapshot to ca-central-1: `aws rds copy-db-snapshot --source-region us-east-1 --region ca-central-1 --source-db-snapshot-identifier <dr-snapshot-arn> --target-db-snapshot-identifier <primary-restore-snapshot-id>` and wait for the copied snapshot status to become `available`.
+
+**Step 3: Restore Primary Infrastructure**
+
+- Update the Terraform backend block so it points back to the ca-central-1 S3 bucket and DynamoDB lock table.
+- Run `terraform init -migrate-state` to move the remote state back to ca-central-1.
+- Update `terraform.tfvars` so `aws_region = "ca-central-1"` and review any other DR-specific variable overrides.
+- Execute `terraform plan` and `terraform apply` from ca-central-1 to recreate the primary infrastructure. Wait for each apply to finish before continuing.
+
+**Step 4: Restore Database**
+
+- Restore the ca-central-1 database instance from the copied snapshot (`aws rds restore-db-instance-from-db-snapshot ... --region ca-central-1`) and wait for the instance status to be `available`. Reapply parameter groups or Multi-AZ settings if needed.
+
+**Step 5: Verify and Cutover**
+
+- Update application configuration, Secrets Manager values, and DNS records so workloads point back to ca-central-1 endpoints.
+- Perform functional testing (API health checks, database connectivity, end-to-end user flows). Only move on when validations succeed.
+- After verification, update `terraform.tfvars` to target `us-east-1` and run `terraform destroy` to remove DR resources, ensuring you do not destroy ca-central-1 assets prematurely.
 
 #### Important Notes
 

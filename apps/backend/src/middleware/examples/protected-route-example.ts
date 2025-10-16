@@ -9,7 +9,7 @@
 import { Router } from 'express';
 
 import { RedisClient } from '../../cache/redis-client';
-import { authenticateJWT, authorize, requireRole, AuthenticatedRequest } from '../auth';
+import { authenticateJWT, authorize, AuthenticatedRequest } from '../auth';
 
 export function createProtectedRoutes(redisClient: RedisClient): Router {
   const router = Router();
@@ -110,7 +110,7 @@ export function createProtectedRoutes(redisClient: RedisClient): Router {
     // Rate limiting would go here
     // Validation would go here
     authenticateJWT(redisClient),
-    requireRole(['caregiver', 'coordinator', 'admin']),
+    authorize(['coordinator', 'admin'], ['read:visits']),
     async (req: AuthenticatedRequest, res) => {
       const { clientId } = req.params;
       const { zoneId, role } = req.user!;
