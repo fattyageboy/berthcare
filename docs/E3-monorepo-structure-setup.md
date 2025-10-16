@@ -49,7 +49,7 @@ apps/mobile/
 
 **Configuration:**
 
-- React Native 0.73+ with Expo SDK 50+
+- React Native 0.82 with Expo SDK 54.0.13
 - WatermelonDB for offline-first architecture
 - Zustand + React Query for state management
 - Nx targets: `dev`, `build`, `lint`, `test`
@@ -69,7 +69,7 @@ apps/backend/
 
 **Configuration:**
 
-- Node.js 20 LTS with Express.js 4.x
+- Node.js 22.20.0 LTS with Express.js 5.1.0
 - TypeScript with CommonJS modules
 - Hot reload with `tsx watch`
 - Nx targets: `dev`, `build`, `lint`, `test`
@@ -385,7 +385,7 @@ Check `project.json` files have correct `dependsOn` configuration:
 
 ## Notes
 
-- All projects use TypeScript 5.3.3 for consistency
+- All projects use TypeScript 5.9 for consistency
 - Shared ESLint config enforces import ordering
 - Nx caching significantly speeds up CI/CD pipelines
 - Path aliases require IDE restart to take effect

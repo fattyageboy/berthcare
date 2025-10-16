@@ -107,7 +107,7 @@ Added `validateLogin` middleware:
 
 Already implemented `createLoginRateLimiter`:
 
-- 10 attempts per hour per IP
+- 10 attempts per 15 minutes per IP
 - 15-minute time window
 - Redis-backed counters
 
@@ -463,6 +463,7 @@ npm test -- auth.login.test.ts -t "Successful Login"
 ```bash
 # 1. Create a test user (via registration)
 curl -X POST http://localhost:3000/v1/auth/register \
+  -H "Authorization: Bearer <ADMIN_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",

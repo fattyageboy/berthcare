@@ -24,37 +24,55 @@
  * - Clear separation between access and refresh tokens
  */
 
-import jwt from 'jsonwebtoken';
+import { randomUUID } from 'crypto';
+
+import jwt, { type JwtPayload } from 'jsonwebtoken';
+
+import type { Permission } from './authorization';
 
 /**
  * User role types
  * - caregiver: Home care workers who provide direct care to clients
  * - coordinator: Zone managers who handle alerts and oversight
  * - admin: System administrators with full access
+ * - family: Authorized family members with limited access
  */
-export type UserRole = 'caregiver' | 'coordinator' | 'admin';
+export type UserRole = 'caregiver' | 'coordinator' | 'admin' | 'family';
 
 /**
  * JWT payload structure
  */
-export interface JWTPayload {
-  userId: string;
+export interface JWTPayload extends JwtPayload {
+  sub: string;
+  userId?: string;
   role: UserRole;
   zoneId: string;
   email?: string;
-  iat?: number; // Issued at (automatically added by jwt.sign)
-  exp?: number; // Expiration (automatically added by jwt.sign)
+  deviceId?: string;
+  tokenId?: string;
+  permissions?: Permission[];
 }
 
 /**
  * Token generation options
  */
-export interface TokenOptions {
+interface TokenBaseOptions {
   userId: string;
   role: UserRole;
   zoneId: string;
+  deviceId?: string;
   email?: string;
+  permissions?: Permission[];
 }
+
+export type AccessTokenOptions = TokenBaseOptions;
+
+export interface RefreshTokenOptions extends TokenBaseOptions {
+  tokenId?: string;
+}
+
+/** Default device identifier used when a concrete device id is unavailable. */
+export const DEFAULT_DEVICE_ID = 'unknown-device';
 
 /**
  * Access token expiry: 1 hour
@@ -78,92 +96,352 @@ export const REFRESH_TOKEN_EXPIRY = '30d';
 export const JWT_ALGORITHM = 'RS256';
 
 // Key cache with TTL to support key rotation without requiring process restart
-// Each cache entry stores the key and the timestamp when it was cached
 const KEY_CACHE_TTL = 1000 * 60 * 5; // 5 minutes
 
-type KeyCacheEntry = {
-  key: string;
-  cachedAt: number; // epoch ms
-};
-
-let cachedPrivateKey: KeyCacheEntry | null = null;
-let cachedPublicKey: KeyCacheEntry | null = null;
-
-/**
- * Get JWT private key from environment
- *
- * Private key is used for signing tokens and must be kept secure.
- * The key is cached after first retrieval to avoid repeated decoding.
- *
- * Key Management Strategy:
- * - Development: Use environment variable (JWT_PRIVATE_KEY)
- * - Production: Use environment variable with base64 encoding
- * - Future: Can be extended to fetch from AWS Secrets Manager
- * - Support key rotation via versioned secrets
- *
- * @returns Private key for JWT signing
- * @throws Error if private key is not configured
- */
-function getPrivateKey(): string {
-  const now = Date.now();
-
-  // Return cached key if available and not expired
-  if (cachedPrivateKey && now - cachedPrivateKey.cachedAt < KEY_CACHE_TTL) {
-    return cachedPrivateKey.key;
-  }
-
-  // Load from environment
-  const privateKey = process.env.JWT_PRIVATE_KEY;
-
-  if (!privateKey) {
-    throw new Error(
-      'JWT_PRIVATE_KEY not configured. ' +
-        'Set JWT_PRIVATE_KEY environment variable (optionally base64-encoded with "base64:" prefix).'
-    );
-  }
-
-  // Decode base64-encoded keys (common in environment variables)
-  const decoded = privateKey.startsWith('base64:')
-    ? Buffer.from(privateKey.substring(7), 'base64').toString('utf-8')
-    : privateKey;
-
-  cachedPrivateKey = { key: decoded, cachedAt: now };
-  return decoded;
+interface KeyEntry {
+  kid: string;
+  privateKey?: string;
+  publicKey: string;
 }
 
-/**
- * Get JWT public key from environment
- *
- * Public key is used for token verification and can be safely distributed.
- * The key is cached after first retrieval to avoid repeated decoding.
- *
- * @returns Public key for JWT verification
- * @throws Error if public key is not configured
- */
-function getPublicKey(): string {
-  const now = Date.now();
+interface KeyConfig {
+  activeKid: string;
+  keys: Record<string, KeyEntry>;
+}
 
-  // Return cached key if available and not expired
-  if (cachedPublicKey && now - cachedPublicKey.cachedAt < KEY_CACHE_TTL) {
-    return cachedPublicKey.key;
+interface ConfigCache {
+  signature: string;
+  config: KeyConfig;
+  cachedAt: number;
+}
+
+let runtimeKeyConfig: KeyConfig | null = null;
+let runtimeKeyConfigLoadedAt = 0;
+let envKeyCache: ConfigCache | null = null;
+
+/**
+ * Clear cached key configuration.
+ * Primarily intended for test suites to ensure environment changes are picked up.
+ */
+export function clearJwtKeyCache(): void {
+  runtimeKeyConfig = null;
+  runtimeKeyConfigLoadedAt = 0;
+  envKeyCache = null;
+}
+
+function decodeKeyValue(rawValue: string, label: string): string {
+  const value = rawValue.trim();
+  if (!value) {
+    throw new Error(`${label} is empty`);
   }
 
-  const publicKey = process.env.JWT_PUBLIC_KEY;
+  if (value.startsWith('base64:')) {
+    const base64Content = value.substring(7);
+    return Buffer.from(base64Content, 'base64').toString('utf-8');
+  }
 
-  if (!publicKey) {
+  return value;
+}
+
+function mergeKeyEntry(
+  existing: KeyEntry | undefined,
+  incoming: Partial<KeyEntry>,
+  kid: string
+): KeyEntry {
+  return {
+    kid,
+    privateKey: incoming.privateKey ?? existing?.privateKey,
+    publicKey: incoming.publicKey ?? existing?.publicKey ?? '',
+  };
+}
+
+function parseKeyEntry(kid: string, value: unknown, source: string): Partial<KeyEntry> {
+  if (typeof value === 'string') {
+    return {
+      kid,
+      publicKey: decodeKeyValue(value, `${source}.${kid}.publicKey`),
+    };
+  }
+
+  if (!value || typeof value !== 'object') {
+    throw new Error(`${source}.${kid} must be a string or object containing key material`);
+  }
+
+  const entryValue = value as Record<string, unknown>;
+  const publicKeyCandidate =
+    entryValue.publicKey ?? entryValue.key ?? entryValue.value ?? entryValue.pub;
+
+  if (typeof publicKeyCandidate !== 'string') {
+    throw new Error(`${source}.${kid}.publicKey must be defined`);
+  }
+
+  const privateKeyCandidate = entryValue.privateKey ?? entryValue.signingKey ?? entryValue.priv;
+
+  const result: Partial<KeyEntry> = {
+    kid,
+    publicKey: decodeKeyValue(String(publicKeyCandidate), `${source}.${kid}.publicKey`),
+  };
+
+  if (typeof privateKeyCandidate === 'string') {
+    result.privateKey = decodeKeyValue(privateKeyCandidate, `${source}.${kid}.privateKey`);
+  }
+
+  return result;
+}
+
+function parseKeySetFromJson(jsonValue: string, source: string): KeyConfig {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(jsonValue);
+  } catch (error) {
+    throw new Error(`${source} contains invalid JSON: ${(error as Error).message}`);
+  }
+
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error(`${source} must be a JSON object`);
+  }
+
+  const configObject = parsed as Record<string, unknown>;
+  const activeKidValue =
+    configObject.activeKid ?? configObject.activeKey ?? configObject.currentKid ?? configObject.currentKey;
+
+  if (typeof activeKidValue !== 'string' || !activeKidValue.trim()) {
+    throw new Error(`${source} must include a non-empty "activeKid" property`);
+  }
+
+  const keysSection =
+    configObject.keys ??
+    configObject.keySet ??
+    configObject.versions ??
+    configObject.keyVersions ??
+    {};
+
+  if (!keysSection || typeof keysSection !== 'object') {
+    throw new Error(`${source} must include a "keys" object containing key material`);
+  }
+
+  const keys: Record<string, KeyEntry> = {};
+
+  Object.entries(keysSection as Record<string, unknown>).forEach(([kid, value]) => {
+    const entry = parseKeyEntry(kid, value, `${source}.keys`);
+    keys[kid] = mergeKeyEntry(keys[kid], entry, kid);
+  });
+
+  const previous = configObject.previous ?? configObject.previousKeys ?? configObject.oldKeys;
+
+  if (Array.isArray(previous)) {
+    previous.forEach((item, index) => {
+      if (!item || typeof item !== 'object') {
+        throw new Error(`${source}.previous[${index}] must be an object`);
+      }
+
+      const entryObject = item as Record<string, unknown>;
+      const kidValue = entryObject.kid ?? entryObject.keyId ?? entryObject.id;
+
+      if (typeof kidValue !== 'string' || !kidValue.trim()) {
+        throw new Error(`${source}.previous[${index}] is missing a kid/keyId`);
+      }
+
+      const entry = parseKeyEntry(kidValue, entryObject, `${source}.previous[${index}]`);
+      keys[kidValue] = mergeKeyEntry(keys[kidValue], entry, kidValue);
+    });
+  }
+
+  const activeKid = activeKidValue.trim();
+  const activeEntry = keys[activeKid];
+
+  if (!activeEntry) {
+    throw new Error(`${source} is missing key material for active kid "${activeKid}"`);
+  }
+
+  if (!activeEntry.privateKey) {
+    throw new Error(`${source} must include a privateKey for active kid "${activeKid}"`);
+  }
+
+  if (!activeEntry.publicKey) {
+    throw new Error(`${source} must include a publicKey for active kid "${activeKid}"`);
+  }
+
+  return {
+    activeKid,
+    keys,
+  };
+}
+
+function buildConfigFromEnv(): KeyConfig {
+  const activeKid = (process.env.JWT_KEY_ID || 'env-default').trim();
+
+  const privateKeyRaw = process.env.JWT_PRIVATE_KEY;
+  const publicKeyRaw = process.env.JWT_PUBLIC_KEY;
+
+  if (!publicKeyRaw) {
     throw new Error(
       'JWT_PUBLIC_KEY not configured. ' +
         'Set JWT_PUBLIC_KEY environment variable (optionally base64-encoded with "base64:" prefix).'
     );
   }
 
-  const decoded = publicKey.startsWith('base64:')
-    ? Buffer.from(publicKey.substring(7), 'base64').toString('utf-8')
-    : publicKey;
+  const keys: Record<string, KeyEntry> = {
+    [activeKid]: {
+      kid: activeKid,
+      publicKey: decodeKeyValue(publicKeyRaw, `JWT_PUBLIC_KEY (${activeKid})`),
+      ...(privateKeyRaw && {
+        privateKey: decodeKeyValue(privateKeyRaw, `JWT_PRIVATE_KEY (${activeKid})`),
+      }),
+    },
+  };
 
-  cachedPublicKey = { key: decoded, cachedAt: now };
-  return decoded;
+  const publicKeySetRaw = process.env.JWT_PUBLIC_KEY_SET;
+  if (publicKeySetRaw) {
+    let additional: unknown;
+    try {
+      additional = JSON.parse(publicKeySetRaw);
+    } catch (error) {
+      throw new Error(
+        `JWT_PUBLIC_KEY_SET contains invalid JSON: ${(error as Error).message}`
+      );
+    }
+
+    if (!additional || typeof additional !== 'object') {
+      throw new Error('JWT_PUBLIC_KEY_SET must be a JSON object');
+    }
+
+    Object.entries(additional as Record<string, unknown>).forEach(([kid, value]) => {
+      const entry = parseKeyEntry(kid, value, 'JWT_PUBLIC_KEY_SET');
+      keys[kid] = mergeKeyEntry(keys[kid], entry, kid);
+    });
+  }
+
+  return {
+    activeKid,
+    keys,
+  };
 }
+
+function getKeyConfig(): KeyConfig {
+  const secretArn = process.env.JWT_KEYS_SECRET_ARN;
+  const shouldUseRuntimeConfig =
+    runtimeKeyConfig &&
+    (!secretArn ||
+      (runtimeKeyConfigLoadedAt && Date.now() - runtimeKeyConfigLoadedAt < KEY_CACHE_TTL));
+
+  if (shouldUseRuntimeConfig && runtimeKeyConfig) {
+    return runtimeKeyConfig;
+  }
+
+  const signature = JSON.stringify({
+    json: process.env.JWT_KEYS_JSON || '',
+    keyId: process.env.JWT_KEY_ID || '',
+    privateKey: process.env.JWT_PRIVATE_KEY || '',
+    publicKey: process.env.JWT_PUBLIC_KEY || '',
+    publicKeySet: process.env.JWT_PUBLIC_KEY_SET || '',
+  });
+
+  if (envKeyCache && envKeyCache.signature === signature) {
+    const isFresh = Date.now() - envKeyCache.cachedAt < KEY_CACHE_TTL;
+    if (isFresh) {
+      return envKeyCache.config;
+    }
+  }
+
+  let config: KeyConfig;
+
+  if (process.env.JWT_KEYS_JSON) {
+    config = parseKeySetFromJson(process.env.JWT_KEYS_JSON, 'JWT_KEYS_JSON');
+  } else {
+    config = buildConfigFromEnv();
+  }
+
+  envKeyCache = {
+    signature,
+    config,
+    cachedAt: Date.now(),
+  };
+
+  return config;
+}
+
+/**
+ * Initialize JWT key store from AWS Secrets Manager.
+ *
+ * Secrets Manager payload must be JSON in the following format:
+ * {
+ *   "activeKid": "2024-rotation",
+ *   "keys": {
+ *     "2024-rotation": { "privateKey": "-----BEGIN...", "publicKey": "-----BEGIN..." },
+ *     "2023-rotation": { "publicKey": "-----BEGIN..." }
+ *   }
+ * }
+ */
+export interface InitializeJwtKeyStoreOptions {
+  secretArn?: string;
+  region?: string;
+  cacheResultMs?: number;
+  client?: unknown;
+}
+
+export async function initializeJwtKeyStore(
+  options: InitializeJwtKeyStoreOptions = {}
+): Promise<void> {
+  const secretArn = options.secretArn ?? process.env.JWT_KEYS_SECRET_ARN;
+  if (!secretArn) {
+    return;
+  }
+
+  const region =
+    options.region ?? process.env.AWS_REGION ?? process.env.AWS_DEFAULT_REGION ?? 'us-east-1';
+
+  type SecretsClient = { send: (command: any) => Promise<any> };
+
+  let client = options.client as SecretsClient | undefined;
+  let GetSecretValueCommand: new (input: { SecretId: string }) => any;
+
+  const awsModule = await import('@aws-sdk/client-secrets-manager');
+  GetSecretValueCommand = awsModule.GetSecretValueCommand;
+
+  if (!client) {
+    client = new awsModule.SecretsManagerClient({ region }) as unknown as SecretsClient;
+  }
+
+  if (!client) {
+    throw new Error('Failed to initialise Secrets Manager client for JWT key loading');
+  }
+
+  const command = new GetSecretValueCommand({ SecretId: secretArn });
+  const response = await client.send(command);
+
+  const secretString: string | undefined =
+    response.SecretString ??
+    (response.SecretBinary
+      ? Buffer.from(response.SecretBinary as Uint8Array).toString('utf-8')
+      : undefined);
+
+  if (!secretString) {
+    throw new Error(`Secrets Manager secret "${secretArn}" is empty`);
+  }
+
+  const config = parseKeySetFromJson(secretString, `SecretsManager:${secretArn}`);
+
+  runtimeKeyConfig = config;
+  runtimeKeyConfigLoadedAt = Date.now();
+  envKeyCache = null;
+}
+
+function getSigningKey(): { kid: string; key: string } {
+  const config = getKeyConfig();
+  const entry = config.keys[config.activeKid];
+
+  if (!entry || !entry.privateKey) {
+    throw new Error(
+      'JWT_PRIVATE_KEY not configured. ' +
+        'Set JWT_PRIVATE_KEY environment variable (optionally base64-encoded with "base64:" prefix).'
+    );
+  }
+
+  return { kid: config.activeKid, key: entry.privateKey };
+}
+
+/* intentionally empty helper removed for rotation logic */
 
 /**
  * Generate access token (1 hour expiry)
@@ -173,8 +451,10 @@ function getPublicKey(): string {
  *
  * Token Payload:
  * - userId: Unique user identifier
- * - role: User role (caregiver, coordinator, admin)
+ * - sub: Subject (mirror of userId for JWT spec compliance)
+ * - role: User role (caregiver, coordinator, admin, family)
  * - zoneId: Geographic zone for data access control
+ * - deviceId: Device identifier asserting session binding (defaults to unknown-device)
  * - email: User email (optional, for logging/debugging)
  * - iat: Issued at timestamp (automatic)
  * - exp: Expiration timestamp (automatic)
@@ -188,26 +468,37 @@ function getPublicKey(): string {
  *   userId: 'user_123',
  *   role: 'caregiver',
  *   zoneId: 'zone_456',
+ *   deviceId: 'device_789',
  *   email: 'caregiver@example.com'
  * });
  */
-export function generateAccessToken(options: TokenOptions): string {
+export function generateAccessToken(options: AccessTokenOptions): string {
   try {
-    const privateKey = getPrivateKey();
+    const { kid, key: privateKey } = getSigningKey();
+
+    const deviceId = options.deviceId?.trim() || DEFAULT_DEVICE_ID;
 
     const payload: JWTPayload = {
+      sub: options.userId,
       userId: options.userId,
       role: options.role,
       zoneId: options.zoneId,
+      deviceId,
       ...(options.email && { email: options.email }),
+      ...(options.permissions && options.permissions.length > 0 && {
+        permissions: options.permissions,
+      }),
     };
+
+    const jwtId = randomUUID();
 
     const token = jwt.sign(payload, privateKey, {
       algorithm: JWT_ALGORITHM,
       expiresIn: ACCESS_TOKEN_EXPIRY,
       issuer: 'berthcare-api',
       audience: 'berthcare-app',
-      jwtid: `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`,
+      jwtid: jwtId,
+      keyid: kid,
     });
 
     return token;
@@ -232,8 +523,11 @@ export function generateAccessToken(options: TokenOptions): string {
  *
  * Token Payload:
  * - userId: Unique user identifier
- * - role: User role (for quick validation)
+ * - sub: Subject (mirror of userId)
+ * - role: User role (for quick validation / audit)
  * - zoneId: Geographic zone
+ * - deviceId: Device identifier that issued the token
+ * - tokenId: Unique identifier for rotation and revocation tracking
  * - iat: Issued at timestamp (automatic)
  * - exp: Expiration timestamp (automatic)
  *
@@ -245,17 +539,27 @@ export function generateAccessToken(options: TokenOptions): string {
  * const refreshToken = generateRefreshToken({
  *   userId: 'user_123',
  *   role: 'caregiver',
- *   zoneId: 'zone_456'
+ *   zoneId: 'zone_456',
+ *   deviceId: 'device_789'
  * });
  */
-export function generateRefreshToken(options: TokenOptions): string {
+export function generateRefreshToken(options: RefreshTokenOptions): string {
   try {
-    const privateKey = getPrivateKey();
+    const { kid, key: privateKey } = getSigningKey();
+
+    const tokenId = options.tokenId ?? randomUUID();
+    const deviceId = options.deviceId?.trim() || DEFAULT_DEVICE_ID;
 
     const payload: JWTPayload = {
+      sub: options.userId,
       userId: options.userId,
       role: options.role,
       zoneId: options.zoneId,
+      deviceId,
+      tokenId,
+      ...(options.permissions && options.permissions.length > 0 && {
+        permissions: options.permissions,
+      }),
     };
 
     const token = jwt.sign(payload, privateKey, {
@@ -263,7 +567,8 @@ export function generateRefreshToken(options: TokenOptions): string {
       expiresIn: REFRESH_TOKEN_EXPIRY,
       issuer: 'berthcare-api',
       audience: 'berthcare-app',
-      jwtid: `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`,
+      jwtid: tokenId,
+      keyid: kid,
     });
 
     return token;
@@ -294,15 +599,78 @@ export function generateRefreshToken(options: TokenOptions): string {
  */
 export function verifyToken(token: string): JWTPayload {
   try {
-    const publicKey = getPublicKey();
+    const decodedHeader = jwt.decode(token, { complete: true });
+    const kid =
+      typeof decodedHeader === 'object' && decodedHeader !== null
+        ? (decodedHeader.header?.kid as string | undefined)
+        : undefined;
 
-    const decoded = jwt.verify(token, publicKey, {
-      algorithms: [JWT_ALGORITHM],
-      issuer: 'berthcare-api',
-      audience: 'berthcare-app',
-    }) as JWTPayload;
+    const config = getKeyConfig();
+    const candidateKids: string[] = [];
 
-    return decoded;
+    if (kid) {
+      candidateKids.push(kid);
+    }
+
+    if (!kid || kid !== config.activeKid) {
+      candidateKids.push(config.activeKid);
+    }
+
+    Object.keys(config.keys).forEach((candidate) => {
+      if (!candidateKids.includes(candidate)) {
+        candidateKids.push(candidate);
+      }
+    });
+
+    let lastSignatureError: jwt.JsonWebTokenError | null = null;
+
+    for (const candidateKid of candidateKids) {
+      const entry = config.keys[candidateKid];
+      if (!entry || !entry.publicKey) {
+        continue;
+      }
+
+      try {
+        const decoded = jwt.verify(token, entry.publicKey, {
+          algorithms: [JWT_ALGORITHM],
+          issuer: 'berthcare-api',
+          audience: 'berthcare-app',
+        }) as JWTPayload;
+
+        if (!decoded.userId && decoded.sub) {
+          decoded.userId = decoded.sub;
+        }
+
+        if (!decoded.deviceId) {
+          decoded.deviceId = DEFAULT_DEVICE_ID;
+        }
+
+        return decoded;
+      } catch (error) {
+        if (error instanceof jwt.TokenExpiredError) {
+          throw new Error('Token has expired');
+        }
+
+        if (error instanceof jwt.JsonWebTokenError) {
+          lastSignatureError = error;
+          continue;
+        }
+
+        throw new Error(
+          `Token verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+    }
+
+    if (kid && !config.keys[kid]) {
+      throw new Error(`Invalid token: unknown key id ${kid}`);
+    }
+
+    if (lastSignatureError) {
+      throw new Error(`Invalid token: ${lastSignatureError.message}`);
+    }
+
+    throw new Error('Token verification failed: Unable to validate token with available keys');
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
       throw new Error('Token has expired');
@@ -333,7 +701,13 @@ export function verifyToken(token: string): JWTPayload {
  */
 export function decodeToken(token: string): JWTPayload | null {
   try {
-    const decoded = jwt.decode(token) as JWTPayload;
+    const decoded = jwt.decode(token) as JWTPayload | null;
+    if (decoded && !decoded.userId && decoded.sub) {
+      decoded.userId = decoded.sub;
+    }
+    if (decoded && !decoded.deviceId) {
+      decoded.deviceId = DEFAULT_DEVICE_ID;
+    }
     return decoded;
   } catch (error) {
     return null;

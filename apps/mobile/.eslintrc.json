@@ -1,6 +1,10 @@
 {
   "extends": ["../../.eslintrc.json"],
   "ignorePatterns": ["!**/*", ".expo/**"],
+  "parserOptions": {
+    "project": ["apps/mobile/tsconfig.eslint.json"],
+    "EXPERIMENTAL_useProjectService": true
+  },
   "overrides": [
     {
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],

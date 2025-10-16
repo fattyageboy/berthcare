@@ -122,6 +122,8 @@ Complete implementation of JWT-based authentication system with role-based acces
 
 Register a new user account.
 
+**Auth:** Requires admin access token (`Authorization: Bearer <token>`).
+
 **Request:**
 
 ```json
@@ -170,22 +172,20 @@ Authenticate user and issue tokens.
 ```
 
 **Response (200):**
-
-```json
 {
   "data": {
     "accessToken": "jwt-token",
     "refreshToken": "jwt-token",
     "user": {
-      "id": "user-uuid",
+      "id": "uuid",
       "email": "user@example.com",
-      "firstName": "Taylor",
-      "lastName": "Caregiver",
-      "role": "caregiver"
+      "firstName": "John",
+      "lastName": "Doe",
+      "role": "caregiver",
+      "zoneId": "uuid"
     }
   }
 }
-```
 
 ### POST /v1/auth/refresh
 
@@ -279,7 +279,7 @@ Authorization: Bearer <access-token>
 - `apps/backend/src/middleware/validation.ts` - Input validation middleware
 - `apps/backend/src/middleware/rate-limiter.ts` - Rate limiting middleware
 - `apps/backend/src/db/migrations/001_create_users_auth.sql` - Database schema
-- `apps/backend/src/db/migrations/001_create_users_auth_rollback.sql` - Rollback script
+- `apps/backend/src/db/migrations/001_create_users_auth-down.sql` - Rollback script
 - `libs/shared/src/jwt-utils.ts` - JWT token utilities
 - `libs/shared/src/auth-utils.ts` - Password hashing utilities
 - `apps/backend/tests/auth.register.test.ts` - Registration tests

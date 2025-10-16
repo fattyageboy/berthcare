@@ -31,7 +31,7 @@ services:
       - '${POSTGRES_PORT:-5432}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+      - './scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro'
     healthcheck:
       test:
         ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-berthcare} -d ${POSTGRES_DB:-berthcare_dev}']
@@ -77,6 +77,7 @@ services:
       - '${LOCALSTACK_PORT:-4566}:4566'
     volumes:
       - './scripts/init-localstack.sh:/etc/localstack/init/ready.d/init-localstack.sh:ro'
+      - localstack_data:/var/lib/localstack
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:4566/_localstack/health']
       interval: 10s
@@ -131,6 +132,8 @@ volumes:
   redis_data:
     driver: local
   pgadmin_data:
+    driver: local
+  localstack_data:
     driver: local
 
 # Network for service communication

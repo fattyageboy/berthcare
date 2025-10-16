@@ -256,7 +256,7 @@ CREATE TRIGGER update_visits_updated_at
 
 ```bash
 cd apps/backend
-npm run migrate:up 004
+npm run migrate:up -- 004
 ```
 
 ### Verification
@@ -517,7 +517,7 @@ VALUES (
 ## Migration Files
 
 - **Forward Migration:** `apps/backend/src/db/migrations/004_create_visits.sql`
-- **Rollback Migration:** `apps/backend/src/db/migrations/004_create_visits_rollback.sql`
+- **Rollback Migration:** `apps/backend/src/db/migrations/004_create_visits-down.sql`
 - **Migration Runner:** `apps/backend/src/db/migrate.ts`
 
 ---

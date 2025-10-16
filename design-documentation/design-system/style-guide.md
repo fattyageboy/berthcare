@@ -1,7 +1,7 @@
 # BerthCare Design System
 
 **Version:** 1.0.0  
-**Last Updated:** October 7, 2025
+**Last Updated:** October 14, 2025
 
 ---
 

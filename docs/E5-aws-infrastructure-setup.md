@@ -382,6 +382,38 @@ echo "https://ca-central-1.console.aws.amazon.com/cloudwatch/home?region=ca-cent
 - [ ] VPC Flow Logs enabled
 - [ ] All resources tagged correctly
 
+### Recording Verification Evidence
+
+Capture `terraform` outputs immediately after a successful apply and store the
+results in version control (for example under `docs/infra-verification/`).
+
+```bash
+mkdir -p ../../../docs/infra-verification
+terraform output -json > ../../../docs/infra-verification/staging-$(date +%Y%m%d-%H%M%S).json
+```
+
+> 💡 The helper script `terraform/scripts/deploy-staging.sh` now performs the
+> same export automatically after a successful `terraform apply`.
+
+Update the following log with concrete values and mark each checklist item
+above once the evidence has been reviewed by the DevOps owner.
+
+| Item | Command / Source | Recorded Value | Verified By | Timestamp |
+| ---- | ---------------- | -------------- | ----------- | ---------- |
+| VPC ID | `terraform output -raw vpc_id` |  |  |  |
+| Public subnet IDs | `terraform output public_subnet_ids` |  |  |  |
+| Private subnet IDs | `terraform output private_subnet_ids` |  |  |  |
+| RDS endpoint | `terraform output -raw db_endpoint` |  |  |  |
+| Redis endpoint | `terraform output -raw redis_endpoint` |  |  |  |
+| CloudFront domain | `terraform output -raw cloudfront_domain_name` |  |  |  |
+| DB credentials secret ARN | `terraform output -raw db_credentials_secret_arn` |  |  |  |
+| Redis credentials secret ARN | `terraform output -raw redis_credentials_secret_arn` |  |  |  |
+| CloudWatch dashboard URL | `terraform output -raw cloudwatch_dashboard_url` |  |  |  |
+| SNS alerts topic ARN | `terraform output -raw sns_alerts_topic_arn` |  |  |  |
+
+> ℹ️ Once the table is populated, commit the updated document alongside the
+> exported JSON output so future runs can be compared for drift.
+
 ---
 
 ## Cost Estimation (Staging)
@@ -652,28 +684,28 @@ aws iam put-role-policy \
 # 6. Configure replication on primary bucket
 REPLICATION_ROLE_ARN=$(aws iam get-role --role-name S3TerraformStateReplicationRole --query 'Role.Arn' --output text)
 
-cat > replication-config.json <<EOF
+jq -n --arg role "$REPLICATION_ROLE_ARN" '
 {
-  "Role": "$REPLICATION_ROLE_ARN",
-  "Rules": [{
-    "Status": "Enabled",
-    "Priority": 1,
-    "DeleteMarkerReplication": {"Status": "Enabled"},
-    "Filter": {},
-    "Destination": {
-      "Bucket": "arn:aws:s3:::berthcare-terraform-state-dr",
-      "ReplicationTime": {
-        "Status": "Enabled",
-        "Time": {"Minutes": 15}
+  Role: $role,
+  Rules: [{
+    Status: "Enabled",
+    Priority: 1,
+    DeleteMarkerReplication: {Status: "Enabled"},
+    Filter: {},
+    Destination: {
+      Bucket: "arn:aws:s3:::berthcare-terraform-state-dr",
+      ReplicationTime: {
+        Status: "Enabled",
+        Time: {Minutes: 15}
       },
-      "Metrics": {
-        "Status": "Enabled",
-        "EventThreshold": {"Minutes": 15}
+      Metrics: {
+        Status: "Enabled",
+        EventThreshold: {Minutes: 15}
       }
     }
   }]
 }
-EOF
+' > replication-config.json
 
 aws s3api put-bucket-replication \
   --bucket berthcare-terraform-state \
@@ -919,50 +951,97 @@ terraform apply
 
 **Step 4: Restore Persistent Data**
 
-1. **Database:** Locate the newest RDS snapshot from the primary region (or backup account), copy it if necessary, and restore the instance in DR. Use placeholders for automation and double-check identifiers before applying:
+1. **Database:** Use the most recent production snapshot and only copy what you need. The following script validates each step, waits for asynchronous operations, and exits on any AWS CLI failure:
 
    ```bash
-   # Discover latest snapshot in primary region
-   aws rds describe-db-snapshots \
-     --db-instance-identifier berthcare-prod-db \
-     --region ca-central-1 \
+   set -euo pipefail
+
+   PRIMARY_REGION=ca-central-1
+   DR_REGION=us-east-1
+   SOURCE_DB_INSTANCE=berthcare-prod-db
+   TARGET_DB_INSTANCE=berthcare-prod-db-dr
+   TARGET_SNAPSHOT_ID="${TARGET_DB_INSTANCE}-seed"
+
+   LATEST_SNAPSHOT_ARN=$(aws rds describe-db-snapshots \
+     --db-instance-identifier "$SOURCE_DB_INSTANCE" \
+     --region "$PRIMARY_REGION" \
      --query 'DBSnapshots | sort_by(@, &SnapshotCreateTime)[-1].DBSnapshotArn' \
-     --output text
+     --output text)
 
-   # (Optional) copy to DR if the snapshot is not yet replicated
-   aws rds copy-db-snapshot \
-     --source-db-snapshot-identifier arn:aws:rds:ca-central-1:123456789012:snapshot:rds:berthcare-prod-db-2025-10-10-05-30 \
-     --target-db-snapshot-identifier berthcare-prod-db-restore-seed \
-     --source-region ca-central-1 \
-     --region us-east-1
+   if [ -z "$LATEST_SNAPSHOT_ARN" ] || [ "$LATEST_SNAPSHOT_ARN" = "None" ]; then
+     echo "No snapshots found for ${SOURCE_DB_INSTANCE} in ${PRIMARY_REGION}" >&2
+     exit 1
+   fi
 
-   # Restore the DR instance from the copied snapshot
+   if ! aws rds describe-db-snapshots \
+     --db-snapshot-identifier "$TARGET_SNAPSHOT_ID" \
+     --region "$DR_REGION" \
+     >/dev/null 2>&1; then
+     aws rds copy-db-snapshot \
+       --source-db-snapshot-identifier "$LATEST_SNAPSHOT_ARN" \
+       --target-db-snapshot-identifier "$TARGET_SNAPSHOT_ID" \
+       --source-region "$PRIMARY_REGION" \
+       --region "$DR_REGION"
+
+     aws rds wait db-snapshot-available \
+       --db-snapshot-identifier "$TARGET_SNAPSHOT_ID" \
+       --region "$DR_REGION"
+   fi
+
    aws rds restore-db-instance-from-db-snapshot \
-     --db-instance-identifier berthcare-prod-db-dr \
-     --db-snapshot-identifier berthcare-prod-db-restore-seed \
-     --region us-east-1
+     --db-instance-identifier "$TARGET_DB_INSTANCE" \
+     --db-snapshot-identifier "$TARGET_SNAPSHOT_ID" \
+     --region "$DR_REGION"
 
-   # Apply production parameter group and networking once instance is available
+   aws rds wait db-instance-available \
+     --db-instance-identifier "$TARGET_DB_INSTANCE" \
+     --region "$DR_REGION"
+
    aws rds modify-db-instance \
-     --db-instance-identifier berthcare-prod-db-dr \
+     --db-instance-identifier "$TARGET_DB_INSTANCE" \
      --db-parameter-group-name berthcare-prod-pg \
      --vpc-security-group-ids sg-xxxxxxxx \
      --apply-immediately \
-     --region us-east-1
+     --region "$DR_REGION"
    ```
 
-2. **Object storage:** If cross-region replication is configured, confirm the latest objects are present. Otherwise sync from the primary bucket before promoting DR:
+   Adjust identifiers to match the current DR plan; the `wait` commands block until the snapshot copy and instance restore complete, preventing downstream tasks from running on incomplete resources.
+
+2. **Object storage:** If cross-region replication lags, perform a validated sync before cut-over. The script below deletes stray objects, verifies parity, and fails fast when counts or sizes diverge:
 
    ```bash
-   aws s3 sync s3://berthcare-photos-prod s3://berthcare-photos-prod-dr --source-region ca-central-1 --region us-east-1
+   set -euo pipefail
+
+   PRIMARY_REGION=ca-central-1
+   DR_REGION=us-east-1
+   SOURCE_BUCKET=berthcare-photos-prod
+   DEST_BUCKET=berthcare-photos-prod-dr
+
+   if ! aws s3 sync "s3://${SOURCE_BUCKET}" "s3://${DEST_BUCKET}" \
+     --source-region "${PRIMARY_REGION}" \
+     --region "${DR_REGION}" \
+     --delete; then
+     echo "S3 sync failed" >&2
+     exit 1
+   fi
+
+   SOURCE_SUMMARY=$(aws s3 ls "s3://${SOURCE_BUCKET}" --recursive --summarize --region "${PRIMARY_REGION}")
+   DEST_SUMMARY=$(aws s3 ls "s3://${DEST_BUCKET}" --recursive --summarize --region "${DR_REGION}")
+
+   SOURCE_COUNT=$(echo "$SOURCE_SUMMARY" | awk '/Total Objects:/ {print $3}')
+   DEST_COUNT=$(echo "$DEST_SUMMARY" | awk '/Total Objects:/ {print $3}')
+   SOURCE_SIZE=$(echo "$SOURCE_SUMMARY" | awk '/Total Size:/ {print $3}')
+   DEST_SIZE=$(echo "$DEST_SUMMARY" | awk '/Total Size:/ {print $3}')
+
+   if [ "$SOURCE_COUNT" != "$DEST_COUNT" ] || [ "$SOURCE_SIZE" != "$DEST_SIZE" ]; then
+     echo "S3 validation mismatch: source=${SOURCE_COUNT}/${SOURCE_SIZE} bytes, dest=${DEST_COUNT}/${DEST_SIZE} bytes" >&2
+     exit 1
+   fi
+
+   echo "S3 sync complete: ${DEST_BUCKET} matches ${SOURCE_BUCKET}"
    ```
 
-   For large backfills, consider S3 Batch Operations or AWS DataSync and verify parity:
-
-   ```bash
-   aws s3 ls s3://berthcare-photos-prod --recursive --summarize --region ca-central-1
-   aws s3 ls s3://berthcare-photos-prod-dr --recursive --summarize --region us-east-1
-   ```
+   For very large backfills, rerun the sync if validation fails or escalate to **S3 Batch Operations**/**AWS DataSync** to handle high object counts with managed retries and reporting.
 
 3. **Caches:** Redis/ElastiCache data is treated as ephemeral. Warm it via normal application flows after the DR stack is online; do **not** attempt to replicate cache snapshots unless a business requirement demands it.
 

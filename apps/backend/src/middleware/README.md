@@ -13,7 +13,7 @@ Provides JWT token verification and role-based access control.
 **Usage:**
 
 ```typescript
-import { authenticateJWT, requireRole, AuthenticatedRequest } from './middleware/auth';
+import { authenticateJWT, authorize, requireRole, AuthenticatedRequest } from './middleware/auth';
 
 // Protect a route (any authenticated user)
 router.get('/protected', authenticateJWT(redisClient), (req: AuthenticatedRequest, res) => {
@@ -22,13 +22,25 @@ router.get('/protected', authenticateJWT(redisClient), (req: AuthenticatedReques
 });
 
 // Protect a route (specific roles only)
-router.get(
-  '/admin',
+router.post(
+  '/admin/users',
   authenticateJWT(redisClient),
-  requireRole(['admin']),
+  authorize(['admin'], ['create:user']),
   (req: AuthenticatedRequest, res) => {
-    res.json({ message: 'Admin only' });
+    res.json({ message: 'User created' });
   }
+);
+
+// Config-object invocation with custom zone resolver
+router.patch(
+  '/zones/:zoneId/settings',
+  authenticateJWT(redisClient),
+  authorize({
+    roles: ['coordinator', 'admin'],
+    permissions: ['update:schedule'],
+    zoneResolver: (req) => req.params.zoneId,
+  }),
+  updateZoneSettingsHandler
 );
 ```
 
@@ -37,8 +49,10 @@ router.get(
 - JWT signature verification
 - Token expiration checking
 - Token blacklist support (logout)
-- User context attachment to request
-- Role-based authorization
+- User context attachment (role, zone, permissions)
+- Role + permission enforcement with shared helpers
+- Zone-aware access control (admin bypass configurable)
+- Standardized `AUTH_*` error payloads
 
 **See:** `docs/A7-jwt-auth-middleware.md` for complete documentation
 
@@ -103,7 +117,7 @@ When using multiple middleware, apply them in this order:
 1. **Rate Limiting** - Reject abusive requests early
 2. **Validation** - Validate input format
 3. **Authentication** - Verify JWT token
-4. **Authorization** - Check user role
+4. **Authorization** - Check role/permissions/zone
 5. **Business Logic** - Execute route handler
 
 **Example:**
@@ -114,7 +128,7 @@ router.post(
   createRateLimiter(redisClient, config), // 1. Rate limiting
   validateRequest, // 2. Validation
   authenticateJWT(redisClient), // 3. Authentication
-  requireRole(['admin']), // 4. Authorization
+  authorize(['admin'], ['update:client']), // 4. Authorization
   async (req: AuthenticatedRequest, res) => {
     // 5. Business logic
     res.json({ success: true });

@@ -76,8 +76,8 @@ docker-compose --profile tools up -d
 
 | Service         | Port | Purpose           | Access                |
 | --------------- | ---- | ----------------- | --------------------- |
-| PgAdmin         | 5050 | PostgreSQL web UI | http://localhost:5050 |
-| Redis Commander | 8081 | Redis web UI      | http://localhost:8081 |
+| PgAdmin         | 5050 | PostgreSQL web UI | <http://localhost:5050> |
+| Redis Commander | 8081 | Redis web UI      | <http://localhost:8081> |
 
 ## Service Details
 
@@ -245,6 +245,7 @@ cp .env.example .env
 # Application
 NODE_ENV=development
 PORT=3000
+DEFAULT_VISIT_DURATION_MINUTES=60
 
 # PostgreSQL
 DATABASE_URL=postgresql://berthcare:berthcare_dev_password@localhost:5432/berthcare_dev

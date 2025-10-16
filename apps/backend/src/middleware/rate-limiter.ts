@@ -33,10 +33,9 @@ interface RateLimitConfig {
  * @param config - Rate limit configuration
  * @returns Express middleware function
  */
-export function createRateLimiter(
-  redisClient: ReturnType<typeof import('redis').createClient>,
-  config: RateLimitConfig
-) {
+import { RedisClient } from '../cache/redis-client';
+
+export function createRateLimiter(redisClient: RedisClient, config: RateLimitConfig) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       // Get client IP address - handle test environment

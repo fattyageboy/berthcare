@@ -30,9 +30,19 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { createClient } from 'redis';
 
-import { verifyToken, JWTPayload, UserRole } from '@berthcare/shared';
+import {
+  verifyToken,
+  JWTPayload,
+  UserRole,
+  DEFAULT_DEVICE_ID,
+  getRolePermissions,
+  hasRole,
+  hasPermission,
+} from '@berthcare/shared';
+import type { Permission } from '@berthcare/shared';
+
+import { RedisClient } from '../cache/redis-client';
 
 /**
  * Extended Express Request with authenticated user
@@ -43,7 +53,101 @@ export interface AuthenticatedRequest extends Request {
     role: UserRole;
     zoneId: string;
     email?: string;
+    deviceId: string;
+    permissions?: Permission[];
   };
+}
+
+type RoleInput = UserRole | UserRole[] | null | undefined;
+type PermissionInput = Permission | Permission[] | null | undefined;
+
+interface AuthorizeOptions {
+  enforceZoneCheck?: boolean;
+  zoneParam?: string;
+  allowAdminZoneBypass?: boolean;
+  zoneResolver?: (req: AuthenticatedRequest) => string | null | undefined;
+}
+
+interface AuthorizeConfig extends AuthorizeOptions {
+  roles?: RoleInput;
+  permissions?: PermissionInput;
+}
+
+const AUTHORIZE_OPTIONS_KEYS = new Set([
+  'enforceZoneCheck',
+  'zoneParam',
+  'allowAdminZoneBypass',
+  'zoneResolver',
+  'roles',
+  'permissions',
+]);
+
+function extractRequestId(req: Request): string {
+  const header = req.headers['x-request-id'];
+  if (Array.isArray(header)) {
+    return header[0] ?? 'unknown';
+  }
+
+  if (typeof header === 'string' && header.trim().length > 0) {
+    return header;
+  }
+
+  return 'unknown';
+}
+
+function buildAuthErrorResponse(
+  req: Request,
+  code: string,
+  message: string,
+  details?: Record<string, unknown>
+) {
+  return {
+    error: {
+      code,
+      message,
+      ...(details ? { details } : {}),
+      timestamp: new Date().toISOString(),
+      requestId: extractRequestId(req),
+    },
+  };
+}
+
+function toRoleArray(input: RoleInput): UserRole[] {
+  if (!input) {
+    return [];
+  }
+
+  const roles = Array.isArray(input) ? input : [input];
+  return Array.from(new Set(roles));
+}
+
+function toPermissionArray(input: PermissionInput): Permission[] {
+  if (!input) {
+    return [];
+  }
+
+  const permissions = Array.isArray(input) ? input : [input];
+  return Array.from(new Set(permissions));
+}
+
+function isAuthorizeConfigObject(value: unknown): value is AuthorizeConfig {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  return Object.keys(value as Record<string, unknown>).some((key) =>
+    AUTHORIZE_OPTIONS_KEYS.has(key)
+  );
+}
+
+function isAuthorizeOptionsCandidate(value: unknown): value is AuthorizeOptions {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  return Object.keys(value as Record<string, unknown>).some((key) =>
+    AUTHORIZE_OPTIONS_KEYS.has(key)
+  );
 }
 
 /**
@@ -68,7 +172,7 @@ export interface AuthenticatedRequest extends Request {
  *   res.json({ userId: req.user?.userId });
  * });
  */
-export function authenticateJWT(redisClient: ReturnType<typeof createClient>) {
+export function authenticateJWT(redisClient: RedisClient) {
   return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       // Extract token from Authorization header
@@ -149,11 +253,18 @@ export function authenticateJWT(redisClient: ReturnType<typeof createClient>) {
       }
 
       // Attach user information to request
+      const resolvedPermissions =
+        Array.isArray(payload.permissions) && payload.permissions.length > 0
+          ? (Array.from(new Set(payload.permissions)) as Permission[])
+          : getRolePermissions(payload.role);
+
       req.user = {
         userId: payload.userId,
         role: payload.role,
         zoneId: payload.zoneId,
         email: payload.email,
+        deviceId: payload.deviceId ?? DEFAULT_DEVICE_ID,
+        permissions: resolvedPermissions,
       };
 
       next();
@@ -172,50 +283,150 @@ export function authenticateJWT(redisClient: ReturnType<typeof createClient>) {
 }
 
 /**
- * Role-based authorization middleware
+ * Configurable authorization middleware enforcing roles, permissions, and zone access rules.
  *
- * Restricts access to routes based on user role.
- * Must be used after authenticateJWT middleware.
+ * Supports multiple calling conventions:
+ * - `authorize(['coordinator', 'admin'])`
+ * - `authorize(['caregiver'], ['create:visit', 'update:visit'])`
+ * - `authorize({ roles: ['coordinator'], permissions: ['update:client'], zoneParam: 'zoneId' })`
  *
- * @param allowedRoles - Array of roles that can access the route
- * @returns Express middleware function
- *
- * @example
- * // Only coordinators and admins can access
- * router.get('/admin', authenticateJWT(redisClient), requireRole(['coordinator', 'admin']), handler);
+ * @param rolesOrConfig - Roles array or configuration object
+ * @param permissionsOrOptions - Required permissions or additional options
+ * @param maybeOptions - Optional configuration when using positional arguments
  */
-export function requireRole(allowedRoles: UserRole[]) {
+export function authorize(
+  rolesOrConfig?: RoleInput | AuthorizeConfig,
+  permissionsOrOptions?: PermissionInput | AuthorizeOptions | null,
+  maybeOptions?: AuthorizeOptions
+) {
+  let config: AuthorizeConfig;
+
+  if (isAuthorizeConfigObject(rolesOrConfig)) {
+    config = { ...rolesOrConfig };
+
+    if (permissionsOrOptions && isAuthorizeOptionsCandidate(permissionsOrOptions)) {
+      config = { ...config, ...permissionsOrOptions };
+      if (maybeOptions) {
+        config = { ...config, ...maybeOptions };
+      }
+    } else if (permissionsOrOptions !== undefined && permissionsOrOptions !== null) {
+      config = { ...config, permissions: permissionsOrOptions as PermissionInput };
+      if (maybeOptions) {
+        config = { ...config, ...maybeOptions };
+      }
+    } else if (maybeOptions) {
+      config = { ...config, ...maybeOptions };
+    }
+  } else {
+    let permissions: PermissionInput | undefined;
+    let options: AuthorizeOptions | undefined;
+
+    if (permissionsOrOptions && isAuthorizeOptionsCandidate(permissionsOrOptions)) {
+      options = permissionsOrOptions;
+    } else {
+      permissions = permissionsOrOptions as PermissionInput;
+      options = maybeOptions;
+    }
+
+    config = {
+      roles: rolesOrConfig,
+      permissions,
+      ...options,
+    };
+  }
+
+  const requiredRoles = toRoleArray(config.roles);
+  const requiredPermissions = toPermissionArray(config.permissions);
+  const {
+    enforceZoneCheck = true,
+    zoneParam = 'zoneId',
+    allowAdminZoneBypass = true,
+    zoneResolver,
+  } = config;
+
   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
-      res.status(401).json({
-        error: {
-          code: 'UNAUTHORIZED',
-          message: 'Authentication required',
-          timestamp: new Date().toISOString(),
-          requestId: req.headers['x-request-id'] || 'unknown',
-        },
-      });
+      res.status(401).json(
+        buildAuthErrorResponse(
+          req,
+          'AUTH_UNAUTHENTICATED',
+          'Authentication is required to access this resource'
+        )
+      );
       return;
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
-      res.status(403).json({
-        error: {
-          code: 'FORBIDDEN',
-          message: 'Insufficient permissions',
-          details: {
-            requiredRoles: allowedRoles,
-            userRole: req.user.role,
-          },
-          timestamp: new Date().toISOString(),
-          requestId: req.headers['x-request-id'] || 'unknown',
-        },
-      });
+    const user = req.user;
+
+    if (requiredRoles.length > 0 && !hasRole(user, requiredRoles)) {
+      res.status(403).json(
+        buildAuthErrorResponse(req, 'AUTH_INSUFFICIENT_ROLE', 'You do not have permission to access this resource', {
+          requiredRoles,
+          userRole: user.role,
+        })
+      );
       return;
+    }
+
+    if (requiredPermissions.length > 0 && !hasPermission(user, requiredPermissions)) {
+      res.status(403).json(
+        buildAuthErrorResponse(
+          req,
+          'AUTH_INSUFFICIENT_PERMISSIONS',
+          'You do not have permission to perform this action',
+          {
+            requiredPermissions,
+          }
+        )
+      );
+      return;
+    }
+
+    if (enforceZoneCheck) {
+      let requestedZoneId: string | undefined;
+
+      if (zoneResolver) {
+        const resolvedZone = zoneResolver(req);
+        if (typeof resolvedZone === 'string' && resolvedZone.trim().length > 0) {
+          requestedZoneId = resolvedZone.trim();
+        }
+      }
+
+      if (!requestedZoneId && typeof req.params?.[zoneParam] === 'string') {
+        requestedZoneId = (req.params as Record<string, string>)[zoneParam];
+      }
+
+      if (
+        requestedZoneId &&
+        requestedZoneId !== user.zoneId &&
+        !(allowAdminZoneBypass && user.role === 'admin')
+      ) {
+        res.status(403).json(
+          buildAuthErrorResponse(
+            req,
+            'AUTH_ZONE_ACCESS_DENIED',
+            'You do not have access to this zone',
+            {
+              requestedZoneId,
+              userZoneId: user.zoneId,
+            }
+          )
+        );
+        return;
+      }
     }
 
     next();
   };
+}
+
+/**
+ * Backwards-compatible role-only convenience wrapper.
+ *
+ * Note: Zone enforcement is disabled to preserve previous behavior.
+ */
+export function requireRole(allowedRoles: UserRole | UserRole[]) {
+  return authorize(allowedRoles, null, { enforceZoneCheck: false });
 }
 
 /**
@@ -239,7 +450,7 @@ export function requireRole(allowedRoles: UserRole[]) {
  * });
  */
 export async function blacklistToken(
-  redisClient: ReturnType<typeof createClient>,
+  redisClient: RedisClient,
   token: string,
   expirySeconds: number = 3600
 ): Promise<void> {

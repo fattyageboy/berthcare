@@ -4,11 +4,11 @@
 **Status:** ✅ Complete  
 **Date:** October 12, 2025  
 **Endpoints:**
-
 - POST /api/v1/visits/:visitId/signature/upload-url
-- POST /api/v1/visits/:visitId/signature  
-  **Estimated Effort:** 1 day  
-  **Actual Effort:** 1 day
+- POST /api/v1/visits/:visitId/signature
+
+**Estimated Effort:** 1 day  
+**Actual Effort:** 1 day
 
 ---
 
@@ -211,15 +211,35 @@ VALUES ($1, $2)
 
 **Implementation:**
 
-```typescript
-const maxSize = 1 * 1024 * 1024; // 1MB
-if (fileSize > maxSize) {
-  return res.status(400).json({
-    error: 'Bad Request',
-    message: 'File size exceeds maximum of 1MB.',
-  });
-}
-```
+- For pre-signed `PUT` uploads, validate the stored object after the client finishes uploading:
+
+  ```typescript
+  const maxSize = 1 * 1024 * 1024; // 1MB
+
+  const head = await s3
+    .headObject({
+      Bucket: S3_BUCKETS.SIGNATURES,
+      Key: signatureKey,
+    })
+    .promise();
+
+  const uploadedSize = Number(head.ContentLength ?? 0);
+  if (uploadedSize > maxSize) {
+    await s3
+      .deleteObject({
+        Bucket: S3_BUCKETS.SIGNATURES,
+        Key: signatureKey,
+      })
+      .promise();
+
+    return res.status(400).json({
+      error: 'Bad Request',
+      message: 'Uploaded signature exceeds the 1MB limit.',
+    });
+  }
+  ```
+
+- Alternatively, issue a pre-signed `POST` instead of a `PUT` and supply a [`Content-Length-Range`](https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-HTTPPOSTConstructPolicy.html) condition (e.g., `0` to `1048576`) so S3 enforces the size limit before accepting the upload.
 
 **Expected Sizes:**
 

@@ -15,12 +15,15 @@
 import compression from 'compression';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import express, { Router } from 'express';
+import express, { NextFunction, Request, Response, Router } from 'express';
 import helmet from 'helmet';
-import { Pool } from 'pg';
-import { createClient } from 'redis';
 
-import { logError, logInfo } from './config/logger';
+import { initializeJwtKeyStore } from '@berthcare/shared';
+
+import { redisClient } from './cache/redis-client';
+import { logError, logInfo, logWarn } from './config/logger';
+import { getReadPool, primaryPool, replicaPool } from './db/pool';
+import { createGlobalRateLimiter } from './middleware/global-rate-limiter';
 import { createAuthRoutes } from './routes/auth.routes';
 import { createCarePlanRoutes } from './routes/care-plans.routes';
 import { createClientRoutes } from './routes/clients.routes';
@@ -50,19 +53,25 @@ app.use(cors());
 app.use(compression());
 app.use(express.json());
 
-// PostgreSQL connection
-const pgPool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  max: parseInt(process.env.DB_POOL_MAX || '10'),
-  min: parseInt(process.env.DB_POOL_MIN || '2'),
-  idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT_MS || '30000'),
-  connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT_MS || '2000'),
-});
+const rateLimitWindowMs = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10);
+const rateLimitMaxRequests = parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100', 10);
+app.use(
+  createGlobalRateLimiter({
+    windowMs: rateLimitWindowMs,
+    maxRequests: rateLimitMaxRequests,
+  })
+);
 
-// Redis connection
-const redisClient = createClient({
-  url: process.env.REDIS_URL,
-});
+// PostgreSQL connection
+const pgPool = primaryPool;
+
+if (replicaPool) {
+  logInfo('Read replica connection pool initialised', {
+    maxConnections: replicaPool.options?.max,
+  });
+} else {
+  logInfo('Read replica not configured; routing read queries to primary database pool');
+}
 
 // Health check endpoint
 app.get('/health', async (_req, res) => {
@@ -101,7 +110,7 @@ app.get('/health', async (_req, res) => {
 app.get('/api/v1', (_req, res) => {
   res.json({
     name: 'BerthCare API',
-    version: '2.0.0',
+    version: '1.0.0',
     environment: process.env.NODE_ENV || 'development',
     endpoints: {
       health: '/health',
@@ -123,6 +132,28 @@ let visitsRoutes: Router | null = null;
 // Initialize connections and start server
 async function startServer() {
   try {
+    try {
+      await initializeJwtKeyStore();
+      logInfo('JWT key store initialised', {
+        source: process.env.JWT_KEYS_SECRET_ARN ? 'secrets-manager' : 'environment',
+      });
+    } catch (error) {
+      if (process.env.JWT_KEYS_SECRET_ARN) {
+        logError(
+          'Failed to initialise JWT key store from Secrets Manager',
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            secretArn: process.env.JWT_KEYS_SECRET_ARN,
+          }
+        );
+        throw error;
+      }
+
+      logWarn('JWT key store not initialised from Secrets Manager; using environment keys', {
+        reason: error instanceof Error ? error.message : String(error),
+      });
+    }
+
     // Test PostgreSQL connection
     logInfo('Connecting to PostgreSQL...');
     const pgResult = await pgPool.query('SELECT NOW() as time, version() as version');
@@ -138,6 +169,17 @@ async function startServer() {
     const redisVersion = redisInfo.match(/redis_version:([^\r\n]+)/)?.[1] || 'unknown';
     logInfo('Connected to Redis', { version: redisVersion });
 
+    if (replicaPool) {
+      try {
+        await getReadPool().query('SELECT 1');
+        logInfo('Read replica connectivity verified');
+      } catch (error) {
+        logWarn('Read replica verification failed', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
     // Initialize routes after Redis connection
     authRoutes = createAuthRoutes(pgPool, redisClient);
     app.use('/api/v1/auth', authRoutes);
@@ -150,6 +192,8 @@ async function startServer() {
 
     visitsRoutes = createVisitsRouter(pgPool, redisClient);
     app.use('/api/v1/visits', visitsRoutes);
+
+    registerGlobalErrorHandler(app);
 
     // Start Express server
     app.listen(PORT, () => {
@@ -184,17 +228,44 @@ process.on('SIGINT', async () => {
 
 try {
   validateEnvironment();
-  startServer();
 } catch (error) {
   const envError = error instanceof Error ? error : new Error(String(error));
   logError('Environment validation failed', envError);
 
-  if (process.env.NODE_ENV !== 'test') {
-    process.exit(1);
+  if (process.env.NODE_ENV === 'test') {
+    throw envError;
   }
-
-  throw envError;
+  process.exit(1);
 }
+
+startServer();
 
 // Export for testing
 export { app, pgPool, redisClient };
+
+function registerGlobalErrorHandler(server: express.Application) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  server.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
+    logError('Unhandled application error', err, {
+      path: req.path,
+      method: req.method,
+      requestId: req.headers['x-request-id'] || 'unknown',
+    });
+
+    if (res.headersSent) {
+      return;
+    }
+
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message:
+          process.env.NODE_ENV === 'production'
+            ? 'An unexpected error occurred'
+            : err.message || 'An unexpected error occurred',
+        requestId: req.headers['x-request-id'] || 'unknown',
+        timestamp: new Date().toISOString(),
+      },
+    });
+  });
+}

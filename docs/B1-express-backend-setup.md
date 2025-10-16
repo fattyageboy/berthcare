@@ -49,6 +49,7 @@ Successfully initialized Express.js 4.x backend with TypeScript, comprehensive m
 
 - **compression** (v1.7.4) - Gzip compression for responses
 - **express.json()** - JSON body parsing with size limits
+- **Global rate limiter** - In-memory rate limiting (`RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX_REQUESTS`)
 
 **CORS Configuration:**
 
@@ -134,7 +135,7 @@ Production:
 
 **Error Tracking:**
 
-- Sentry integration configured (`src/config/sentry.ts`)
+- Sentry integration scaffolded (`src/config/sentry.ts`) and activates only when `SENTRY_DSN` is provided
 - Automatic error capture and reporting
 - Context enrichment (user, request, environment)
 - Performance monitoring ready
@@ -152,11 +153,12 @@ Production:
 
 ```typescript
 Pool Settings:
-- Max connections: 10 (configurable via DB_POOL_MAX)
+- Max connections: 20 (clamped via DB_POOL_MAX)
 - Min connections: 2 (configurable via DB_POOL_MIN)
 - Idle timeout: 30 seconds
 - Connection timeout: 2 seconds
 - Connection string: DATABASE_URL env variable
+- Read replica (optional): DATABASE_REPLICA_URL / DB_REPLICA_POOL_MAX
 ```
 
 **Redis Configuration:**
@@ -340,7 +342,7 @@ NODE_ENV=development
 
 # Database
 DATABASE_URL=postgresql://berthcare:berthcare@localhost:5432/berthcare
-DB_POOL_MAX=10
+DB_POOL_MAX=20
 DB_POOL_MIN=2
 DB_IDLE_TIMEOUT_MS=30000
 DB_CONNECTION_TIMEOUT_MS=2000
@@ -351,12 +353,12 @@ REDIS_URL=redis://localhost:6379
 # Logging
 LOG_LEVEL=info
 
-# Monitoring (optional)
+# Monitoring (optional; Sentry integration is scaffolded but only activates when SENTRY_DSN is set)
 SENTRY_DSN=<your-sentry-dsn>
 CLOUDWATCH_LOG_GROUP=/aws/ecs/berthcare-api
 ```
 
-**Template:** See `.env.example` for complete configuration
+**Template:** See `.env.example` for complete configuration. Leave `SENTRY_DSN` unset to keep the bundled Sentry integration dormant.
 
 ## Architecture Decisions
 

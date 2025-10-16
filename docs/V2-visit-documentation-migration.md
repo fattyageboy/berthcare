@@ -235,7 +235,7 @@ CREATE TRIGGER update_visit_documentation_updated_at
 
 ```bash
 cd apps/backend
-npm run migrate:up 005
+npm run migrate:up -- 005
 ```
 
 ### Verification
@@ -265,7 +265,7 @@ docker exec berthcare-postgres psql -U berthcare -d berthcare_dev -c "
 If needed, rollback the migration:
 
 ```bash
-npm run migrate:down 005
+npm run migrate:down -- 005
 ```
 
 ---
@@ -595,7 +595,7 @@ visits (1) ---- (1) visit_documentation
 ## Migration Files
 
 - **Forward Migration:** `apps/backend/src/db/migrations/005_create_visit_documentation.sql`
-- **Rollback Migration:** `apps/backend/src/db/migrations/005_create_visit_documentation_rollback.sql`
+- **Rollback Migration:** `apps/backend/src/db/migrations/005_create_visit_documentation-down.sql`
 - **Migration Runner:** `apps/backend/src/db/migrate.ts`
 
 ---
@@ -617,4 +617,3 @@ visits (1) ---- (1) visit_documentation
 
 **Status:** ✅ Complete
 **Next Task:** V3 - Visit Photos Table Migration
-````

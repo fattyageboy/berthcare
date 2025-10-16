@@ -1,6 +1,6 @@
 # BerthCare Technical Architecture Blueprint
 
-**Version:** 2.0.0  
+**Version:** 1.0.0  
 **Last Updated:** October 7, 2025  
 **Philosophy:** Simplicity is the ultimate sophistication
 
@@ -633,6 +633,7 @@ Request:
 Response (200):
 {
   accessToken: string;    // New JWT, expires in 1 hour
+  refreshToken: string;   // Rotated refresh token, expires in 30 days
 }
 
 Errors:
@@ -5153,7 +5154,7 @@ caregiver → Mobile App → API → Alert Service → WebSocket Server
 
 ## Document History
 
-**Version 2.0.0** (October 7, 2025)
+**Version 1.0.0** (October 7, 2025)
 
 - Complete redesign integrating design philosophy throughout
 - Added "Philosophy in Practice" comprehensive conclusion
@@ -5171,7 +5172,7 @@ caregiver → Mobile App → API → Alert Service → WebSocket Server
 
 ---
 
-**Document Version:** 2.0.0  
+**Document Version:** 1.0.0  
 **Last Updated:** October 7, 2025  
 **Next Review:** November 7, 2025  
 **Owner:** System Architect  

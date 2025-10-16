@@ -14,17 +14,17 @@ We use plain SQL migration files as the source of truth. No complex migration fr
 db/
 ├── migrations/           # SQL migration files
 │   ├── 001_create_users_auth.sql
-│   ├── 001_create_users_auth_rollback.sql
+│   ├── 001_create_users_auth-down.sql
 │   ├── 002_create_clients.sql
-│   ├── 002_create_clients_rollback.sql
+│   ├── 002_create_clients-down.sql
 │   ├── 003_create_care_plans.sql
-│   ├── 003_create_care_plans_rollback.sql
+│   ├── 003_create_care_plans-down.sql
 │   ├── 004_create_visits.sql
-│   ├── 004_create_visits_rollback.sql
+│   ├── 004_create_visits-down.sql
 │   ├── 005_create_visit_documentation.sql
-│   ├── 005_create_visit_documentation_rollback.sql
+│   ├── 005_create_visit_documentation-down.sql
 │   ├── 006_create_visit_photos.sql
-│   └── 006_create_visit_photos_rollback.sql
+│   └── 006_create_visit_photos-down.sql
 ├── migrate.ts           # Migration runner
 ├── verify-schema.ts     # Schema verification tool
 ├── seed.ts             # Database seeding tool
@@ -44,9 +44,9 @@ npm run migrate:up
 Apply specific migration:
 
 ```bash
-npm run migrate:up 001  # Users and auth
-npm run migrate:up 002  # Clients
-npm run migrate:up 003  # Care plans
+npm run migrate:up -- 001  # Users and auth
+npm run migrate:up -- 002  # Clients
+npm run migrate:up -- 003  # Care plans
 ```
 
 ### 2. Verify Schema
@@ -62,9 +62,9 @@ npm run db:verify
 Rollback a specific migration:
 
 ```bash
-npm run migrate:down 001  # Rollback users and auth
-npm run migrate:down 002  # Rollback clients
-npm run migrate:down 003  # Rollback care plans
+npm run migrate:down -- 001  # Rollback users and auth
+npm run migrate:down -- 002  # Rollback clients
+npm run migrate:down -- 003  # Rollback care plans
 ```
 
 ### 4. Reset Database
@@ -172,11 +172,11 @@ These are configured in your `.env` file and match the `docker-compose.yml` setu
 ### Creating a New Migration
 
 1. Create forward migration file: `00X_description.sql`
-2. Create rollback file: `00X_description_rollback.sql`
+2. Create rollback file: `00X_description-down.sql`
 3. Update `migrate.ts` to include new migration
-4. Test migration: `npm run migrate:up 00X`
+4. Test migration: `npm run migrate:up -- 00X`
 5. Verify schema: `npm run db:verify`
-6. Test rollback: `npm run migrate:down 00X`
+6. Test rollback: `npm run migrate:down -- 00X`
 7. Commit both files to version control
 
 ### Migration Best Practices

@@ -21,16 +21,13 @@
 
 import { Request, Response, Router } from 'express';
 import { Pool } from 'pg';
-import { createClient } from 'redis';
 
+import { RedisClient } from '../cache/redis-client';
 import { logError, logInfo } from '../config/logger';
 import { authenticateJWT, AuthenticatedRequest, requireRole } from '../middleware/auth';
 import { validateCarePlan } from '../middleware/validation';
 
-export function createCarePlanRoutes(
-  pgPool: Pool,
-  redisClient: ReturnType<typeof createClient>
-): Router {
+export function createCarePlanRoutes(pgPool: Pool, redisClient: RedisClient): Router {
   const router = Router();
 
   /**
@@ -125,8 +122,12 @@ export function createCarePlanRoutes(
           if (clientData.zone_id !== user.zoneId) {
             res.status(403).json({
               error: {
-                code: 'FORBIDDEN',
-                message: 'You can only manage care plans for clients in your zone',
+                code: 'AUTH_ZONE_ACCESS_DENIED',
+                message: 'You do not have access to this client',
+                details: {
+                  requestedZoneId: clientData.zone_id,
+                  userZoneId: user.zoneId,
+                },
                 timestamp: new Date().toISOString(),
                 requestId: req.headers['x-request-id'] || 'unknown',
               },
@@ -222,6 +223,25 @@ export function createCarePlanRoutes(
         ]);
 
         const carePlan = result.rows[0];
+
+        // Invalidate related caches to ensure fresh data
+        try {
+          // Client detail cache
+          await redisClient.del(`client:detail:${clientId}`);
+
+          // Client list caches (all zones + specific zone)
+          const zoneListKeys = await redisClient.keys(`clients:list:zone=${clientData.zone_id}:*`);
+          if (zoneListKeys.length > 0) {
+            await redisClient.del(...zoneListKeys);
+          }
+
+          const allZoneKeys = await redisClient.keys('clients:list:zone=all:*');
+          if (allZoneKeys.length > 0) {
+            await redisClient.del(...allZoneKeys);
+          }
+        } catch (cacheError) {
+          console.warn('Care plan cache invalidation error:', cacheError);
+        }
 
         // Log the operation
         logInfo(isUpdate ? 'Care plan updated' : 'Care plan created', {

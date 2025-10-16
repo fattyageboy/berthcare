@@ -7,42 +7,32 @@
 
 ## Overview
 
-Successfully configured Redis connection using the `redis` library (v4.6.12) with health checks, graceful shutdown, and session management support. The implementation provides a solid foundation for caching and session storage with production-ready error handling.
+Successfully configured Redis connection using the `ioredis` client (v5.x) with exponential backoff retry logic, health checks, graceful shutdown, and session management support. The implementation provides a solid foundation for caching and session storage with production-ready error handling.
 
 ## Deliverables
 
 ### 1. Redis Client Configuration ✅
 
-**Location:** `apps/backend/src/main.ts`
+**Location:** `apps/backend/src/cache/redis-client.ts`
 
 **Implementation:**
 
 ```typescript
-import { createClient } from 'redis';
+import { createRedisClient } from './cache/redis-client';
 
-// Redis connection
-const redisClient = createClient({
-  url: process.env.REDIS_URL,
-});
+export const redisClient = createRedisClient();
 ```
 
 **Configuration:**
 
-- **Library:** `redis` v4.6.12 (modern Redis client for Node.js)
+- **Library:** `ioredis` v5.x (cluster-ready Redis client for Node.js)
 - **Connection URL:** From `REDIS_URL` environment variable
 - **Default URL:** `redis://localhost:6379`
 - **Connection Mode:** Single client instance (shared across application)
 
-**Note on client libraries:**
-
-- This document describes the `redis` package (v4.x). `ioredis` is a different Redis client library with a distinct API and feature set (stronger first-class support for clusters and Sentinel). They are not interchangeable without code changes. See:
-  - `redis` docs: [https://www.npmjs.com/package/redis](https://www.npmjs.com/package/redis)
-  - `ioredis` docs: [https://www.npmjs.com/package/ioredis](https://www.npmjs.com/package/ioredis)
-  - Quick difference: `ioredis` exposes built-in cluster/sentinel convenience methods and a different connection/command API; `redis` v4 uses a modern promise-based API and built-in retry strategy. Choose the client that best matches your deployment needs.
-
 **Library Features:**
 
-- Built-in connection pooling
+- Cluster and Sentinel support (future ready)
 - Automatic command pipelining
 - Promise-based API (async/await support)
 - TypeScript support with full type definitions
@@ -84,24 +74,21 @@ async function startServer() {
 
 ### 3. Connection Retry Logic ✅
 
-**Built-in Retry Behavior:**
+**Retry Strategy:**
 
-The `redis` v4.x library includes automatic retry logic by default:
+`ioredis` allows custom retry logic via the `retryStrategy` option. We configure an exponential backoff with a 50ms base delay, doubling each attempt and capping at 5000ms:
 
 ```typescript
-// Default retry strategy (built into redis library)
-{
-  socket: {
-    reconnectStrategy: (retries) => {
-      // Exponential backoff with jitter
-      // Retries: 0ms, 50ms, 100ms, 200ms, 400ms, 800ms, 1600ms...
-      // Max delay: 5000ms (5 seconds)
-      if (retries > 20) {
-        return new Error('Max retries reached');
-      }
-      return Math.min(retries * 50, 5000);
-    },
+const baseOptions: RedisOptions = {
+  lazyConnect: true,
+  maxRetriesPerRequest: null,
+  retryStrategy(times) {
+    return Math.min(Math.pow(2, times) * 50, 5000);
   },
+};
+
+export function createRedisClient(options: Partial<RedisOptions> = {}) {
+  return new Redis(redisUrl, { ...baseOptions, ...options });
 }
 ```
 
@@ -109,29 +96,9 @@ The `redis` v4.x library includes automatic retry logic by default:
 
 - ✅ Exponential backoff (50ms base, doubles each retry)
 - ✅ Maximum delay cap (5 seconds)
-- ✅ Maximum retry limit (20 attempts)
-- ✅ Automatic reconnection on connection loss
-- ✅ Jitter to prevent thundering herd
-
-**Custom Retry Configuration (Optional Enhancement):**
-
-```typescript
-// Can be added if custom retry behavior needed
-const redisClient = createClient({
-  url: process.env.REDIS_URL,
-  socket: {
-    reconnectStrategy: (retries) => {
-      if (retries > 10) {
-        logError('Redis max retries exceeded', new Error('Connection failed'));
-        return new Error('Too many retries');
-      }
-      const delay = Math.min(retries * 100, 3000);
-      logInfo('Redis reconnecting...', { attempt: retries, delay });
-      return delay;
-    },
-  },
-});
-```
+- ✅ Unlimited retries (service keeps attempting until failure resolved)
+- ✅ Lazy connection (`lazyConnect: true`) prevents auto-connect on import
+- ✅ `maxRetriesPerRequest = null` avoids premature request errors during reconnects
 
 ### 4. Redis Health Check ✅
 
@@ -494,24 +461,21 @@ REDIS_TLS=true
 
 ### 1. Redis Library Choice
 
-**Decision:** Use `redis` v4.x (not `ioredis`)  
+**Decision:** Use `ioredis` v5.x  
 **Rationale:**
 
-- Official Redis client for Node.js
-- Modern promise-based API
-- Built-in TypeScript support
-- Active maintenance and updates
-- Simpler API than ioredis
-- Built-in retry logic with exponential backoff
+- First-class cluster and Sentinel support
+- Advanced retry/event hooks for observability
+- Mature TypeScript support with modern async API
+- Proven performance characteristics in production systems
 
 **Trade-offs:**
 
-- ioredis has more features (cluster support, sentinel)
-- ioredis has better performance benchmarks
-- redis v4 is simpler and easier to use
-- redis v4 sufficient for current requirements
+- Slightly larger dependency footprint
+- Requires wrapper helpers to align with existing code patterns
+- More configuration surface area (retry, TLS, cluster)
 
-**Note:** Task specification mentioned `ioredis`, but `redis` v4.x provides equivalent functionality with simpler API.
+**Note:** This satisfies the original task requirement to use `ioredis`; the wrapper in `cache/redis-client.ts` abstracts away the differences for the rest of the codebase.
 
 ### 2. Connection Strategy
 
@@ -531,19 +495,17 @@ REDIS_TLS=true
 
 ### 3. Retry Strategy
 
-**Decision:** Use built-in exponential backoff  
+**Decision:** Implement custom exponential backoff via `retryStrategy`  
 **Rationale:**
 
-- Proven retry algorithm
-- Prevents thundering herd
-- Configurable if needed
-- No custom code to maintain
+- Gives explicit control over retry timing and limits
+- Implements true exponential backoff capped at 5 seconds
+- Aligns with architecture requirement for deterministic retry behaviour
 
 **Trade-offs:**
 
-- Less control over retry behavior
-- Default settings may not be optimal for all scenarios
-- Can customize if needed in future
+- Slightly more code to maintain in wrapper
+- Requires careful tuning for different environments
 
 ### 4. Health Check Design
 
@@ -773,8 +735,8 @@ apps/backend/src/
 
 | Criteria                                     | Status | Evidence                                |
 | -------------------------------------------- | ------ | --------------------------------------- |
-| Redis client using `redis` library           | ✅     | redis v4.6.12 installed and configured  |
-| Connection retry logic (exponential backoff) | ✅     | Built-in retry with exponential backoff |
+| Redis client using `ioredis` library         | ✅     | ioredis v5.x configured via `redis-client.ts` |
+| Connection retry logic (exponential backoff) | ✅     | Custom exponential backoff retry strategy |
 | Redis health check                           | ✅     | PING command in health endpoint         |
 | Session management configuration             | ✅     | Client ready for session storage        |
 | Caching configuration                        | ✅     | Client ready for caching operations     |
@@ -782,8 +744,6 @@ apps/backend/src/
 | Test set/get works                           | ✅     | Verified with redis-cli                 |
 
 **All acceptance criteria met. B3 is complete and production-ready.**
-
-**Note:** Task specification mentioned `ioredis`, but we used `redis` v4.x which provides equivalent functionality with a simpler, more modern API. The built-in retry logic includes exponential backoff as required.
 
 ## Next Steps
 
@@ -807,7 +767,8 @@ apps/backend/src/
 - Task Plan: `project-documentation/task-plan.md` (B3)
 - Architecture Blueprint: `project-documentation/architecture-output.md` (Redis section)
 - Redis Documentation: https://redis.io/docs/
-- redis npm package: https://www.npmjs.com/package/redis
+- ioredis npm package: https://www.npmjs.com/package/ioredis
+- connect-redis npm package: https://www.npmjs.com/package/connect-redis
 - Local Setup Guide: `docs/E4-local-setup.md`
 
 ## Notes

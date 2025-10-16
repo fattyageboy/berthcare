@@ -31,7 +31,8 @@ Implemented the token refresh endpoint that allows users to obtain new access to
 ```json
 {
   "data": {
-    "accessToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+    "accessToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "refreshToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
   }
 }
 ```
@@ -88,6 +89,11 @@ The endpoint implements multiple layers of security validation:
    - Checks account is not soft-deleted
    - Ensures account is active
 
+5. **Token Rotation**
+   - Issues new refresh token on successful refresh
+   - Hashes and stores new token with fresh expiry
+   - Revokes previous token to prevent reuse
+
 ### Token Lifecycle
 
 ```
@@ -104,7 +110,8 @@ The endpoint implements multiple layers of security validation:
 ┌─────────────────────────────────────────────────────────────┐
 │ 3. App calls POST /v1/auth/refresh                          │
 │    - Sends refresh token                                    │
-│    - Receives new access token                              │
+│    - Receives new access & refresh tokens                   │
+│    - Previous refresh token revoked                         │
 └─────────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -148,6 +155,7 @@ Implemented refresh endpoint:
 - Database token validation
 - User account validation
 - New access token generation
+- Refresh token rotation (issue new token, revoke old)
 - Comprehensive error handling
 
 ### 3. Integration Tests (`apps/backend/tests/auth.refresh.test.ts`)
@@ -159,7 +167,7 @@ Created comprehensive test suite:
 - Authentication errors (invalid/expired/revoked tokens)
 - User account validation (deleted/disabled accounts)
 - Response format validation
-- Edge cases (multiple refreshes, different roles)
+- Edge cases (token rotation behavior, different roles)
 
 ## Testing
 
@@ -184,7 +192,7 @@ npm test -- --coverage auth.refresh.test.ts
 - ✅ Expired token returns 401
 - ✅ Deleted user account returns 401
 - ✅ Disabled user account returns 401
-- ✅ Multiple refresh attempts with same token
+- ✅ Rejects reuse of rotated refresh token
 - ✅ Different user roles (caregiver, coordinator)
 - ✅ Error response format validation
 - ✅ No sensitive information leakage
@@ -201,14 +209,16 @@ curl -X POST http://localhost:3000/v1/auth/login \
     "deviceId": "test-device"
   }'
 
-# Save the refreshToken from response
+# Save the refreshToken from response as ORIGINAL_REFRESH_TOKEN
 
-# 2. Refresh access token
+# 2. Refresh access token (rotate refresh token)
 curl -X POST http://localhost:3000/v1/auth/refresh \
   -H "Content-Type: application/json" \
   -d '{
-    "refreshToken": "YOUR_REFRESH_TOKEN_HERE"
+    "refreshToken": "ORIGINAL_REFRESH_TOKEN"
   }'
+
+# Update stored refresh token with the value returned in this response
 
 # 3. Verify new access token works
 curl -X GET http://localhost:3000/v1/clients \
@@ -359,40 +369,6 @@ async function refreshAccessToken() {
 
 ## Future Enhancements
 
-### Token Rotation (Security Best Practice)
-
-**Current:** Refresh token can be reused multiple times  
-**Enhanced:** Issue new refresh token on each refresh
-
-```typescript
-// Generate new refresh token
-const newRefreshToken = generateRefreshToken({...});
-
-// Revoke old refresh token
-await revokeToken(oldTokenHash);
-
-// Store new refresh token
-await storeToken(newTokenHash);
-
-// Return both tokens
-return {
-  accessToken: newAccessToken,
-  refreshToken: newRefreshToken
-};
-```
-
-**Benefits:**
-
-- Limits token lifetime even if stolen
-- Detects token theft (old token used after rotation)
-- Industry best practice for high-security applications
-
-**Trade-offs:**
-
-- More complex mobile app logic
-- Must handle token update failures
-- Increased database writes
-
 ### Device Management
 
 **Future feature:** Allow users to view and revoke device sessions
@@ -418,6 +394,7 @@ WHERE user_id = $1 AND device_id = $2;
 - ✅ Endpoint validates token not expired
 - ✅ Endpoint validates user account active
 - ✅ Endpoint generates new access token
+- ✅ Endpoint rotates refresh tokens and revokes previous token
 - ✅ Returns 401 for invalid/expired tokens
 - ✅ Returns 400 for validation errors
 - ✅ Error messages don't leak sensitive information

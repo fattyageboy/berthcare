@@ -13,27 +13,27 @@ Successfully configured PostgreSQL database connection with connection pooling, 
 
 ### 1. PostgreSQL Connection Pool ✅
 
-**Location:** `apps/backend/src/main.ts`
+**Location:** `apps/backend/src/db/pool.ts`
 
 **Configuration:**
 
 ```typescript
-const pgPool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  max: parseInt(process.env.DB_POOL_MAX || '10'),
-  min: parseInt(process.env.DB_POOL_MIN || '2'),
-  idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT_MS || '30000'),
-  connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT_MS || '2000'),
+const primaryPool = new Pool({
+  connectionString: resolveConnectionString(),
+  max: clampPoolSize(process.env.DB_POOL_MAX, 20, 20),
+  min: Math.max(0, parseInt(process.env.DB_POOL_MIN ?? '2', 10)),
+  idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT_MS ?? '30000', 10),
+  connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT_MS ?? '2000', 10),
 });
 ```
 
 **Pool Settings:**
 
-- **Max Connections:** 10 (default), configurable up to 20 via `DB_POOL_MAX`
+- **Max Connections:** 20 (clamped to protect Postgres); configurable via `DB_POOL_MAX`
 - **Min Connections:** 2 (default), configurable via `DB_POOL_MIN`
-- **Idle Timeout:** 30 seconds - connections idle longer are closed
-- **Connection Timeout:** 2 seconds - fail fast if connection unavailable
-- **Connection String:** Full PostgreSQL URL from `DATABASE_URL` env variable
+- **Idle Timeout:** 30 seconds - idle connections are closed automatically
+- **Connection Timeout:** 2 seconds - fail fast if the pool cannot obtain a connection
+- **Connection String:** Derived from `DATABASE_URL` or discrete `POSTGRES_*` variables
 
 **Benefits:**
 
@@ -48,26 +48,26 @@ const pgPool = new Pool({
 
 **Features:**
 
-- Simple SQL-based migrations (no complex ORM)
+- Backed by `node-pg-migrate`
+- SQL-first migrations (no ORM boilerplate)
 - Forward migrations (up) and rollbacks (down)
 - Transaction-wrapped execution (ACID guarantees)
-- Migration versioning with numbered files
-- Connection verification before execution
-- Detailed logging and error handling
+- Shared migrations table `schema_migrations`
+- Loads `.env` automatically for local execution
 
 **Migration Commands:**
 
 ```bash
-# Run all pending migrations
+# Apply all pending migrations
 npm run migrate:up
 
-# Run specific migration
-npm run migrate:up 001
+# Apply a limited number of pending migrations
+npm run migrate:up -- 1
 
-# Rollback specific migration
-npm run migrate:down 001
+# Roll back one migration
+npm run migrate:down -- 1
 
-# Reset database (drop and recreate)
+# Roll back everything, then re-apply
 npm run db:reset
 
 # Verify schema integrity
@@ -78,8 +78,8 @@ npm run db:verify
 
 ```
 apps/backend/src/db/migrations/
-├── 001_create_users_auth.sql           # Forward migration
-└── 001_create_users_auth_rollback.sql  # Rollback migration
+├── 001_create_users_auth.sql       # Forward migration
+└── 001_create_users_auth-down.sql  # Rollback migration
 ```
 
 **Philosophy:**
@@ -165,37 +165,27 @@ async function startServer() {
 
 **Current Implementation:**
 
-- Single connection pool to primary database
-- Architecture ready for read replica addition
-
-**Future Enhancement:**
+- Primary pool exposed via `primaryPool`
+- Optional replica pool created when `DATABASE_REPLICA_URL` is provided
+- Helper `getReadPool()` routes read traffic to the replica when available
 
 ```typescript
-// Primary pool (writes)
-const primaryPool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  max: 20,
-});
+export const primaryPool = new Pool({ /* ... */ });
+export const replicaPool = process.env.DATABASE_REPLICA_URL
+  ? new Pool({ connectionString: process.env.DATABASE_REPLICA_URL, max: 10 })
+  : null;
 
-// Read replica pool (reads)
-const replicaPool = new Pool({
-  connectionString: process.env.DATABASE_REPLICA_URL,
-  max: 40, // More connections for read-heavy workload
-});
-
-// Query router
-async function query(sql: string, params: any[], readOnly = false) {
-  const pool = readOnly ? replicaPool : primaryPool;
-  return pool.query(sql, params);
+export function getReadPool(): Pool {
+  return replicaPool ?? primaryPool;
 }
 ```
 
 **Read Replica Strategy:**
 
-- Route SELECT queries to read replicas
+- Route SELECT queries to read replicas (future enhancement)
 - Route INSERT/UPDATE/DELETE to primary
 - Automatic failover to primary if replica unavailable
-- Connection pooling for both primary and replicas
+- Connection pooling and sizing controls for both pools
 
 ### 6. Database Migration Files ✅
 
@@ -236,7 +226,7 @@ async function query(sql: string, params: any[], readOnly = false) {
 
 **Rollback Migration:**
 
-- Location: `apps/backend/src/db/migrations/001_create_users_auth_rollback.sql`
+- Location: `apps/backend/src/db/migrations/001_create_users_auth-down.sql`
 - Drops all tables, indexes, triggers, and functions
 - Safe rollback to pre-migration state
 
@@ -342,11 +332,11 @@ $ curl http://localhost:3000/health
 ### 5. Rollback Testing ✅
 
 ```bash
-$ npm run migrate:down 001
+$ npm run migrate:down -- 001
 
 ⏪ Rolling back migration...
 
-📄 Executing migration: 001_create_users_auth_rollback.sql
+📄 Executing migration: 001_create_users_auth-down.sql
 ────────────────────────────────────────────────────────────
 ✅ Migration completed successfully
 
@@ -362,7 +352,7 @@ $ npm run migrate:down 001
 DATABASE_URL=postgresql://berthcare:berthcare@localhost:5432/berthcare
 
 # Connection Pool Settings
-DB_POOL_MAX=10              # Maximum connections (default: 10, max: 20)
+DB_POOL_MAX=20              # Maximum connections (clamped to 20)
 DB_POOL_MIN=2               # Minimum connections (default: 2)
 DB_IDLE_TIMEOUT_MS=30000    # Idle timeout in milliseconds
 DB_CONNECTION_TIMEOUT_MS=2000  # Connection timeout in milliseconds
@@ -569,7 +559,7 @@ if (duration > 1000) {
 apps/backend/src/db/
 ├── migrations/
 │   ├── 001_create_users_auth.sql           # Forward migration
-│   └── 001_create_users_auth_rollback.sql  # Rollback migration
+│   └── 001_create_users_auth-down.sql  # Rollback migration
 ├── migrate.ts                               # Migration runner
 ├── verify-schema.ts                         # Schema verification
 ├── seed.ts                                  # Database seeding (dev)

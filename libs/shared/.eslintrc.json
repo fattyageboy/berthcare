@@ -1,30 +1,19 @@
 {
   "extends": ["../../.eslintrc.json"],
   "ignorePatterns": ["!**/*", "jest.config.ts"],
+  "parserOptions": {
+    "project": ["libs/shared/tsconfig.eslint.json"],
+    "EXPERIMENTAL_useProjectService": true
+  },
   "settings": {
     "import/resolver": {
       "typescript": {
         "alwaysTryTypes": true,
-        "project": ["libs/shared/tsconfig.json", "libs/shared/tsconfig.spec.json"]
+        "project": ["libs/shared/tsconfig.eslint.json"]
       },
       "node": {
         "extensions": [".js", ".jsx", ".ts", ".tsx"]
       }
     }
-  },
-  "overrides": [
-    {
-      "files": ["src/**/*.ts"],
-      "excludedFiles": ["**/*.test.ts", "**/*.spec.ts"],
-      "parserOptions": {
-        "project": ["libs/shared/tsconfig.json"]
-      }
-    },
-    {
-      "files": ["**/*.test.ts", "**/*.spec.ts"],
-      "parserOptions": {
-        "project": ["libs/shared/tsconfig.spec.json"]
-      }
-    }
-  ]
+  }
 }

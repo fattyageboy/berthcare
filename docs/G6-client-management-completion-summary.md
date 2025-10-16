@@ -17,9 +17,9 @@ Successfully completed the full client management API implementation including d
 **Migrations Created:**
 
 - ✅ `002_create_clients.sql` - Clients table with geographic indexing
-- ✅ `002_create_clients_rollback.sql` - Rollback migration
+- ✅ `002_create_clients-down.sql` - Rollback migration
 - ✅ `003_create_care_plans.sql` - Care plans with JSONB support
-- ✅ `003_create_care_plans_rollback.sql` - Rollback migration
+- ✅ `003_create_care_plans-down.sql` - Rollback migration
 
 **Key Features:**
 
@@ -351,9 +351,9 @@ GOOGLE_MAPS_GEOCODING_CACHE_TTL=86400
 **Database Migrations:**
 
 - `apps/backend/src/db/migrations/002_create_clients.sql`
-- `apps/backend/src/db/migrations/002_create_clients_rollback.sql`
+- `apps/backend/src/db/migrations/002_create_clients-down.sql`
 - `apps/backend/src/db/migrations/003_create_care_plans.sql`
-- `apps/backend/src/db/migrations/003_create_care_plans_rollback.sql`
+- `apps/backend/src/db/migrations/003_create_care_plans-down.sql`
 
 **Services:**
 

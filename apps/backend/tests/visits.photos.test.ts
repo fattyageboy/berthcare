@@ -24,10 +24,11 @@ import * as crypto from 'crypto';
 
 import { Express } from 'express';
 import { Pool } from 'pg';
-import { createClient } from 'redis';
 import request from 'supertest';
 
-import { generateAccessToken } from '../../../libs/shared/src/jwt-utils';
+import { generateAccessToken } from '@berthcare/shared';
+
+import { RedisClient } from '../src/cache/redis-client';
 
 import {
   cleanAllTestData,
@@ -41,7 +42,7 @@ import {
 
 describe('Photo Upload Endpoints', () => {
   let pgPool: Pool;
-  let redisClient: ReturnType<typeof createClient>;
+  let redisClient: RedisClient;
   let app: Express;
 
   let caregiverToken: string;

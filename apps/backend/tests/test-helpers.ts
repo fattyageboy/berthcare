@@ -15,8 +15,8 @@ import * as crypto from 'crypto';
 
 import express, { Express } from 'express';
 import { Pool } from 'pg';
-import { createClient } from 'redis';
 
+import { createRedisClient, RedisClient } from '../src/cache/redis-client';
 import { createAuthRoutes } from '../src/routes/auth.routes';
 import { createCarePlanRoutes } from '../src/routes/care-plans.routes';
 import { createClientRoutes } from '../src/routes/clients.routes';
@@ -33,10 +33,60 @@ if (!TEST_REDIS_URL) {
   throw new Error('TEST_REDIS_URL environment variable is required');
 }
 
+async function ensureTestSchema(pgPool: Pool): Promise<void> {
+  // Ensure zone coordinate columns exist for zone assignment tests
+  await pgPool.query(
+    `
+      ALTER TABLE zones
+        ADD COLUMN IF NOT EXISTS center_latitude DOUBLE PRECISION,
+        ADD COLUMN IF NOT EXISTS center_longitude DOUBLE PRECISION
+    `
+  );
+
+  // Ensure soft-delete column exists (some environments may lack recent migration)
+  await pgPool.query(
+    `
+      ALTER TABLE zones
+        ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ
+    `
+  );
+
+  // Add check constraints if they are missing (idempotent)
+  await pgPool.query(
+    `
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1
+          FROM pg_constraint
+          WHERE conname = 'zones_center_latitude_check'
+            AND conrelid = 'zones'::regclass
+        ) THEN
+          ALTER TABLE zones
+            ADD CONSTRAINT zones_center_latitude_check
+            CHECK (center_latitude IS NULL OR (center_latitude BETWEEN -90 AND 90));
+        END IF;
+
+        IF NOT EXISTS (
+          SELECT 1
+          FROM pg_constraint
+          WHERE conname = 'zones_center_longitude_check'
+            AND conrelid = 'zones'::regclass
+        ) THEN
+          ALTER TABLE zones
+            ADD CONSTRAINT zones_center_longitude_check
+            CHECK (center_longitude IS NULL OR (center_longitude BETWEEN -180 AND 180));
+        END IF;
+      END;
+      $$;
+    `
+  );
+}
+
 /**
  * Create a test app with all routes mounted
  */
-export function createTestApp(pgPool: Pool, redisClient: ReturnType<typeof createClient>): Express {
+export function createTestApp(pgPool: Pool, redisClient: RedisClient): Express {
   const app = express();
   app.use(express.json());
 
@@ -221,7 +271,7 @@ export function registerCleanup(cleanup: () => Promise<void>): void {
  */
 export async function setupTestConnections(): Promise<{
   pgPool: Pool;
-  redisClient: ReturnType<typeof createClient>;
+  redisClient: RedisClient;
 }> {
   const pgPool = new Pool({
     connectionString: TEST_DATABASE_URL,
@@ -241,13 +291,9 @@ export async function setupTestConnections(): Promise<{
     throw new Error('PostgreSQL connection failed. Is the database running?');
   }
 
-  const redisClient = createClient({
-    url: TEST_REDIS_URL,
-    socket: {
-      connectTimeout: 2000, // Fail fast
-      reconnectStrategy: false, // Don't reconnect in tests
-    },
-  });
+  await ensureTestSchema(pgPool);
+
+  const redisClient = createRedisClient({ url: TEST_REDIS_URL });
 
   try {
     await redisClient.connect();
@@ -266,7 +312,7 @@ export async function setupTestConnections(): Promise<{
  */
 export async function teardownTestConnections(
   pgPool: Pool,
-  redisClient: ReturnType<typeof createClient>
+  redisClient: RedisClient
 ): Promise<void> {
   const cleanupTasks: Promise<void>[] = [];
 

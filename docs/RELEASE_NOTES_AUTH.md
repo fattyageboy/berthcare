@@ -32,6 +32,7 @@ Complete JWT-based authentication system with role-based access control, enablin
 
 Register a new user account.
 
+- Requires: Admin access token (`Authorization: Bearer <token>`)
 - Rate limit: 5 attempts/hour per IP
 - Returns: Access token, refresh token, user profile
 

@@ -193,7 +193,7 @@ If issues are discovered:
 1. Revert the PR merge commit
 2. Roll back database migration:
    ```bash
-   npm run migrate:down 004
+   npm run migrate:down -- 004
    ```
 
 ---

@@ -37,7 +37,7 @@ Successfully implemented the database schema for the BerthCare care plan managem
 
 #### Rollback Migration
 
-**File:** `apps/backend/src/db/migrations/003_create_care_plans_rollback.sql`
+**File:** `apps/backend/src/db/migrations/003_create_care_plans-down.sql`
 
 Safely removes all objects created by the forward migration including triggers, functions, indexes, and the table.
 
@@ -367,7 +367,7 @@ clients.zone_id → zones.id (when zones table created)
 npm run migrate:up
 
 # Option 2: Run only migration 003
-npm run migrate:up 003
+npm run migrate:up -- 003
 
 # Option 3: Use Makefile
 make db-migrate
@@ -390,7 +390,7 @@ docker-compose exec postgres psql -U berthcare -d berthcare_dev -c "\df *care_pl
 
 ```bash
 # Rollback migration 003
-npm run migrate:down 003
+npm run migrate:down -- 003
 
 # Verify rollback
 npm run db:verify
@@ -562,10 +562,10 @@ With the care_plans table in place, the next implementation tasks are:
 docker-compose exec postgres psql -U berthcare -d berthcare_dev -c "\d care_plans"
 
 # Rollback if needed
-npm run migrate:down 003
+npm run migrate:down -- 003
 
 # Re-run migration
-npm run migrate:up 003
+npm run migrate:up -- 003
 ```
 
 ### Foreign Key Violation
@@ -577,8 +577,8 @@ npm run migrate:up 003
 ```bash
 # Ensure client exists first
 # Migration 002 must be applied before 003
-npm run migrate:up 002
-npm run migrate:up 003
+npm run migrate:up -- 002
+npm run migrate:up -- 003
 ```
 
 ### Unique Constraint Violation
@@ -639,7 +639,7 @@ The database schema for care plans is now complete and verified. The table struc
 **Migration Files:**
 
 - ✅ `003_create_care_plans.sql` - Forward migration
-- ✅ `003_create_care_plans_rollback.sql` - Rollback migration
+- ✅ `003_create_care_plans-down.sql` - Rollback migration
 - ✅ `migrate.ts` - Updated migration runner
 - ✅ `README.md` - Updated database documentation
 - ✅ `C2-care-plans-migration.md` - This documentation

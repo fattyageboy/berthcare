@@ -58,6 +58,8 @@ VHc9rnG8BVSMTwPmPG7grCM+uqrgEOYMyV64XcY+MBXZlgJSlcRdqfx47I1k3P5j
 ZQIDAQAB
 -----END PUBLIC KEY-----`;
 
+process.env.JWT_KEY_ID = 'test-suite-key';
+
 // Set timeout for integration tests (database setup can take time)
 jest.setTimeout(20000);
 

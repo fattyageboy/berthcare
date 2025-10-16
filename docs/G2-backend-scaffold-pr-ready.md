@@ -214,6 +214,10 @@ b7b6666 fix: resolve ESLint and TypeScript configuration issues
 - Diagrams updated
 - Infrastructure documented
 
+## Planned for v1.0.0
+
+Enhancements identified during this work but deferred beyond the v1.x releases are tracked under the v1.0.0 milestone. These include post-v1.1.0 improvements to monitoring, automation, and developer tooling, to be scheduled once the authentication phase is complete.
+
 ## Code Quality Metrics
 
 ### TypeScript Compilation

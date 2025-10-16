@@ -21,10 +21,11 @@ import * as crypto from 'crypto';
 
 import { Express } from 'express';
 import { Pool } from 'pg';
-import { createClient } from 'redis';
 import request from 'supertest';
 
-import { generateAccessToken } from '../../../libs/shared/src/jwt-utils';
+import { generateAccessToken } from '@berthcare/shared';
+
+import { RedisClient } from '../src/cache/redis-client';
 
 import {
   cleanAllTestData,
@@ -38,7 +39,7 @@ import {
 
 describe('POST /v1/visits', () => {
   let pgPool: Pool;
-  let redisClient: ReturnType<typeof createClient>;
+  let redisClient: RedisClient;
   let app: Express;
 
   let caregiverToken: string;
@@ -257,6 +258,36 @@ describe('POST /v1/visits', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.message).toContain('scheduledStartTime');
+    });
+  });
+
+  describe('Conflict handling', () => {
+    it('should return 409 when an overlapping visit exists for the same client', async () => {
+      const scheduledStartTime = '2025-10-15T09:00:00Z';
+
+      const firstResponse = await request(app)
+        .post('/api/v1/visits')
+        .set('Authorization', `Bearer ${caregiverToken}`)
+        .send({
+          clientId,
+          scheduledStartTime,
+          checkInTime: '2025-10-15T09:05:00Z',
+        });
+
+      expect(firstResponse.status).toBe(201);
+
+      const conflictResponse = await request(app)
+        .post('/api/v1/visits')
+        .set('Authorization', `Bearer ${caregiverToken}`)
+        .send({
+          clientId,
+          scheduledStartTime,
+          checkInTime: '2025-10-15T09:10:00Z',
+        });
+
+      expect(conflictResponse.status).toBe(409);
+      expect(conflictResponse.body.error).toBe('Conflict');
+      expect(conflictResponse.body.message).toContain('time slot');
     });
   });
 });

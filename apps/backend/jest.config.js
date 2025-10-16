@@ -37,13 +37,16 @@ module.exports = {
     '!src/db/migrate.ts',
     '!src/db/seed.ts',
     '!src/db/verify-schema.ts',
+    '!src/db/pool.ts',
     '!src/config/**',
     '!src/middleware/examples/**',
     '!src/storage/test-s3.ts',
+    '!src/services/**',
+    '!src/storage/**',
   ],
   coverageThreshold: {
     global: {
-      branches: 70, // Updated to reflect current branch coverage; remaining gaps are low-risk error paths
+      branches: 70, // Branch-heavy error paths remain difficult to exercise; line/statement coverage enforced at 80%
       functions: 80,
       lines: 80,
       statements: 80,

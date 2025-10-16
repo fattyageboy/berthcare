@@ -151,9 +151,10 @@ The middleware attaches user information to the request object:
 interface AuthenticatedRequest extends Request {
   user?: {
     userId: string; // Unique user identifier
-    role: UserRole; // 'caregiver' | 'coordinator' | 'admin'
+    role: UserRole; // 'caregiver' | 'coordinator' | 'admin' | 'family'
     zoneId: string; // Geographic zone for data access control
     email?: string; // User email (optional)
+    deviceId: string; // Device identifier for session binding
   };
 }
 ```
@@ -165,9 +166,10 @@ router.get('/profile', authenticateJWT(redisClient), (req: AuthenticatedRequest,
   const userId = req.user?.userId;
   const role = req.user?.role;
   const zoneId = req.user?.zoneId;
+  const deviceId = req.user?.deviceId;
 
   // Use user information for business logic
-  res.json({ userId, role, zoneId });
+  res.json({ userId, role, zoneId, deviceId });
 });
 ```
 

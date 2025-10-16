@@ -46,6 +46,10 @@ Implemented the POST /v1/auth/register endpoint with complete validation, securi
 POST /api/v1/auth/register
 ```
 
+### Authentication
+
+- Requires admin access token in `Authorization: Bearer <token>` header
+
 ### Request Body
 
 ```typescript
@@ -307,6 +311,7 @@ Tests require:
 
 ```bash
 curl -X POST http://localhost:3000/api/v1/auth/register \
+  -H "Authorization: Bearer <ADMIN_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
     "email": "caregiver@example.com",
@@ -342,6 +347,7 @@ Response:
 
 ```bash
 curl -X POST http://localhost:3000/api/v1/auth/register \
+  -H "Authorization: Bearer <ADMIN_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
     "email": "invalid-email",
@@ -374,6 +380,7 @@ Response (400):
 ```bash
 # Second registration with same email
 curl -X POST http://localhost:3000/api/v1/auth/register \
+  -H "Authorization: Bearer <ADMIN_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
     "email": "existing@example.com",
@@ -406,6 +413,7 @@ Response (409):
 ```bash
 # 6th attempt within 1 hour
 curl -X POST http://localhost:3000/api/v1/auth/register \
+  -H "Authorization: Bearer <ADMIN_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{...}'
 ```

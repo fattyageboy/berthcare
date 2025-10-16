@@ -100,7 +100,7 @@ SENTRY_DSN=https://[key]@[org].ingest.sentry.io/[project]
 SENTRY_ENVIRONMENT=development
 SENTRY_TRACES_SAMPLE_RATE=0.1
 SENTRY_PROFILES_SAMPLE_RATE=0.1
-APP_VERSION=2.0.0
+APP_VERSION=1.0.0
 ```
 
 ## Step 5: Install Dependencies

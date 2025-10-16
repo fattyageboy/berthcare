@@ -19,8 +19,8 @@
 
 import { Request, Response, Router } from 'express';
 import { Pool } from 'pg';
-import { createClient } from 'redis';
 
+import { RedisClient } from '../cache/redis-client';
 import { logError, logInfo } from '../config/logger';
 import { authenticateJWT, AuthenticatedRequest } from '../middleware/auth';
 import {
@@ -71,21 +71,33 @@ interface VisitResponse {
  *
  * @param redisClient - Redis client instance
  */
-async function invalidateVisitListCache(
-  redisClient: ReturnType<typeof createClient>
-): Promise<void> {
+async function invalidateVisitListCache(redisClient: RedisClient): Promise<void> {
   try {
-    // Use SCAN instead of KEYS to avoid blocking Redis
+    // Use incremental SCAN to avoid blocking Redis
     const keysToDelete: string[] = [];
-    for await (const key of redisClient.scanIterator({
-      MATCH: 'visits:list:*',
-      COUNT: 100,
-    })) {
-      keysToDelete.push(key);
-    }
+    let cursor = '0';
+
+    do {
+      const [nextCursor, keys] = await redisClient.scan(
+        cursor,
+        'MATCH',
+        'visits:list:*',
+        'COUNT',
+        100
+      );
+      if (keys.length > 0) {
+        keysToDelete.push(...keys);
+      }
+      cursor = nextCursor;
+    } while (cursor !== '0');
 
     if (keysToDelete.length > 0) {
-      await redisClient.del(keysToDelete);
+      // Delete in manageable chunks to respect command argument limits
+      const chunkSize = 100;
+      for (let i = 0; i < keysToDelete.length; i += chunkSize) {
+        const chunk = keysToDelete.slice(i, i + chunkSize);
+        await redisClient.del(...chunk);
+      }
       logInfo('Visit list cache invalidated', { keysDeleted: keysToDelete.length });
     }
   } catch (error) {
@@ -97,10 +109,7 @@ async function invalidateVisitListCache(
 /**
  * Create visits router
  */
-export function createVisitsRouter(
-  pool: Pool,
-  redisClient: ReturnType<typeof createClient>
-): Router {
+export function createVisitsRouter(pool: Pool, redisClient: RedisClient): Router {
   const router = Router();
 
   /**
@@ -530,16 +539,17 @@ export function createVisitsRouter(
 
       // Check for overlapping visits (same client, overlapping time)
       const overlapCheck = await client.query(
-        `SELECT id FROM visits 
-         WHERE client_id = $1 
+        `SELECT id FROM visits
+         WHERE client_id = $1
            AND status IN ('scheduled', 'in_progress')
-           AND (
-             status = 'in_progress'
-             OR (
-               scheduled_start_time < $3
-               AND (scheduled_start_time + (COALESCE(duration_minutes, $4) * INTERVAL '1 minute')) > $2
-             )
-           )`,
+           AND COALESCE(check_in_time, scheduled_start_time) < $3
+           AND COALESCE(
+             check_out_time,
+             CASE
+               WHEN duration_minutes IS NOT NULL THEN scheduled_start_time + (duration_minutes * INTERVAL '1 minute')
+               ELSE COALESCE(check_in_time, scheduled_start_time) + ($4 * INTERVAL '1 minute')
+             END
+           ) > $2`,
         [clientId, newVisitStart.toISOString(), newVisitEnd.toISOString(), expectedDurationMinutes]
       );
 
@@ -880,20 +890,21 @@ export function createVisitsRouter(
           let docParamCount = 1;
 
           if (documentation.vitalSigns !== undefined) {
-            const vitalSignsValue = typeof documentation.vitalSigns === 'string'
-              ? documentation.vitalSigns
-              : JSON.stringify(documentation.vitalSigns);
+            const vitalSignsValue =
+              typeof documentation.vitalSigns === 'string'
+                ? documentation.vitalSigns
+                : JSON.stringify(documentation.vitalSigns);
             docUpdates.push(`vital_signs = $${docParamCount}`);
             docValues.push(vitalSignsValue);
             docParamCount++;
           }
 
           if (documentation.activities !== undefined) {
-          if (documentation.activities !== undefined) {
-            const activitiesValue = typeof documentation.activities === 'string'
-              ? documentation.activities
-              : JSON.stringify(documentation.activities);
-            docUpdates.push(`activities = ${docParamCount}`);
+            const activitiesValue =
+              typeof documentation.activities === 'string'
+                ? documentation.activities
+                : JSON.stringify(documentation.activities);
+            docUpdates.push(`activities = $${docParamCount}`);
             docValues.push(activitiesValue);
             docParamCount++;
           }

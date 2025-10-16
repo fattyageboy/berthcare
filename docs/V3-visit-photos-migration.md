@@ -180,7 +180,7 @@ CHECK (file_size > 0)
 
 ```bash
 cd apps/backend
-npm run migrate:up 006
+npm run migrate:up -- 006
 ```
 
 ### Verification
@@ -210,7 +210,7 @@ docker exec berthcare-postgres psql -U berthcare -d berthcare_dev -c "
 If needed, rollback the migration:
 
 ```bash
-npm run migrate:down 006
+npm run migrate:down -- 006
 ```
 
 ---
@@ -595,7 +595,7 @@ visits (1) ----< (many) visit_photos
 ## Migration Files
 
 - **Forward Migration:** `apps/backend/src/db/migrations/006_create_visit_photos.sql`
-- **Rollback Migration:** `apps/backend/src/db/migrations/006_create_visit_photos_rollback.sql`
+- **Rollback Migration:** `apps/backend/src/db/migrations/006_create_visit_photos-down.sql`
 - **Migration Runner:** `apps/backend/src/db/migrate.ts`
 
 ---

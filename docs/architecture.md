@@ -1,6 +1,6 @@
 # BerthCare System Architecture
 
-**Version:** 2.0.0  
+**Version:** 1.0.0  
 **Last Updated:** October 10, 2025  
 **Status:** Staging Environment Deployed  
 **Philosophy:** Simplicity is the ultimate sophistication

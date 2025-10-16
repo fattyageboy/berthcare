@@ -190,7 +190,7 @@ Results are always sorted by:
 
 **Cache Key Format:**
 
-```
+```text
 clients:list:zone={zoneId}:search={search}:page={page}:limit={limit}
 ```
 

@@ -17,10 +17,11 @@ import * as crypto from 'crypto';
 
 import { Express } from 'express';
 import { Pool } from 'pg';
-import { createClient } from 'redis';
 import request from 'supertest';
 
 import { generateAccessToken } from '@berthcare/shared';
+
+import { RedisClient } from '../src/cache/redis-client';
 
 import {
   cleanAllTestData,
@@ -34,7 +35,7 @@ import {
 
 describe('GET /api/v1/visits/:visitId', () => {
   let pgPool: Pool;
-  let redisClient: ReturnType<typeof createClient>;
+  let redisClient: RedisClient;
   let app: Express;
 
   // Test users
