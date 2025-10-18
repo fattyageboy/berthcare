@@ -34,7 +34,7 @@ This implementation plan translates the BerthCare Technical Architecture Bluepri
 ## Phase E – Environment & Tooling
 
 | ID  | Title | Description| Deps | Deliverables | Acceptance| Role| Effort |
------ | ----- | -----------|------|--------------| --------- |-----|--------|
+| ----- | ----- | -----------|------|--------------| --------- |-----|--------|
 | E1  | Initialize Git repository | Create monorepo at GitHub; add README.md with project overview, LICENSE (MIT or proprietary), .gitignore (Node, React Native, IDE files), .editorconfig (consistent formatting), CODEOWNERS (code review assignments); enable branch protections on `main` (require 1+ reviews, status checks, signed commits); initial commit. Reference: Arch Blueprint - project-documentation/architecture-output.md v1.0.0 – System Architecture Overview. | – | GitHub repo URL; base scaffold files| Repo exists; branch protections active; initial commit visible; README describes project | DevOps | 0.5d|
 | E2  | Set up CI bootstrap| Configure GitHub Actions to run on PRs to `main`: ESLint, Prettier, TypeScript type checks, unit tests (Jest), SAST (Snyk or SonarCloud), dependency audit (npm audit). All checks required before merge. Reference: Arch Blueprint - project-documentation/architecture-output.md – Infrastructure section.| E1| `.github/workflows/ci.yml`; passing sample run| CI triggers on PR; all checks run; required in branch rules | DevOps | 1d  |
 | E3  | Configure monorepo structure | Set up Nx or Turborepo for monorepo management; create workspace structure: `/apps/mobile`, `/apps/backend`, `/libs/shared`, `/docs`; configure shared TypeScript config, ESLint, Prettier. Assumptions: Nx chosen for better caching and task orchestration.  | E2| Monorepo config files; workspace structure  | `nx run-many` executes tasks across projects; shared configs work  | DevOps | 1d  |
@@ -49,7 +49,7 @@ This implementation plan translates the BerthCare Technical Architecture Bluepri
 ## Phase B – Backend Core Infrastructure
 
 | ID  | Title | Description| Deps | Deliverables | Acceptance| Role| Effort |
------ | ----- | -----------|------|------------- | --------- |-----|--------|
+| ----- | ----- | -----------|------|------------- | --------- |-----|--------|
 | G1  | Create feature branch – backend scaffold | Branch `feat/backend-scaffold` from `main`; link to issue #1; open draft PR with checklist (setup Express, DB connection, health check).| E8| Branch + draft PR | PR open; CI triggered| Backend Dev | 0.1d|
 | B1  | Initialize Express.js backend | Set up Express.js 4.x with TypeScript; configure middleware (helmet, cors, compression, express-rate-limit); create health check endpoint `GET /health`; configure logging (Winston); set up error handling middleware. Reference: Arch Blueprint - project-documentation/architecture-output.md – Backend Services Layer. Assumptions: Port 3000 for local, environment variable for production. | G1| `/apps/backend` with Express setup; health endpoint | `curl localhost:3000/health` returns 200; logs to console | Backend Dev | 1d  |
 | B2  | Configure database connection | Set up PostgreSQL connection using `pg` library with connection pooling (max 20 connections); create database migration framework (node-pg-migrate); implement connection health check; configure read replica support (placeholder). Reference: Arch Blueprint - project-documentation/architecture-output.md – Data Layer, PostgreSQL section.  | B1| Database connection module; migration setup | Backend connects to local PostgreSQL; migrations run| Backend Dev | 1d  |
@@ -62,7 +62,7 @@ This implementation plan translates the BerthCare Technical Architecture Bluepri
 ## Phase A – Authentication & Authorization
 
 | ID  | Title | Description| Deps | Deliverables | Acceptance| Role| Effort |
------ | ----- | -----------|------|------------- | --------- |-----|--------|
+| ----- | ----- | -----------|------|------------- | --------- |-----|--------|
 | G3  | Create feature branch – authentication | Branch `feat/auth-system` from `main`; link to issue #2; open draft PR with checklist (JWT, login, refresh, middleware).| G2| Branch + draft PR| PR open; CI triggered| Backend Dev | 0.1d|
 | A1  | Design database schema – users & auth  | Create migration for `users` table (id, email, password_hash, first_name, last_name, role, zone_id, created_at, updated_at); `refresh_tokens` table (id, user_id, token_hash, device_id, expires_at); add indexes on email, zone_id. Reference: Arch Blueprint - project-documentation/architecture-output.md – Authentication section. | G3| Migration file `001_create_users_auth.sql` | Migration runs; tables created; indexes exist| Backend Dev | 0.5d|
 | A2  | Implement password hashing  | Create auth utility module using bcrypt (cost factor 12); implement `hashPassword()` and `verifyPassword()` functions; add unit tests (valid password, invalid password, timing attack resistance). Reference: Arch Blueprint - project-documentation/architecture-output.md – Security, bcrypt section.| A1| `/libs/shared/auth-utils.ts`; unit tests| Tests pass; hashing takes ~200ms (secure)  | Backend Dev | 0.5d|
@@ -80,7 +80,7 @@ This implementation plan translates the BerthCare Technical Architecture Bluepri
 ## Phase C – Client Management API
 
 | ID  | Title | Description| Deps | Deliverables | Acceptance| Role| Effort |
------ | ----- | -----------|------|------------- | --------- |-----|--------|
+| ----- | ----- | -----------|------|------------- | --------- |-----|--------|
 | G5  | Create feature branch – client management | Branch `feat/client-management` from `main`; link to issue #3; open draft PR with checklist (schema, CRUD endpoints, tests).| G4| Branch + draft PR| PR open; CI triggered| Backend Dev | 0.1d|
 | C1  | Design database schema – clients  | Create migration for `clients` table (id, first_name, last_name, date_of_birth, address, latitude, longitude, phone, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship, zone_id, created_at, updated_at); add indexes on zone_id, last_name. Reference: Arch Blueprint - project-documentation/architecture-output.md – Client Management Endpoints. | G5| Migration file `002_create_clients.sql` | Migration runs; table created; indexes exist| Backend Dev | 0.5d|
 | C2  | Design database schema – care plans  | Create migration for `care_plans` table (id, client_id, summary, medications JSONB, allergies JSONB, special_instructions TEXT, version, created_at, updated_at); add foreign key to clients; add index on client_id. Reference: Arch Blueprint - project-documentation/architecture-output.md – GET /v1/clients/:clientId, care plan section.| C1| Migration file `003_create_care_plans.sql` | Migration runs; table created; foreign key works | Backend Dev | 0.5d|
@@ -96,7 +96,7 @@ This implementation plan translates the BerthCare Technical Architecture Bluepri
 ## Phase V – Visit Documentation API
 
 | ID  | Title | Description| Deps | Deliverables | Acceptance| Role| Effort |
------ | ----- | -----------|------|------------- | --------- |-----|--------|
+| ----- | ----- | -----------|------|------------- | --------- |-----|--------|
 | G7  | Create feature branch – visit documentation | Branch `feat/visit-documentation` from `main`; link to issue #4; open draft PR with checklist (schema, CRUD, sync, tests).| G6| Branch + draft PR | PR open; CI triggered | Backend Dev | 0.1d|
 | V1  | Design database schema – visits  | Create migration for `visits` table (id, client_id, staff_id, scheduled_start_time, check_in_time, check_in_latitude, check_in_longitude, check_out_time, check_out_latitude, check_out_longitude, status ENUM, duration_minutes, created_at, updated_at, synced_at); add indexes on client_id, staff_id, status, scheduled_start_time. Reference: Arch Blueprint - project-documentation/architecture-output.md – Visit Documentation Endpoints. | G7| Migration file `004_create_visits.sql`| Migration runs; table created; indexes exist; ENUM works| Backend Dev | 0.5d|
 | V2  | Design database schema – visit documentation| Create migration for `visit_documentation` table (id, visit_id, vital_signs JSONB, activities JSONB, observations TEXT, concerns TEXT, copied_from_visit_id, created_at, updated_at); add foreign key to visits; add index on visit_id. Reference: Arch Blueprint - project-documentation/architecture-output.md – POST /v1/visits, documentation structure.  | V1| Migration file `005_create_visit_documentation.sql` | Migration runs; table created; foreign key works| Backend Dev | 0.5d|
@@ -114,7 +114,7 @@ This implementation plan translates the BerthCare Technical Architecture Bluepri
 ## Phase S – Offline Sync Engine
 
 | ID  | Title | Description| Deps | Deliverables | Acceptance| Role| Effort |
------ | ----- | -----------|------|------------- | --------- |-----|--------|
+| ----- | ----- | -----------|------|------------- | --------- |-----|--------|
 | G9  | Create feature branch – sync engine | Branch `feat/sync-engine` from `main`; link to issue #5; open draft PR with checklist (batch sync, conflict resolution, audit trail).  | G8| Branch + draft PR| PR open; CI triggered| Backend Dev | 0.1d|
 | S1  | Design database schema – sync audit trail| Create migration for `sync_operations` table (id, user_id, device_id, operation_type ENUM, entity_type ENUM, entity_id, payload JSONB, client_timestamp, server_timestamp, conflict_detected BOOLEAN, resolution_strategy, created_at); add indexes on user_id, device_id, entity_type, entity_id. Reference: Arch Blueprint - project-documentation/architecture-output.md – Sync Conflict Resolution Engine. | G9| Migration file `007_create_sync_operations.sql` | Migration runs; table created; indexes exist  | Backend Dev | 0.5d|
 | S2  | Implement POST /v1/sync/batch endpoint | Create endpoint to process batch sync operations: accept array of operations (create, update, delete); validate each operation; process in transaction; return success/failure for each operation; implement idempotency using client-generated operation IDs. Reference: Arch Blueprint - project-documentation/architecture-output.md – POST /v1/sync/batch. | S1| Batch sync endpoint; integration tests  | Processes batch successfully; transaction rollback on error; idempotency works  | Backend Dev | 2.5d|
@@ -129,7 +129,7 @@ This implementation plan translates the BerthCare Technical Architecture Bluepri
 ## Phase T – Twilio Integration (Voice & SMS)
 
 | ID  | Title | Description| Deps | Deliverables | Acceptance| Role| Effort |
------ | ----- | -----------|------|------------- | --------- |-----|--------|
+| ----- | ----- | -----------|------|------------- | --------- |-----|--------|
 | G11 | Create feature branch – twilio integration | Branch `feat/twilio-integration` from `main`; link to issue #6; open draft PR with checklist (voice alerts, SMS, webhooks).| G10  | Branch + draft PR| PR open; CI triggered  | Backend Dev | 0.1d|
 | T1  | Design database schema – care coordination | Create migration for `care_alerts` table (id, client_id, staff_id, coordinator_id, alert_type ENUM, voice_message_url, status ENUM, initiated_at, answered_at, escalated_at, resolved_at, outcome TEXT); create `coordinators` table (id, user_id, zone_id, phone_number, backup_coordinator_id); add indexes. Reference: Arch Blueprint - project-documentation/architecture-output.md – Voice Alert Service. | G11  | Migration files `008_create_care_alerts.sql`, `009_create_coordinators.sql` | Migrations run; tables created; indexes exist| Backend Dev | 0.5d|
 | T2  | Implement Twilio Voice client| Create Twilio Voice service module: initialize Twilio client with credentials from AWS Secrets Manager; implement `initiateCall(to, voiceMessageUrl)` function; implement webhook handlers for call status (answered, no-answer, completed); log all call events. Reference: Arch Blueprint - project-documentation/architecture-output.md – Twilio Voice API. | T1| Twilio Voice service module; unit tests| Initiates call successfully; webhooks receive events; events logged | Backend Dev | 2d  |
@@ -144,7 +144,7 @@ This implementation plan translates the BerthCare Technical Architecture Bluepri
 ## Phase F – Family Portal (SMS-First)
 
 | ID  | Title | Description| Deps | Deliverables | Acceptance| Role| Effort |
------ | ----- | -----------|------|------------- | --------- |-----|--------|
+| ----- | ----- | -----------|------|------------- | --------- |-----|--------|
 | G13 | Create feature branch – family portal | Branch `feat/family-portal` from `main`; link to issue #7; open draft PR with checklist (daily messages, reply processing, callback handling). | G12  | Branch + draft PR| PR open; CI triggered | Backend Dev | 0.1d|
 | F1  | Design database schema – family contacts | Create migration for `family_contacts` table (id, client_id, name, relationship, phone_number, preferred_contact_time, opt_in_daily_updates BOOLEAN, opt_in_alerts BOOLEAN, created_at, updated_at); add index on client_id, phone_number. Reference: Arch Blueprint - project-documentation/architecture-output.md – Family Portal Flow.  | G13  | Migration file `010_create_family_contacts.sql` | Migration runs; table created; indexes exist| Backend Dev | 0.25d  |
 | F2  | Design database schema – family messages | Create migration for `family_messages` table (id, family_contact_id, message_type ENUM, message_text TEXT, sent_at, delivered_at, reply_text TEXT, replied_at, status ENUM); add indexes on family_contact_id, sent_at. Reference: Arch Blueprint - project-documentation/architecture-output.md – Family SMS Service. | F1| Migration file `011_create_family_messages.sql` | Migration runs; table created; indexes exist| Backend Dev | 0.25d  |
@@ -160,7 +160,7 @@ This implementation plan translates the BerthCare Technical Architecture Bluepri
 ## Phase M – Mobile App Foundation (React Native)
 
 | ID  | Title | Description| Deps | Deliverables | Acceptance| Role| Effort |
------ | ----- | -----------|------|------------- | --------- |-----|--------|
+| ----- | ----- | -----------|------|------------- | --------- |-----|--------|
 | G15 | Create feature branch – mobile foundation | Branch `feat/mobile-foundation` from `main`; link to issue #8; open draft PR with checklist (Expo setup, navigation, state management). | E3| Branch + draft PR| PR open; CI triggered  | Frontend Dev | 0.1d|
 | M1  | Initialize React Native app with Expo| Create Expo app in `/apps/mobile` using Expo SDK 50+; configure TypeScript; set up folder structure (/src/screens, /src/components, /src/services, /src/store, /src/utils); configure app.json (name, slug, version, orientation portrait-only). Reference: Arch Blueprint - project-documentation/architecture-output.md – Mobile Application, React Native 0.73+ with Expo SDK 50+.  | G15  | Expo app scaffold; app.json config  | `npx expo start` launches app; TypeScript compiles; folder structure exists | Frontend Dev | 1d  |
 | M2  | Configure navigation  | Install and configure React Navigation 6.x; set up stack navigator for auth flow (Login, Register) and main app flow (Home, ClientList, ClientDetail, VisitDocumentation); implement deep linking support; configure screen options (headers, gestures). Reference: Arch Blueprint - project-documentation/architecture-output.md – Mobile App Layer.| M1| Navigation setup; navigation types  | Navigation works; deep links work; TypeScript types correct | Frontend Dev | 1.5d|
@@ -176,7 +176,7 @@ This implementation plan translates the BerthCare Technical Architecture Bluepri
 ## Phase MA – Mobile Authentication
 
 | ID  | Title | Description| Deps | Deliverables | Acceptance| Role| Effort |
------ | ----- | -----------|------|------------- | --------- |-----|--------|
+| ----- | ----- | -----------|------|------------- | --------- |-----|--------|
 | G17 | Create feature branch – mobile auth | Branch `feat/mobile-auth` from `main`; link to issue #9; open draft PR with checklist (login, token management, secure storage).| G16  | Branch + draft PR| PR open; CI triggered| Frontend Dev | 0.1d|
 | MA1 | Implement secure token storage | Install and configure expo-secure-store for secure token storage; create token storage service with methods: `saveTokens()`, `getTokens()`, `clearTokens()`; implement biometric authentication option (Face ID/Touch ID) for token access. Reference: Arch Blueprint - project-documentation/architecture-output.md – Authentication, JWT tokens. | G17  | Token storage service; unit tests | Tokens stored securely; biometric auth works; retrieval works  | Frontend Dev | 1.5d|
 | MA2 | Implement login screen UI| Create login screen with email and password inputs; implement form validation (email format, password min length); add "Remember me" toggle; add "Forgot password" link (placeholder); implement loading state; follow design system guidelines. Reference: Design Documentation – Authentication/Onboarding. | MA1  | Login screen component | Screen renders correctly; validation works; follows design system | Frontend Dev | 1.5d|
@@ -191,7 +191,7 @@ This implementation plan translates the BerthCare Technical Architecture Bluepri
 ## Phase MC – Mobile Client Management
 
 | ID  | Title | Description| Deps | Deliverables | Acceptance| Role| Effort |
------ | ----- | -----------|------|------------- | --------- |-----|--------|
+| ----- | ----- | -----------|------|------------- | --------- |-----|--------|
 | G19 | Create feature branch – mobile clients | Branch `feat/mobile-clients` from `main`; link to issue #10; open draft PR with checklist (client list, detail, local storage).  | G18  | Branch + draft PR  | PR open; CI triggered | Frontend Dev | 0.1d|
 | MC1 | Implement client list screen UI| Create client list screen with search bar, filter by zone, pull-to-refresh; display client cards (name, address, last visit date, next scheduled visit); implement infinite scroll pagination; add floating action button for new visit; follow design system guidelines. Reference: Design Documentation – Client List.| G19  | Client list screen component  | Screen renders correctly; search works; pagination works; follows design | Frontend Dev | 2d  |
 | MC2 | Implement client list data fetching | Create client list service: fetch from local WatermelonDB first (instant display); fetch from API in background; sync to local database; implement search and filtering locally; implement pagination (50 per page). Reference: Arch Blueprint - project-documentation/architecture-output.md – GET /v1/clients, Offline-First. | MC1  | Client list service; integration tests| Displays local data instantly; syncs from API; search/filter work| Frontend Dev | 2d  |
@@ -205,7 +205,7 @@ This implementation plan translates the BerthCare Technical Architecture Bluepri
 ## Phase MV – Mobile Visit Documentation
 
 | ID  | Title | Description| Deps | Deliverables | Acceptance| Role| Effort |
------ | ----- | -----------|------|------------- | --------- |-----|--------|
+| ----- | ----- | -----------|------|------------- | --------- |-----|--------|
 | G21 | Create feature branch – mobile visits | Branch `feat/mobile-visits` from `main`; link to issue #11; open draft PR with checklist (visit flow, auto-save, GPS, photos). | G20  | Branch + draft PR  | PR open; CI triggered  | Frontend Dev | 0.1d|
 | MV1 | Implement GPS auto-check-in| Install and configure expo-location for GPS access; request location permissions on app launch; implement GPS service: `getCurrentLocation()`, `startLocationTracking()`, `stopLocationTracking()`; implement geofencing to detect arrival at client location (within 100m); auto-trigger check-in when arrived. Reference: Arch Blueprint - project-documentation/architecture-output.md – GPS auto-check-in/out. | G21  | GPS service; location permissions | GPS works; permissions requested; geofencing detects arrival| Frontend Dev | 2d  |
 | MV2 | Implement visit start flow | Create "Start Visit" screen: display client info, scheduled time, current time; capture GPS coordinates on check-in; create visit record in local WatermelonDB; set status to 'in_progress'; implement smart data reuse (pre-fill from last visit); navigate to documentation screen. Reference: Arch Blueprint - project-documentation/architecture-output.md – Visit Documentation Flow, smart data reuse. | MV1  | Visit start screen; visit start service| Creates visit locally; GPS captured; smart reuse works; navigation works | Frontend Dev | 2d  |
@@ -223,7 +223,7 @@ This implementation plan translates the BerthCare Technical Architecture Bluepri
 ## Phase MS – Mobile Sync Engine
 
 | ID  | Title | Description| Deps | Deliverables | Acceptance| Role| Effort |
------ | ----- | -----------|------|------------- | --------- |-----|--------|
+| ----- | ----- | -----------|------|------------- | --------- |-----|--------|
 | G23 | Create feature branch – mobile sync | Branch `feat/mobile-sync` from `main`; link to issue #12; open draft PR with checklist (background sync, conflict resolution, sync status). | G22  | Branch + draft PR| PR open; CI triggered  | Frontend Dev | 0.1d|
 | MS1 | Implement sync queue | Create sync queue service: queue all local changes (create, update, delete) for sync; store queue in WatermelonDB; implement priority (high for visits, normal for others); implement retry logic (exponential backoff, max 5 retries); persist queue across app restarts. Reference: Arch Blueprint - project-documentation/architecture-output.md – Background Sync Engine.| G23  | Sync queue service; unit tests  | Queues changes; persists across restarts; retry logic works  | Frontend Dev | 2d  |
 | MS2 | Implement background sync service| Create background sync service: detect network connectivity; process sync queue when online; batch operations (max 50 per batch); call POST /v1/sync/batch API; update local records with server IDs; remove from queue on success; implement sync interval (every 30 seconds when online). Reference: Arch Blueprint - project-documentation/architecture-output.md – POST /v1/sync/batch, Background Sync Engine. | MS1  | Background sync service; integration tests| Syncs when online; batches operations; updates local records; interval works| Frontend Dev | 2.5d|
@@ -238,7 +238,7 @@ This implementation plan translates the BerthCare Technical Architecture Bluepri
 ## Phase MA2 – Mobile Care Coordination
 
 | ID  | Title | Description| Deps | Deliverables | Acceptance| Role| Effort |
------ | ----- | -----------|------|------------- | --------- |-----|--------|
+| ----- | ----- | -----------|------|------------- | --------- |-----|--------|
 | G25| Create feature branch – mobile alerts | Branch `feat/mobile-alerts` from `main`; link to issue #13; open draft PR with checklist (voice alerts, push notifications).  | G24| Branch + draft PR| PR open; CI triggered  | Frontend Dev | 0.1d|
 | MA2_1 | Implement floating alert button  | Create floating action button (FAB) for alerts: always visible on visit documentation screen; prominent red color; icon: phone with alert; tap to open alert modal; follow design system guidelines. Reference: Arch Blueprint - project-documentation/architecture-output.md – Care Coordination Flow, floating alert button. | G25| Alert FAB component  | FAB renders correctly; always visible; tap opens modal; follows design | Frontend Dev | 1d  |
 | MA2_2 | Implement voice message recording| Install and configure expo-av for audio recording; create alert modal: display client info, record button, stop button, playback button, send button; implement voice recording (max 60 seconds); save recording to local storage; display waveform visualization; implement playback. Reference: Arch Blueprint - project-documentation/architecture-output.md – Care Coordination Flow, voice message. | MA2_1 | Voice recording service; alert modal | Records voice; saves locally; playback works; waveform displays  | Frontend Dev | 2.5d|
@@ -252,7 +252,7 @@ This implementation plan translates the BerthCare Technical Architecture Bluepri
 ## Phase P – Performance Optimization
 
 | ID  | Title | Description| Deps | Deliverables | Acceptance| Role| Effort |
------ | ----- | -----------|------|------------- | --------- |-----|--------|
+| ----- | ----- | -----------|------|------------- | --------- |-----|--------|
 | G27 | Create feature branch – performance | Branch `feat/performance-optimization` from `main`; link to issue #14; open draft PR with checklist (app launch, UI response, sync performance). | G26  | Branch + draft PR  | PR open; CI triggered| Frontend Dev | 0.1d|
 | P1  | Optimize app launch time | Implement lazy loading for screens; defer non-critical initialization (analytics, crash reporting); optimize font loading; implement splash screen with progress indicator; measure launch time (target <2 seconds). Reference: Arch Blueprint - project-documentation/architecture-output.md – Obsessive Performance, <2 second app launch. | G27  | Launch optimization; performance tests | Launch time <2s on mid-range devices; splash screen displays | Frontend Dev | 2d  |
 | P2  | Optimize UI response time| Implement React.memo for expensive components; optimize FlatList rendering (getItemLayout, removeClippedSubviews); debounce search input; implement skeleton loaders; measure UI response time (target <100ms). Reference: Arch Blueprint - project-documentation/architecture-output.md – Obsessive Performance, <100ms UI response time.| P1| UI optimization; performance tests| UI response <100ms; no jank; smooth scrolling | Frontend Dev | 2d  |
@@ -267,7 +267,7 @@ This implementation plan translates the BerthCare Technical Architecture Bluepri
 ## Phase SEC – Security Hardening
 
 | ID  | Title | Description| Deps | Deliverables | Acceptance| Role| Effort |
------ | ----- | -----------|------|------------- | --------- |-----|--------|
+| ----- | ----- | -----------|------|------------- | --------- |-----|--------|
 | G29  | Create feature branch – security hardening | Branch `feat/security-hardening` from `main`; link to issue #15; open draft PR with checklist (encryption, PIPEDA compliance, security audit). | G28  | Branch + draft PR | PR open; CI triggered  | Security Eng | 0.1d|
 | SEC1 | Implement end-to-end encryption for sensitive data | Implement encryption for sensitive fields (care plan, observations, concerns) using AES-256; generate encryption keys per user; store keys in AWS KMS; encrypt before saving to database; decrypt on retrieval; implement key rotation. Reference: Arch Blueprint - project-documentation/architecture-output.md – Uncompromising Security, end-to-end encryption.| G29  | Encryption service; unit tests| Encrypts sensitive data; decrypts correctly; key rotation works  | Security Eng | 3d  |
 | SEC2 | Implement PIPEDA compliance measures  | Document data collection, use, and retention policies; implement data minimization (collect only necessary data); implement consent tracking; implement data access controls; implement data deletion (right to be forgotten); create privacy policy. Reference: Arch Blueprint - project-documentation/architecture-output.md – Canadian data residency, PIPEDA compliant.  | SEC1 | PIPEDA compliance docs; data deletion endpoint| Policies documented; consent tracked; deletion works; privacy policy exists | Security Eng | 2d  |
@@ -283,7 +283,7 @@ This implementation plan translates the BerthCare Technical Architecture Bluepri
 ## Phase TEST – Testing & Quality Assurance
 
 | ID  | Title | Description| Deps | Deliverables | Acceptance| Role| Effort |
------ | ----- | -----------|------|------------- | --------- |-----|--------|
+| ----- | ----- | -----------|------|------------- | --------- |-----|--------|
 | G31| Create feature branch – testing | Branch `feat/comprehensive-testing` from `main`; link to issue #16; open draft PR with checklist (E2E tests, integration tests, load tests).| G30| Branch + draft PR | PR open; CI triggered  | QA Eng | 0.1d|
 | TEST1 | Set up E2E testing framework | Install and configure Detox for React Native E2E testing; configure test environment (iOS simulator, Android emulator); create test utilities (login helper, navigation helper); configure CI to run E2E tests on PRs. Reference: Arch Blueprint - project-documentation/architecture-output.md – Testing gates.  | G31| Detox setup; test utilities; CI config | Detox runs; test utilities work; CI executes E2E tests| QA Eng | 2d  |
 | TEST2 | Write E2E tests for critical user flows | Write E2E tests: login flow, client list and search, visit start flow, visit documentation with auto-save, visit completion, offline mode, sync after reconnection, voice alert sending; target 80% coverage of critical paths. Reference: Arch Blueprint - project-documentation/architecture-output.md – Testing gates, E2E tests where behavior crosses boundaries. | TEST1 | E2E test suite; test reports| Tests pass; 80% critical path coverage; tests run in CI  | QA Eng | 5d  |
@@ -299,7 +299,7 @@ This implementation plan translates the BerthCare Technical Architecture Bluepri
 ## Phase CICD – CI/CD Pipeline
 
 | ID  | Title | Description| Deps | Deliverables | Acceptance| Role| Effort |
------ | ----- | -----------|------|------------- | --------- |-----|--------|
+| ----- | ----- | -----------|------|------------- | --------- |-----|--------|
 | G33| Create feature branch – cicd pipeline | Branch `feat/cicd-pipeline` from `main`; link to issue #17; open draft PR with checklist (build, deploy, rollback).| G32| Branch + draft PR  | PR open; CI triggered  | DevOps | 0.1d|
 | CICD1 | Set up backend build pipeline | Configure GitHub Actions for backend: build Docker image, run tests, run SAST, push image to ECR; tag images with commit SHA and semantic version; configure pipeline to run on push to `main` and on tags. Reference: Arch Blueprint - project-documentation/architecture-output.md – CI/CD.  | G33| Backend build pipeline; Docker image in ECR | Pipeline runs; image built; tests pass; image pushed to ECR | DevOps | 2d  |
 | CICD2 | Set up backend deployment pipeline | Configure GitHub Actions for backend deployment: deploy to ECS Fargate (staging and production); use blue-green deployment strategy; run smoke tests after deployment; rollback on smoke test failure; configure deployment approval for production. Reference: Arch Blueprint - project-documentation/architecture-output.md – Infrastructure, ECS Fargate.| CICD1 | Backend deployment pipeline; ECS services | Pipeline deploys to staging; smoke tests run; rollback works| DevOps | 2.5d|
@@ -315,7 +315,7 @@ This implementation plan translates the BerthCare Technical Architecture Bluepri
 ## Phase DOC – Documentation & Training
 
 | ID  | Title | Description| Deps | Deliverables | Acceptance| Role| Effort |
------ | ----- | -----------|------|------------- | --------- |-----|--------|
+| ----- | ----- | -----------|------|------------- | --------- |-----|--------|
 | G35  | Create feature branch – documentation | Branch `feat/documentation` from `main`; link to issue #18; open draft PR with checklist (API docs, user guides, runbooks).| G34  | Branch + draft PR| PR open; CI triggered| Backend Dev | 0.1d|
 | DOC1 | Write API documentation| Document all API endpoints using OpenAPI 3.0 spec: request/response schemas, authentication, error codes, rate limits; generate API docs using Swagger UI; host docs at api.berthcare.ca/docs; include code examples (curl, JavaScript). Reference: Arch Blueprint - project-documentation/architecture-output.md – API Architecture. | G35  | OpenAPI spec; Swagger UI hosted| API docs complete; Swagger UI accessible; examples work | Backend Dev | 2d  |
 | DOC2 | Write architecture documentation | Document system architecture: component diagram, data flow diagram, deployment diagram, security architecture; document technology stack decisions; document scaling strategy; document disaster recovery plan; store in `/docs/architecture/`. Reference: Arch Blueprint - project-documentation/architecture-output.md – entire document. | DOC1 | Architecture docs; diagrams | Architecture documented; diagrams clear; decisions explained | Backend Dev | 2d  |
@@ -331,7 +331,7 @@ This implementation plan translates the BerthCare Technical Architecture Bluepri
 ## Phase LAUNCH – Production Launch
 
 | ID  | Title | Description| Deps | Deliverables | Acceptance| Role| Effort |
------ | ----- | -----------|------|------------- | --------- |-----|--------|
+| ----- | ----- | -----------|------|------------- | --------- |-----|--------|
 | G37  | Create feature branch – production prep| Branch `feat/production-prep` from `main`; link to issue #19; open draft PR with checklist (production infra, data migration, launch plan).| G36  | Branch + draft PR  | PR open; CI triggered  | DevOps | 0.1d|
 | LAUNCH1 | Set up production infrastructure  | Provision production AWS infrastructure in ca-central-1: RDS PostgreSQL (Multi-AZ, automated backups), ElastiCache Redis (cluster mode), S3 buckets (versioning, encryption), ECS Fargate (auto-scaling), CloudFront (CDN), Route 53 (DNS); configure security groups, IAM roles, VPC; enable AWS CloudTrail for audit. Reference: Arch Blueprint - project-documentation/architecture-output.md – Infrastructure, Canadian data residency. | G37  | Production AWS resources; Terraform configs  | All resources provisioned; security configured; audit enabled  | DevOps | 3d  |
 | LAUNCH2 | Configure production monitoring| Set up production monitoring: CloudWatch dashboards (API, database, ECS), Sentry (error tracking), performance monitoring; configure alerts (critical: PagerDuty, warning: email); set up log aggregation; configure uptime monitoring (Pingdom or UptimeRobot). Reference: Arch Blueprint - project-documentation/architecture-output.md – Monitoring & Observability.  | LAUNCH1 | Production monitoring setup; dashboards| Monitoring active; alerts configured; dashboards show data  | DevOps | 2d  |
