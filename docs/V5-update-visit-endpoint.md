@@ -108,11 +108,17 @@ curl -X PATCH http://localhost:3000/api/v1/visits/786bd901-f1bb-48e4-96d9-af0cd3
   "clientId": "3edaf4f8-2120-4011-a59f-f6d8a47c622f",
   "staffId": "da037928-b124-4736-80f0-10c46fc12fc5",
   "scheduledStartTime": "2025-10-11T10:00:00.000Z",
+  "scheduledEndTime": "2025-10-11T11:00:00.000Z",
   "checkInTime": "2025-10-11T10:05:00.000Z",
   "checkInLatitude": 43.6532,
   "checkInLongitude": -79.3832,
+  "checkOutTime": "2025-10-11T11:05:00.000Z",
+  "checkOutLatitude": 43.6533,
+  "checkOutLongitude": -79.3835,
+  "durationMinutes": 60,
   "status": "completed",
-  "createdAt": "2025-10-11T10:05:23.456Z"
+  "createdAt": "2025-10-11T10:05:23.456Z",
+  "updatedAt": "2025-10-11T11:05:45.789Z"
 }
 ```
 
@@ -313,7 +319,7 @@ if (userRole === 'caregiver' && visit.staff_id !== userId) {
 
 **Status Flow:**
 
-```
+```text
 scheduled → in_progress → completed
          ↘ cancelled
 ```
@@ -437,7 +443,7 @@ it('should complete visit with check-out GPS and calculate duration', async () =
 
 ### File Structure
 
-```
+```text
 apps/backend/src/routes/
   └── visits.routes.ts          # PATCH endpoint added
 
@@ -876,7 +882,7 @@ await fetch(`/api/v1/visits/${visitId}`, {
 - ✅ GPS coordinate validation
 - ✅ Transaction-based consistency
 - ✅ Comprehensive error handling
-- ✅ 7 integration tests (all passing)
+- ✅ 8 integration tests (all passing)
 - ✅ Logging and monitoring
 - ✅ Documentation complete
 

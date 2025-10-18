@@ -144,7 +144,7 @@ describe('GET /api/v1/clients', () => {
         check_out_longitude DECIMAL(11, 8) CHECK (check_out_longitude BETWEEN -180 AND 180),
         status VARCHAR(50) NOT NULL DEFAULT 'scheduled'
           CHECK (status IN ('scheduled', 'in_progress', 'completed', 'cancelled')),
-        duration_minutes INTEGER,
+        duration_minutes INTEGER CHECK (duration_minutes >= 0 AND duration_minutes <= 10000),
         copied_from_visit_id UUID REFERENCES visits(id) ON DELETE SET NULL,
         created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -163,11 +163,10 @@ describe('GET /api/v1/clients', () => {
         CONSTRAINT check_out_longitude_requires_times CHECK (
           check_out_longitude IS NULL OR check_out_time IS NOT NULL
         ),
-        CONSTRAINT duration_requires_both_times CHECK (
+        CONSTRAINT duration_requires_times CHECK (
           duration_minutes IS NULL OR (
             check_in_time IS NOT NULL
             AND check_out_time IS NOT NULL
-            AND duration_minutes = FLOOR(EXTRACT(EPOCH FROM (check_out_time - check_in_time)) / 60)::INTEGER
           )
         )
       );

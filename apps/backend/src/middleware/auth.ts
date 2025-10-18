@@ -417,8 +417,27 @@ export function authorize(
         }
       }
 
-      if (!requestedZoneId && typeof req.params?.[zoneParam] === 'string') {
-        requestedZoneId = (req.params as Record<string, string>)[zoneParam];
+      if (!requestedZoneId) {
+        const sources: unknown[] = [
+          req.params,
+          req.query,
+          typeof req.body === 'object' && req.body !== null ? req.body : undefined,
+        ];
+
+        for (const source of sources) {
+          if (!source || typeof source !== 'object') {
+            continue;
+          }
+
+          const rawValue = (source as Record<string, unknown>)[zoneParam];
+          if (typeof rawValue === 'string') {
+            const trimmedValue = rawValue.trim();
+            if (trimmedValue.length > 0) {
+              requestedZoneId = trimmedValue;
+              break;
+            }
+          }
+        }
       }
 
       if (

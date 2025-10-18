@@ -378,7 +378,10 @@ function getKeyConfig(): KeyConfig {
   if (envKeyCacheBuildInProgress) {
     const latestCache = envKeyCache;
     if (latestCache && latestCache.signature === signature) {
-      return latestCache.config;
+      const isFresh = now - latestCache.cachedAt < KEY_CACHE_TTL;
+      if (isFresh) {
+        return latestCache.config;
+      }
     }
   }
 

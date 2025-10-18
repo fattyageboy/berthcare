@@ -396,7 +396,6 @@ terraform output -json > ../../../docs/infra-verification/staging-$(date +%Y%m%d
 > endpoints, account IDs). Review the JSON before committing to version control,
 > or store outputs in a secure artifact repository if your compliance requirements
 > prohibit committing infrastructure metadata.
-
 > 💡 The helper script `terraform/scripts/deploy-staging.sh` now performs the
 > same export automatically after a successful `terraform apply`.
 

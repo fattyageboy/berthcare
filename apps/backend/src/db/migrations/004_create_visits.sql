@@ -35,8 +35,10 @@ CREATE TABLE IF NOT EXISTS visits (
     status VARCHAR(50) NOT NULL DEFAULT 'scheduled' 
         CHECK (status IN ('scheduled', 'in_progress', 'completed', 'cancelled')),
     
-    -- Duration calculation (in minutes)
-    duration_minutes INTEGER CHECK (duration_minutes >= 0),
+    -- Duration tracking (in minutes)
+    duration_minutes INTEGER CHECK (
+        duration_minutes >= 0 AND duration_minutes <= 10000
+    ),
     
     -- Smart data reuse - reference to previous visit for copying documentation
     copied_from_visit_id UUID REFERENCES visits(id) ON DELETE SET NULL,
@@ -66,12 +68,11 @@ CREATE TABLE IF NOT EXISTS visits (
     CONSTRAINT check_out_longitude_requires_times CHECK (
         check_out_longitude IS NULL OR check_out_time IS NOT NULL
     ),
-    -- Duration requires both times and must match calculation
-    CONSTRAINT duration_requires_both_times CHECK (
+    -- Duration can only be stored when both times exist and stays within sane bounds
+    CONSTRAINT duration_requires_times CHECK (
         duration_minutes IS NULL OR (
             check_in_time IS NOT NULL
             AND check_out_time IS NOT NULL
-            AND duration_minutes = ROUND(EXTRACT(EPOCH FROM (check_out_time - check_in_time)) / 60)::INTEGER
         )
     )
 );
@@ -143,7 +144,7 @@ COMMENT ON COLUMN visits.check_out_time IS 'Actual time caregiver checked out (l
 COMMENT ON COLUMN visits.check_out_latitude IS 'GPS latitude at check-out for location verification';
 COMMENT ON COLUMN visits.check_out_longitude IS 'GPS longitude at check-out for location verification';
 COMMENT ON COLUMN visits.status IS 'Visit status: scheduled, in_progress, completed, or cancelled';
-COMMENT ON COLUMN visits.duration_minutes IS 'Calculated visit duration in minutes (check_out - check_in)';
+COMMENT ON COLUMN visits.duration_minutes IS 'Recorded visit duration in minutes when both check-in and check-out times are present';
 COMMENT ON COLUMN visits.copied_from_visit_id IS 'Reference to previous visit for smart data reuse';
 COMMENT ON COLUMN visits.synced_at IS 'Timestamp when visit was last synced to server (offline-first support)';
 COMMENT ON COLUMN visits.created_at IS 'Timestamp when visit record was created';

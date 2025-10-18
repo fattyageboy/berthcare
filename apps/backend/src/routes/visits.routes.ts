@@ -29,11 +29,16 @@ import {
   S3_BUCKETS,
 } from '../storage/s3-client';
 
-const DEFAULT_VISIT_DURATION_MINUTES = Math.max(
-  1,
-  Number.parseInt(process.env.DEFAULT_VISIT_DURATION_MINUTES || '60', 10)
+const parsedDefaultVisitDuration = Number.parseInt(
+  process.env.DEFAULT_VISIT_DURATION_MINUTES ?? '',
+  10
+);
+const DEFAULT_VISIT_DURATION_MINUTES = Math.min(
+  480,
+  Math.max(15, Number.isNaN(parsedDefaultVisitDuration) ? 60 : parsedDefaultVisitDuration)
 );
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const MAX_VISIT_DURATION_MINUTES = 10000;
 
 /**
  * Create visit request body
@@ -61,6 +66,13 @@ interface VisitResponse {
   status: string;
   createdAt: string;
 }
+
+type DocumentationPayload = {
+  vitalSigns?: Record<string, unknown> | null;
+  activities?: Record<string, unknown> | null;
+  observations?: string | null;
+  concerns?: string | null;
+};
 
 /**
  * Invalidate all cached visit list queries
@@ -759,6 +771,38 @@ export function createVisitsRouter(pool: Pool, redisClient: RedisClient): Router
       });
     }
 
+    if (documentation !== undefined) {
+      if (documentation === null || typeof documentation !== 'object') {
+        return res.status(400).json({
+          error: 'Bad Request',
+          message: 'documentation must be an object when provided',
+        });
+      }
+
+      const docPayload = documentation as DocumentationPayload;
+
+      const structuredFields: Array<
+        [keyof Pick<DocumentationPayload, 'vitalSigns' | 'activities'>, string]
+      > = [
+        ['vitalSigns', 'documentation.vitalSigns'],
+        ['activities', 'documentation.activities'],
+      ];
+
+      for (const [key, label] of structuredFields) {
+        const value = docPayload[key];
+        if (value === undefined || value === null) {
+          continue;
+        }
+
+        if (typeof value !== 'object') {
+          return res.status(400).json({
+            error: 'Bad Request',
+            message: `${label} must be a JSON object.`,
+          });
+        }
+      }
+    }
+
     // Validate status if provided
     if (status && !['completed', 'cancelled', 'in_progress'].includes(status)) {
       return res.status(400).json({
@@ -836,11 +880,27 @@ export function createVisitsRouter(pool: Pool, redisClient: RedisClient): Router
           (checkOutTimeDate.getTime() - checkInTime.getTime()) / (1000 * 60)
         );
 
+        if (!Number.isFinite(durationMinutes)) {
+          await client.query('ROLLBACK');
+          return res.status(400).json({
+            error: 'Bad Request',
+            message: 'Unable to calculate visit duration',
+          });
+        }
+
         if (durationMinutes < 0) {
           await client.query('ROLLBACK');
           return res.status(400).json({
             error: 'Bad Request',
             message: 'Check-out time cannot be before check-in time',
+          });
+        }
+
+        if (durationMinutes > MAX_VISIT_DURATION_MINUTES) {
+          await client.query('ROLLBACK');
+          return res.status(400).json({
+            error: 'Bad Request',
+            message: `Visit duration exceeds maximum allowed of ${MAX_VISIT_DURATION_MINUTES} minutes`,
           });
         }
 
@@ -877,6 +937,8 @@ export function createVisitsRouter(pool: Pool, redisClient: RedisClient): Router
 
       // Update documentation if provided
       if (documentation) {
+        const docPayload = documentation as DocumentationPayload;
+
         // Check if documentation exists
         const docResult = await client.query(
           'SELECT id FROM visit_documentation WHERE visit_id = $1',
@@ -889,34 +951,31 @@ export function createVisitsRouter(pool: Pool, redisClient: RedisClient): Router
           const docValues: (string | null)[] = [];
           let docParamCount = 1;
 
-          if (documentation.vitalSigns !== undefined) {
+          if (docPayload.vitalSigns !== undefined) {
             const vitalSignsValue =
-              typeof documentation.vitalSigns === 'string'
-                ? documentation.vitalSigns
-                : JSON.stringify(documentation.vitalSigns);
+              docPayload.vitalSigns === null ? null : JSON.stringify(docPayload.vitalSigns);
             docUpdates.push(`vital_signs = $${docParamCount}`);
             docValues.push(vitalSignsValue);
             docParamCount++;
           }
 
-          if (documentation.activities !== undefined) {
+          if (docPayload.activities !== undefined) {
             const activitiesValue =
-              typeof documentation.activities === 'string'
-                ? documentation.activities
-                : JSON.stringify(documentation.activities);
+              docPayload.activities === null ? null : JSON.stringify(docPayload.activities);
             docUpdates.push(`activities = $${docParamCount}`);
             docValues.push(activitiesValue);
             docParamCount++;
           }
-          if (documentation.observations !== undefined) {
+
+          if (docPayload.observations !== undefined) {
             docUpdates.push(`observations = $${docParamCount}`);
-            docValues.push(documentation.observations);
+            docValues.push(docPayload.observations ?? null);
             docParamCount++;
           }
 
-          if (documentation.concerns !== undefined) {
+          if (docPayload.concerns !== undefined) {
             docUpdates.push(`concerns = $${docParamCount}`);
-            docValues.push(documentation.concerns);
+            docValues.push(docPayload.concerns ?? null);
             docParamCount++;
           }
 
@@ -937,10 +996,14 @@ export function createVisitsRouter(pool: Pool, redisClient: RedisClient): Router
             ) VALUES ($1, $2, $3, $4, $5)`,
             [
               visitId,
-              documentation.vitalSigns ? JSON.stringify(documentation.vitalSigns) : null,
-              documentation.activities ? JSON.stringify(documentation.activities) : null,
-              documentation.observations || null,
-              documentation.concerns || null,
+              docPayload.vitalSigns === undefined || docPayload.vitalSigns === null
+                ? null
+                : JSON.stringify(docPayload.vitalSigns),
+              docPayload.activities === undefined || docPayload.activities === null
+                ? null
+                : JSON.stringify(docPayload.activities),
+              docPayload.observations ?? null,
+              docPayload.concerns ?? null,
             ]
           );
         }
@@ -1041,6 +1104,21 @@ export function createVisitsRouter(pool: Pool, redisClient: RedisClient): Router
     }
 
     try {
+      // Get user's zone and role for authorization
+      const userResult = await pool.query('SELECT zone_id, role FROM users WHERE id = $1', [
+        userId,
+      ]);
+
+      if (userResult.rows.length === 0) {
+        return res.status(403).json({
+          error: 'Forbidden',
+          message: 'User not found',
+        });
+      }
+
+      const userZoneId = userResult.rows[0].zone_id;
+      const userRoleFromDb = userResult.rows[0].role;
+
       // Build cache key
       const cacheKey = `visit:detail:${visitId}`;
 
@@ -1050,21 +1128,7 @@ export function createVisitsRouter(pool: Pool, redisClient: RedisClient): Router
         try {
           const cachedData = JSON.parse(cached);
 
-          // Still need to verify authorization even with cached data
-          const userResult = await pool.query('SELECT zone_id, role FROM users WHERE id = $1', [
-            userId,
-          ]);
-          if (userResult.rows.length === 0) {
-            return res.status(403).json({
-              error: 'Forbidden',
-              message: 'User not found',
-            });
-          }
-
-          const userZoneId = userResult.rows[0].zone_id;
-          const userRoleFromDb = userResult.rows[0].role;
-
-          // Authorization check
+          // Authorization check before returning cached data
           if (userRoleFromDb === 'caregiver' && cachedData.data.staffId !== userId) {
             return res.status(403).json({
               error: 'Forbidden',
@@ -1093,21 +1157,6 @@ export function createVisitsRouter(pool: Pool, redisClient: RedisClient): Router
           await redisClient.del(cacheKey).catch(() => {});
         }
       }
-
-      // Get user's zone and role for authorization
-      const userResult = await pool.query('SELECT zone_id, role FROM users WHERE id = $1', [
-        userId,
-      ]);
-
-      if (userResult.rows.length === 0) {
-        return res.status(403).json({
-          error: 'Forbidden',
-          message: 'User not found',
-        });
-      }
-
-      const userZoneId = userResult.rows[0].zone_id;
-      const userRoleFromDb = userResult.rows[0].role;
 
       // Get visit with client and staff information
       const visitQuery = `

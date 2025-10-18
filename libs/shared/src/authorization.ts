@@ -89,7 +89,7 @@ export function hasRole(
 
   const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
   if (roles.length === 0) {
-    return true;
+    return false;
   }
 
   return roles.includes(user.role);
@@ -116,7 +116,7 @@ export function hasPermission(
     : [requiredPermissions];
 
   if (permissions.length === 0) {
-    return true;
+    return false;
   }
 
   if (user.role === 'admin') {

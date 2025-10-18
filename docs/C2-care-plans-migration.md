@@ -139,30 +139,27 @@ Safely removes all objects created by the forward migration including triggers, 
 
 ### Constraints
 
-**1. Version Positive Check**
+#### Version Positive Check
 
 ```sql
 CONSTRAINT care_plans_version_positive CHECK (version > 0)
 ```
-
 Ensures version is always a positive integer.
 
-**2. Foreign Key Constraint**
+#### Foreign Key Constraint
 
 ```sql
 FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
 ```
-
 When a client is deleted, their care plan is automatically deleted.
 
-**3. Unique Partial Index on Client**
+#### Unique Partial Index on Client
 
 ```sql
 CREATE UNIQUE INDEX idx_care_plans_client_unique
 ON care_plans (client_id)
 WHERE deleted_at IS NULL;
 ```
-
 This unique partial index enforces one active care plan per client while ignoring soft-deleted records.
 
 _Note: A `UNIQUE` constraint is declared on a column or table definition, whereas a unique partial index uses `CREATE UNIQUE INDEX` and can include a `WHERE` clause to target only a subset of rows._

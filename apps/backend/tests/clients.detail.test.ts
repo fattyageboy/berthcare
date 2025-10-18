@@ -133,11 +133,17 @@ describe('GET /api/v1/clients/:clientId', () => {
         check_out_latitude DECIMAL(10, 8),
         check_out_longitude DECIMAL(11, 8),
         status VARCHAR(50) NOT NULL DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'in_progress', 'completed', 'cancelled')),
-        duration_minutes INTEGER CHECK (duration_minutes >= 0),
+        duration_minutes INTEGER CHECK (duration_minutes >= 0 AND duration_minutes <= 10000),
         copied_from_visit_id UUID REFERENCES visits(id) ON DELETE SET NULL,
         created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        synced_at TIMESTAMP WITH TIME ZONE
+        synced_at TIMESTAMP WITH TIME ZONE,
+        CONSTRAINT duration_requires_times CHECK (
+          duration_minutes IS NULL OR (
+            check_in_time IS NOT NULL
+            AND check_out_time IS NOT NULL
+          )
+        )
       );
 
       CREATE INDEX IF NOT EXISTS idx_visits_client_scheduled ON visits(client_id, scheduled_start_time DESC);

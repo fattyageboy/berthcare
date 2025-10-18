@@ -27,6 +27,10 @@ describe('authorization utilities', () => {
       expect(hasRole(undefined, 'caregiver')).toBe(false);
     });
 
+    it('returns false when user is undefined and no roles are allowed', () => {
+      expect(hasRole(undefined, [])).toBe(false);
+    });
+
     it('returns true when user role matches a single allowed role', () => {
       expect(hasRole({ role: 'coordinator' }, 'coordinator')).toBe(true);
       expect(hasRole({ role: 'coordinator' }, 'caregiver')).toBe(false);
@@ -37,8 +41,8 @@ describe('authorization utilities', () => {
       expect(hasRole({ role: 'family' }, ['caregiver', 'coordinator'])).toBe(false);
     });
 
-    it('returns true when allowed roles is empty', () => {
-      expect(hasRole({ role: 'family' }, [])).toBe(true);
+    it('returns false when allowed roles is empty', () => {
+      expect(hasRole({ role: 'family' }, [])).toBe(false);
     });
   });
 
@@ -72,8 +76,8 @@ describe('authorization utilities', () => {
       expect(hasPermission(user, ['create:message'])).toBe(false);
     });
 
-    it('returns true when required permissions array is empty', () => {
-      expect(hasPermission(user, [])).toBe(true);
+    it('returns false when required permissions array is empty', () => {
+      expect(hasPermission(user, [])).toBe(false);
     });
   });
 });

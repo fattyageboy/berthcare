@@ -29,6 +29,7 @@ void (async () => {
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
   });
+  let exitCode = 0;
 
   try {
     await client.connect();
@@ -41,7 +42,7 @@ void (async () => {
 
     if (upMigrations.length === 0) {
       console.log('No migration files found.');
-      process.exit(0);
+      return;
     }
 
     if (direction === 'up') {
@@ -51,9 +52,15 @@ void (async () => {
     }
   } catch (error) {
     console.error(error instanceof Error ? error.message : error);
-    process.exit(1);
+    exitCode = 1;
   } finally {
-    await client.end();
+    try {
+      await client.end();
+    } catch (endError) {
+      console.error('Failed to close database connection.', endError);
+      exitCode = 1;
+    }
+    process.exitCode = exitCode;
   }
 })();
 
